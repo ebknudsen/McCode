@@ -1,0 +1,300 @@
+/*******************************************************************************
+*
+* McStas, neutron ray-tracing package
+*         Copyright 1997-2002, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
+*         Institut Laue Langevin, Grenoble, France
+*
+* Component: Single_MX_crystal
+*
+* %I
+*
+* Written by: Erik B Knudsen
+* Date: Apr,. 2017
+* Version: $Revision$
+* Release: McStas 2.4
+* Origin: DTU Physics
+*
+* Single crystal model whcih may be faster when dealing with large scale models
+*
+* %D
+* This single crystal model is intended for use when the model used by Single_crystal gets problems
+* because of long reflection lists 
+*
+* %P
+* Input parameters:
+* xwidth:  [m] Width of the crystal (box)
+* yheight: [m] Height of the crystal (cylindrical or box).
+* zdepth:  [m] Depth of the crystal (box).
+* radius:  [m] Radius of the crystal (cylinder or sphere).
+* reflections: [text] The file containing the reflection list.
+* sig_inc: [ ] Incoherent cross-section of the crystal.
+* sig_abs: [ ] Absorption cross-section of the crystal. 
+* 
+* %E
+*******************************************************************************/
+
+DEFINE COMPONENT Single_MX_crystal
+DEFINITION PARAMETERS ()
+SETTING PARAMETERS (string reflections="", xwidth=0, yheight=0.02, zdepth=0, radius=0.01, 
+        sig_inc=1, sig_abs=0, p_inc=0.1,p_transmit=0.1 ,ax=0, ay=0, az=0, bx=0, by=0, bz=0, cx=0, cy=0, cz=0,
+        delta_d_d=1e-4, mosaic=1e-4
+)
+OUTPUT PARAMETERS (prms)
+/* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
+
+SHARE
+%{
+    %include "read_table-lib"
+
+    typedef struct sx_MX_t {
+            double a_x,a_y,a_z, b_x,b_y,b_z, c_x,c_y,c_z;
+            double asx,asy,asz, bsx,bsy,bsz, csx,csy,csz;
+            double V0;
+            double mosaic;
+    } sx_MX_t;
+
+    double norm2(int valc, double *vals, int *cols){
+        double res=0;
+        int j;
+        for (j=0; j<valc; j++){
+            res+=vals[(cols?cols[j]:j)]*vals[(cols?cols[j]:j)];
+        }
+        return res;
+    }
+
+
+    /*!
+     * \brief Searches a table for multiple values in mulitple columns
+     * Returns the index, r, of the first row in the table where:
+     * T(data[cols[0],r])==vals[0] && T(data[cols[1],r])==vals[1] && ... && T(data[cols[search_cols],r])==vals[search_cols] 
+     * \param T The table to be searched.
+     * \param search_cols Number ofvalues to match
+     * \param cols Array containing the column numbers to look in 
+     * \param vals Array containing the values to match against the table.
+     */
+
+    int Table_Multicol_Find(t_Table T, int search_cols, int *cols, double *values){
+        int row=0;
+        double valsum=0;
+        int i,found=0;
+        double left=0,right=0,middle=0;
+        int li=0;
+        int mi=T.rows/2;
+        int ri=T.rows;
+        int c=T.columns;
+
+        double left_lim=0;
+        double right_lim=0;
+        for (i=0;i<search_cols;i++){
+            left_lim+=pow(floor(fabs(values[i])),2.0);
+            right_lim+=pow(ceil(fabs(values[i])),2.0);
+        }
+
+        valsum=norm2(search_cols, values,NULL);
+        left=norm2(search_cols, &(T.data[li*c+cols[0]]),NULL);
+        middle=norm2(search_cols, &(T.data[mi*c+cols[0]]),NULL);
+        right=norm2(search_cols, &(T.data[ri*c+cols[0]]),NULL);
+        /*Binary search in table for value sum*/
+        while (!found){
+            if (valsum>middle){
+                left=middle;
+                li=mi;
+            }else{
+                right=middle;
+                ri=mi;
+           }
+           mi=(ri+li)/2;
+           middle=norm2(search_cols, &(T.data[mi*c+cols[0]]),NULL);
+           found = (middle> left_lim) && (middle<right_lim); 
+        }
+        //printf("found at idx = (%d %d %d) => (%g %g %g) ~= (%g %g %g), N1=%g ~= %g \n",li,mi,ri,left,middle,right, values[0], values[1], values[2], pow(T.data[mi*c+cols[0]],2.0)+pow(T.data[mi*c+cols[1]],2.0)+pow(T.data[mi*c+cols[2]],2.0),valsum);
+        //printf("qsearch= (%g %g %g), got: (%g %g %g)...(%g %g %g)\n",values[0],values[1],values[2],T.data[li*c+0],T.data[li*c+1],T.data[li*c+2],T.data[ri*c+0],T.data[ri*c+1],T.data[ri*c+2]);
+
+        /*So we now have some limits as to where things may be found*/
+        /*loop through and check all of them in turn*/
+        double d2=fabs(T.data[i*c+cols[0]]-values[0])<0.5 &&  fabs(T.data[i*c+cols[1]]-values[1])<0.5 &&  fabs(T.data[i*c+cols[2]]-values[2]);
+        double d2_small=d2;
+        int i=li;
+        for (i=li;i<ri;i++){
+            if ( d<0.5){
+                //         printf("%d FOUND! %g %g %g ~= %g %g %g, d=%g\n",i,values[0],values[1],values[2], T.data[i*c+cols[0]],T.data[i*c+cols[1]],T.data[i*c+cols[2]], (pow(T.data[i*c+cols[0]]-values[0],2.0)+pow(T.data[i*c+cols[1]]-values[1],2.0)+pow(T.data[i*c+cols[2]]-values[2],2.0)));
+                /*early exit*/
+                return i;
+            }else if (d2small<d2){
+                d2small=d2;
+                ismall=i;
+                //printf("%d CONFOUND! %g %g %g ~= %g %g %g, d=%g\n",i,values[0],values[1],values[2], T.data[i*c+cols[0]],T.data[i*c+cols[1]],T.data[i*c+cols[2]], (pow(T.data[i*c+cols[0]]-values[0],2.0)+pow(T.data[i*c+cols[1]]-values[1],2.0)+pow(T.data[i*c+cols[2]]-values[2],2.0)));
+            }
+        }
+        return i;
+    }
+
+    double quasi_rand01(int axis){
+        const int no_primes=30;
+        const int primes[no_primes]={2,3,5,7,9,11,13,17,19,23,29, 
+            31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
+            73, 79, 83, 89, 97, 101, 103, 107, 109, 113};
+
+        double f, hn;
+        long long n0, n1, r;
+
+        hn = 0.0;
+        f = 1.0/primes[axis];
+        n0 = mcget_run_num();
+        while ( n0>0 ) 
+        {
+            n1 = n0/primes[axis];
+            r = n0-n1*primes[axis];
+            hn += f*r;
+            f = f/primes[axis];
+            n0 = n1;
+        }
+        return hn;
+    }
+
+    int nearest_kf_from_q(sx_MX_t crystal_prms, t_Table T, double qx, double qy,double qz, double *kfx, double *kfy, double *kfz){
+        /*assemble the hbar vector (the estimated hkl)*/
+        /*find */ 
+    }
+
+%}
+
+DECLARE
+%{
+    struct {
+        enum {BOX, CYLINDER, SPHERE} shape;
+        t_Table reftable;
+        int col_h, col_k, col_l, col_F2, col_d_spc;
+        double mosaic, mosaic_a, mosaic_b, mosaic_c;
+        sx_MX_t sxp;
+    } prms;
+    
+
+%}
+
+INITIALIZE
+%{
+    
+    double tmp_x,tmp_y, tmp_z;
+
+
+    if (yheight && radius) {
+        prms.shape=CYLINDER;
+    }
+
+    int status;
+    if ( (status=Table_Read(&(prms.reftable),reflections,0))==-1){
+        fprintf(stderr,"Error (%s): reflection list (%s) not read cleanly. Aborting.\n",NAME_CURRENT_COMP, prms.reftable);
+        exit(-1);
+    }
+
+    /*from the direct unit cell vectors compute the reciprocal ones*/
+    vec_prod(tmp_x, tmp_y, tmp_z,  prms.sxp.b_x, prms.sxp.b_y, prms.sxp.b_z, prms.sxp.c_x, prms.sxp.c_y, prms.sxp.c_z);
+    prms.sxp.V0 = fabs(scalar_prod(prms.sxp.a_x, prms.sxp.a_y, prms.sxp.a_z, tmp_x, tmp_y, tmp_z));
+    printf("V0=%g\n", prms.sxp.V0);
+
+    prms.sxp.asx = 2*PI/prms.sxp.V0*tmp_x;
+    prms.sxp.asy = 2*PI/prms.sxp.V0*tmp_y;
+    prms.sxp.asz = 2*PI/prms.sxp.V0*tmp_z;
+    vec_prod(tmp_x, tmp_y, tmp_z, prms.sxp.c_x, prms.sxp.c_y, prms.sxp.c_z, prms.sxp.a_x, prms.sxp.a_y, prms.sxp.a_z);
+    prms.sxp.bsx = 2*PI/prms.sxp.V0*tmp_x;
+    prms.sxp.bsy = 2*PI/prms.sxp.V0*tmp_y;
+    prms.sxp.bsz = 2*PI/prms.sxp.V0*tmp_z;
+    vec_prod(tmp_x, tmp_y, tmp_z, prms.sxp.a_x, prms.sxp.a_y, prms.sxp.a_z, prms.sxp.b_x, prms.sxp.b_y, prms.sxp.b_z);
+    prms.sxp.csx = 2*PI/prms.sxp.V0*tmp_x;
+    prms.sxp.csy = 2*PI/prms.sxp.V0*tmp_y;
+    prms.sxp.csz = 2*PI/prms.sxp.V0*tmp_z;
+
+
+    /* Mosaicity calcs.*/
+
+    /* Find two arbitrary axes perpendicular to tau and each other. */
+    /*normal_vec(b1[0], b1[1], b1[2],
+            list[i].u1x, list[i].u1y, list[i].u1z);
+    vec_prod(b2[0], b2[1], b2[2],
+            list[i].u1x, list[i].u1y, list[i].u1z,
+            b1[0], b1[1], b1[2]);
+    */
+    /* Use isotropic mosaic. */
+    /*  list[i].u2x = b1[0];
+    list[i].u2y = b1[1];
+    list[i].u2z = b1[2];
+    sig2 = FWHM2RMS*list[i].tau*MIN2RAD*SC_mosaic;
+    list[i].u3x = b2[0];
+    list[i].u3y = b2[1];
+    list[i].u3z = b2[2];
+    sig3 = FWHM2RMS*list[i].tau*MIN2RAD*SC_mosaic;
+    */
+
+
+
+%}
+
+TRACE
+%{
+    double qx,qy,qz,qmax, k,kfx,kfy,kfz;
+    /*pick a random direction in reciprocal space*/
+    randvec_target_circle(&qx,&qy, &qz, NULL, 0,0,1, 0);
+    
+    /*so qmax needs to come from whatever the maximum q we can reach for this neutron happens to be.*/
+    qmax=120;
+    double q=rand01()*pow(qmax,0.33333333333333333333);
+    NORM(qx,qy,qz);
+    qx*=q; qy*=q; qz*=q;
+    /*the search columns  - could rely on default for Table_Multicol_Find*/
+    int cols[]={0,1,2};
+
+    double qq[3];
+    qq[0]=qx;qq[1]=qy;qq[2]=qz;
+    /*TODO
+      1. add possibility of "quasi-tunneling"
+      2. for a given direction pick either coherent or incoherent
+      3. weight according to the scattering cross-section and p_transmit(if given)
+      4. add option of multiple scattering?
+      5. "Weight according to scattering on the outward line?"
+     */
+
+    /*if coherent do this*/
+    
+    /*find the nearest neighbour in terms of scattering vector*/
+    int r=Table_Multicol_Find(prms.reftable, 3, cols, qq);
+
+    /*need to somehow get at the total coherent cross section to be able to weight properly between the two
+      options.*/
+
+
+    /*pick a point in the mosaic gaussian blob*/
+    /*adjust the length of the vector*/
+    NORM(kfx,kfy,kfz);
+    kfx*=k;kfy*=k;kfz*=k;
+    int rnum;
+
+    /*adjust the weight according to the scattering factor and mosaic*/
+    p*=Table_Value(prms.reftable, rnum, prms.col_F2);
+
+
+
+%}
+
+MCDISPLAY
+
+%{
+  /* A bit ugly; hard-coded dimensions. */
+  magnify("");
+  if (prms.shape==SPHERE){
+      circle("xy",0,0,0,radius);
+      circle("xz",0,0,0,radius);
+      circle("yz",0,0,0,radius);
+  }else if (prms.shape==CYLINDER){
+      circle("zx",0, yheight/2.0,0,radius);
+      circle("zx",0,-yheight/2.0,0,radius);
+      line(radius,yheight/2,0,radius,-yheight/2,0);
+      line(-radius,yheight/2,0,-radius,-yheight/2,0);
+      line(0,yheight/2,radius,0,-yheight/2,radius);
+      line(0,yheight/2,-radius,0,-yheight/2,-radius);
+  }else{
+      box(0,0,0,xwidth,yheight,zdepth);
+  }
+%}
+END
