@@ -546,7 +546,7 @@ double tau;                 /* Length of (tau_x, tau_y, tau_z) */
     if (info->m_a && !info->m_b) info->m_b=info->m_a;
     if (info->m_b && !info->m_c) info->m_c=info->m_b;
 
-    /* compute the lattive angles if not set from data file. Not used when in vector mode. */
+    /* compute the lattice angles if not set from data file. Not used when in vector mode. */
     if (info->m_a && !info->m_aa) info->m_aa=90;
     if (info->m_aa && !info->m_bb) info->m_bb=info->m_aa;
     if (info->m_bb && !info->m_cc) info->m_cc=info->m_bb;
@@ -647,7 +647,7 @@ double tau;                 /* Length of (tau_x, tau_y, tau_z) */
       info->V0 = 1/fabs(scalar_prod(info->asx/(2*PI), info->asy/(2*PI), info->asz/(2*PI), tmp_x, tmp_y, tmp_z));
       printf("V0=%g\n", info->V0);
 
-      /*compute the direct cell parameters, ofr completeness*/
+      /*compute the direct cell parameters, for completeness*/
       info->m_ax = tmp_x*info->V0;
       info->m_ay = tmp_y*info->V0;
       info->m_az = tmp_z*info->V0;
@@ -827,7 +827,7 @@ double tau;                 /* Length of (tau_x, tau_y, tau_z) */
         l->u2x = b1[0]; l->u2y = b1[1]; l->u2z = b1[2];
         l->u3x = b2[0]; l->u3y = b2[1]; l->u3z = b2[2];
 
-        /*so now let's compute the rotation around planenormal tau_a X tau_b*/
+        /*so now let's compute the rotation around plane normal tau_a X tau_b*/
         /*g_bar (unit normal of rotation plane) = tau_a X tau_b / norm(tau_a X tau_b)*/
         vec_prod(tmp_x,tmp_y,tmp_z, tau_a[0],tau_a[1],tau_a[2],tau_b[0],tau_b[1],tau_b[2]);
         vec_prod(em_x,em_y,em_z, l->tau_x, l->tau_y, l->tau_z, tmp_x,tmp_y,tmp_z);
