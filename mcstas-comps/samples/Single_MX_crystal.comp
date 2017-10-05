@@ -38,7 +38,7 @@ DEFINE COMPONENT Single_MX_crystal
 DEFINITION PARAMETERS ()
 SETTING PARAMETERS (string reflections="", xwidth=0, yheight=0.02, zdepth=0, radius=0.01, 
         sig_inc=1, sig_abs=0, p_inc=0.1,p_transmit=0.1 ,ax=0, ay=0, az=0, bx=0, by=0, bz=0, cx=0, cy=0, cz=0,
-        delta_d_d=1e-4, mosaic=1e-4
+        delta_d_d=1e-4, mosaic=1e-4, sigma_abs=0, sigma_inc=0
 )
 OUTPUT PARAMETERS (prms)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
@@ -71,7 +71,7 @@ SHARE
      * \param T The table to be searched.
      * \param search_cols Number ofvalues to match
      * \param cols Array containing the column numbers to look in 
-     * \param vals Array containing the values to match against the table.
+     * \param values Array containing the values to match against the table.
      */
 
     int Table_Multicol_Find(t_Table T, int search_cols, int *cols, double *values){
@@ -81,7 +81,7 @@ SHARE
         double left=0,right=0,middle=0;
         int li=0;
         int mi=T.rows/2;
-        int ri=T.rows;
+        int ri=T.rows-1;
         int c=T.columns;
 
         double left_lim=0;
@@ -113,26 +113,26 @@ SHARE
 
         /*So we now have some limits as to where things may be found*/
         /*loop through and check all of them in turn*/
-        double d2=fabs(T.data[i*c+cols[0]]-values[0])<0.5 &&  fabs(T.data[i*c+cols[1]]-values[1])<0.5 &&  fabs(T.data[i*c+cols[2]]-values[2]);
-        double d2_small=d2;
-        int i=li;
+        double d2_small=FLT_MAX;
+        int i_small=-1;
         for (i=li;i<ri;i++){
-            if ( d<0.5){
-                //         printf("%d FOUND! %g %g %g ~= %g %g %g, d=%g\n",i,values[0],values[1],values[2], T.data[i*c+cols[0]],T.data[i*c+cols[1]],T.data[i*c+cols[2]], (pow(T.data[i*c+cols[0]]-values[0],2.0)+pow(T.data[i*c+cols[1]]-values[1],2.0)+pow(T.data[i*c+cols[2]]-values[2],2.0)));
+            double d2=(T.data[i*c+cols[0]]-values[0])*(T.data[i*c+cols[0]]-values[0]) +  (T.data[i*c+cols[1]]-values[1])*(T.data[i*c+cols[1]]-values[1]) + (T.data[i*c+cols[2]]-values[2])*(T.data[i*c+cols[2]]-values[2]);
+            if ( d2<0.5){
+                printf("%d FOUND! %g %g %g ~= %g %g %g, d2=%g\n",i,values[0],values[1],values[2], T.data[i*c+cols[0]],T.data[i*c+cols[1]],T.data[i*c+cols[2]], (pow(T.data[i*c+cols[0]]-values[0],2.0)+pow(T.data[i*c+cols[1]]-values[1],2.0)+pow(T.data[i*c+cols[2]]-values[2],2.0)));
                 /*early exit*/
                 return i;
-            }else if (d2small<d2){
-                d2small=d2;
-                ismall=i;
-                //printf("%d CONFOUND! %g %g %g ~= %g %g %g, d=%g\n",i,values[0],values[1],values[2], T.data[i*c+cols[0]],T.data[i*c+cols[1]],T.data[i*c+cols[2]], (pow(T.data[i*c+cols[0]]-values[0],2.0)+pow(T.data[i*c+cols[1]]-values[1],2.0)+pow(T.data[i*c+cols[2]]-values[2],2.0)));
+            }else if (d2_small<d2){
+                d2_small=d2;
+                i_small=i;
+                printf("%d CONFOUND! %g %g %g ~= %g %g %g, d2=%g\n",i,values[0],values[1],values[2], T.data[i*c+cols[0]],T.data[i*c+cols[1]],T.data[i*c+cols[2]], (pow(T.data[i*c+cols[0]]-values[0],2.0)+pow(T.data[i*c+cols[1]]-values[1],2.0)+pow(T.data[i*c+cols[2]]-values[2],2.0)));
             }
         }
         return i;
     }
 
     double quasi_rand01(int axis){
-        const int no_primes=30;
-        const int primes[no_primes]={2,3,5,7,9,11,13,17,19,23,29, 
+        const int no_primes=64;
+        const int primes[]={2,3,5,7,9,11,13,17,19,23,29,
             31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
             73, 79, 83, 89, 97, 101, 103, 107, 109, 113};
 
@@ -188,7 +188,10 @@ INITIALIZE
         fprintf(stderr,"Error (%s): reflection list (%s) not read cleanly. Aborting.\n",NAME_CURRENT_COMP, prms.reftable);
         exit(-1);
     }
-
+    prms.sxp.a_x=ax; prms.sxp.a_y=ay; prms.sxp.a_z=az;
+    prms.sxp.b_x=bx; prms.sxp.b_y=by; prms.sxp.b_z=bz;
+    prms.sxp.c_x=cx; prms.sxp.c_y=cy; prms.sxp.c_z=cz;
+    
     /*from the direct unit cell vectors compute the reciprocal ones*/
     vec_prod(tmp_x, tmp_y, tmp_z,  prms.sxp.b_x, prms.sxp.b_y, prms.sxp.b_z, prms.sxp.c_x, prms.sxp.c_y, prms.sxp.c_z);
     prms.sxp.V0 = fabs(scalar_prod(prms.sxp.a_x, prms.sxp.a_y, prms.sxp.a_z, tmp_x, tmp_y, tmp_z));
@@ -233,52 +236,106 @@ INITIALIZE
 
 TRACE
 %{
-    double qx,qy,qz,qmax, k,kfx,kfy,kfz;
-    /*pick a random direction in reciprocal space*/
-    randvec_target_circle(&qx,&qy, &qz, NULL, 0,0,1, 0);
+    double t0,t1,qx,qy,qz,qmax, k,kfx,kfy,kfz;
+    const int hcol=0,kcol=1,lcol=2;
     
-    /*so qmax needs to come from whatever the maximum q we can reach for this neutron happens to be.*/
-    qmax=120;
-    double q=rand01()*pow(qmax,0.33333333333333333333);
-    NORM(qx,qy,qz);
-    qx*=q; qy*=q; qz*=q;
-    /*the search columns  - could rely on default for Table_Multicol_Find*/
-    int cols[]={0,1,2};
+    /* propagate neutron to crystal hull */
+    int status= cylinder_intersect(&t0,&t1, x,y,z,vx,vy,vz, radius, yheight);
+    if(status){
+        status=0;
+        if(t0>0){
+            PROP_DT(t0);
+        }
 
-    double qq[3];
-    qq[0]=qx;qq[1]=qy;qq[2]=qz;
-    /*TODO
-      1. add possibility of "quasi-tunneling"
-      2. for a given direction pick either coherent or incoherent
-      3. weight according to the scattering cross-section and p_transmit(if given)
-      4. add option of multiple scattering?
-      5. "Weight according to scattering on the outward line?"
-     */
+        long long nid;
+        /* An aproximation of the total coh cross section could be to integrate all incoming directions
+         * and thereby get an effective one which should be relevant for incoming directions
+         */
+        /*For now pick a random scattering point on the trajectory*/
+        double dt=t1-t0;
+        double vn=sqrt(scalar_prod(vx,vy,vz,vx,vy,vz))/2200.0;
+        dt=rand01()*dt;
+        /*Check unit of this - clearly this is wrong*/
+        p*=exp(-vn*sigma_abs*dt);
 
-    /*if coherent do this*/
-    
-    /*find the nearest neighbour in terms of scattering vector*/
-    int r=Table_Multicol_Find(prms.reftable, 3, cols, qq);
+        PROP_DT(dt);
+        nid=mcget_run_num();
+        SCATTER;
+        /*pick a random direction in reciprocal space*/
+        randvec_target_circle(&qx,&qy, &qz, NULL, 0,0,1, 0);
 
-    /*need to somehow get at the total coherent cross section to be able to weight properly between the two
-      options.*/
+        /*so qmax needs to come from whatever the maximum q we can reach for this neutron happens to be.*/
+        qmax=120;
+        double q=rand01()*pow(qmax,0.33333333333333333333);
+        NORM(qx,qy,qz);
+        qx*=q; qy*=q; qz*=q;
+        /*the search columns  - could rely on default for Table_Multicol_Find*/
+        int cols[]={0,1,2};
+
+        double qq[3];
+        qq[0]=qx;qq[1]=qy;qq[2]=qz;
+        /*TODO
+          1. add possibility of "quasi-tunneling"
+          2. for a given direction pick either coherent or incoherent
+          3. weight according to the scattering cross-section and p_transmit(if given)
+          4. add option of multiple scattering?
+          5. "Weight according to scattering on the outward line?"
+         */
+
+        /* Do some probability gymnastics on the tunneling options(exit option) which will be the "no more scatering branch"
+         * That is 1 - (1-exp(-mu_coh *l_remain)) - (1-exp(-mu_inc*l_remain))
+         * 2nd term is possibility of scattering coherently on outward line, 3rd is prob for inc on same line
+         * next iteration we may do the same again to catch multiples*/
+
+        /*if coherent do this*/
+
+        /* To get a real q we should replace the sampling above with a sampling on a sphere with radius ki.
+         * To get at the Ewald construction we should do the transformation (as in old Single crystal) to center the
+         * sphere on the origin of ki (i.e. q=q'-ki, where q' is the sampled q-vector).
+         * How would the incoming transformation be to put ki along z of the crystal? (Should be as in old SX, no)
+         * Mosaicity could be handled by a simple MC-choice in an ellisoid.
+         */
+
+        /*find the nearest neighbour in terms of g vector*/
+        int r=Table_Multicol_Find(prms.reftable, 3, cols, qq);
+
+        /* Need to somehow get at the total coherent cross section to be able to weight properly between the two
+         * options.
+         */
 
 
-    /*pick a point in the mosaic gaussian blob*/
-    /*adjust the length of the vector*/
-    NORM(kfx,kfy,kfz);
-    kfx*=k;kfy*=k;kfz*=k;
-    int rnum;
+        /* Pick a point in the 3D mosaic gaussian blob.
+         * - Either by picking a point by means of three randnorm calls or by
+         * uniform sampling within n sigma and adjust weight.
+         * - For testing however- we shall just choose the lattice point.*/
 
-    /*adjust the weight according to the scattering factor and mosaic*/
-    p*=Table_Value(prms.reftable, rnum, prms.col_F2);
+        int hh,kk,ll;
+        hh=Table_Index(prms.reftable,r,cols[0]);
+        kk=Table_Index(prms.reftable,r,cols[1]);
+        ll=Table_Index(prms.reftable,r,cols[2]);
+        printf("DEBUGhkl qi qf: %d %d %d  %g %g %g    %g %g %g  ",hh,kk,ll, vx*V2K, vy*V2K, vz*V2K,  qx,qy,qz);  
+        qx=prms.sxp.asx*hh + prms.sxp.bsx*kk + prms.sxp.csx*ll;
+        qy=prms.sxp.asy*hh + prms.sxp.bsy*kk + prms.sxp.csy*ll;
+        qz=prms.sxp.asz*hh + prms.sxp.bsz*kk + prms.sxp.csz*ll;
+        printf("%g %g %g ",qx,qy,qz);
+        kfx=vx*V2K-qx;
+        kfy=vy*V2K-qy;
+        kfz=vz*V2K-qz;
+        printf("      %g %g %g\n",kfx,kfy,kfz);
+        
+        /*adjust the weight according to the scattering factor and mosaic*/
+        p*=Table_Value(prms.reftable, r, prms.col_F2);
 
-
-
+        vx=K2V*kfx;//fx;
+        vy=K2V*kfy;//fy;
+        vz=K2V*kfz;//fz;
+        status=cylinder_intersect(&t0,&t1, x,y,z,vx,vy,vz,radius,yheight);
+        //PROP_DT(t1);
+        status=0;
+    }
 %}
 
 MCDISPLAY
-
 %{
   /* A bit ugly; hard-coded dimensions. */
   magnify("");
@@ -287,8 +344,8 @@ MCDISPLAY
       circle("xz",0,0,0,radius);
       circle("yz",0,0,0,radius);
   }else if (prms.shape==CYLINDER){
-      circle("zx",0, yheight/2.0,0,radius);
-      circle("zx",0,-yheight/2.0,0,radius);
+      circle("xz",0, yheight/2.0,0,radius);
+      circle("xz",0,-yheight/2.0,0,radius);
       line(radius,yheight/2,0,radius,-yheight/2,0);
       line(-radius,yheight/2,0,-radius,-yheight/2,0);
       line(0,yheight/2,radius,0,-yheight/2,radius);
