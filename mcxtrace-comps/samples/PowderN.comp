@@ -564,7 +564,7 @@ int calc_abs_xsect(double k, double *abs, struct line_info_struct *line_info){
     /* compute the absorption cross section.
      * amounts to a table lookup in material data_file by energy*/
     double e=k*K2E;
-    *abs=Table_Value((line_info->mat_table), e, line_info->mat_column_order[1]);
+    *abs=Table_Value((line_info->mat_table), e, line_info->mat_column_order[1]-1);
     *abs*=100*line_info->rho;
     return 0;
 }
