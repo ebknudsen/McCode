@@ -13,13 +13,13 @@
 " McStas/McXtrace instruments are mostly c syntax so start with that
 :runtime! syntax/c.vim
 
-"keywords for mcstas statements
+"keywords for mccode statements
 :syntax keyword instrStatement DECLARE DEPENDENCY DEFINE END FINALLY INITIALIZE MCDISPLAY SAVE SHARE
 :syntax keyword instrStatement TRACE DEFINITION PARAMETERS POLARISATION SETTING STATE
 :syntax keyword instrStatement OUTPUT INSTRUMENT include
 :highlight link instrStatement Statement
 
-"mcstas runtime keywords
+"mccode runtime keywords
 :syntax keyword instrRuntime
 	\ ABSORB 
 	\ SCATTERED 
@@ -68,6 +68,8 @@
 	\ PROP_Z0 
 	\ PROP_X0 
 	\ PROP_Y0 
+        \ ALLOW_BACKPROP
+        \ DISALLOW_BACKPROP
 	\ vec_prod 
 	\ scalar_prod 
 	\ NORM 
@@ -89,16 +91,16 @@
 	\ randvec_target_rect 
 :highlight link instrRuntime Constant
 
-"mcstas trace keywords -these should ideally only be highlighted when within
+"mccode trace keywords -these should ideally only be highlighted when within
 "the TRACE region or something
 :syntax keyword instrTrace ABSOLUTE AT COMPONENT EXTEND GROUP PREVIOUS NEXT MYSELF RELATIVE ROTATED WHEN JUMP ITERATE SPLIT COPY
 highlight link instrTrace Statement
 
-"mcstas type keywords
+"mccode type keywords
 :syntax keyword instrType auto char const double float int long register restrict short signed static unsigned void volatile _Imaginary _Complex _Bool
 highlight link instrType Type
 
-"mcstas attention keywords 
+"mccode attention keywords 
 :syntax keyword instrATT FIXME TODO ### Identification Description Parameters Link
 :highlight link instrATT Todo
 "here the insertion menus could be put
