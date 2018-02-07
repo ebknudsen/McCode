@@ -35,7 +35,7 @@
 
 /* Need a pure parser to allow for recursive calls when autoloading component
    definitions. */
-%pure_parser
+%pure-parser
 
 /*******************************************************************************
 * Type definition for semantic values.
@@ -76,10 +76,10 @@
 %token TOK_DEFINITION "DEFINITION"
 %token TOK_END        "END"
 %token TOK_FINALLY    "FINALLY"
-%token TOK_INITIALIZE "INITIALIZE"
+%token TOK_INITIALISE "INITIALISE" 
 %token TOK_INSTRUMENT "INSTRUMENT"
-%token TOK_MCDISPLAY  "MCDISPLAY"
-%token TOK_OUTPUT     "OUTPUT"
+%token TOK_DISPLAY    "DISPLAY"
+%token TOK_PRIVATE    "PRIVATE" /* same as OUTPUT PARAMETERS */
 %token TOK_PARAMETERS "PARAMETERS"
 %token TOK_RELATIVE   "RELATIVE"
 %token TOK_ROTATED    "ROTATED"
@@ -100,7 +100,6 @@
 %token TOK_COPY       "COPY"    /* extended McCode grammar */
 %token TOK_SPLIT      "SPLIT"   /* extended McCode grammar */
 %token TOK_REMOVABLE  "REMOVABLE" /* extended McCode grammar with include */
-%token TOK_DEPENDENCY "DEPENDENCY"
 
 /*******************************************************************************
 * Declarations of terminals and nonterminals.
@@ -117,13 +116,13 @@
 
 %type <instance> component compref reference instref
 %type <groupinst> groupdef groupref
-%type <ccode>   code codeblock share declare initialize trace extend save finally mcdisplay
+%type <ccode>   code codeblock share declare initialize trace extend save finally display
 %type <coords>  coords
 %type <exp>     exp topexp topatexp genexp genatexp when split
 %type <actuals> actuallist actuals actuals1
 %type <comp_iformals> comp_iformallist comp_iformals comp_iformals1
 %type <cformal> comp_iformal
-%type <formals> formallist formals formals1 def_par set_par out_par
+%type <formals> def_par set_par out_par
 %type <iformals> instrpar_list instr_formals instr_formals1
 %type <iformal> instr_formal
 %type <parms>   parameters
@@ -147,7 +146,7 @@ compdefs:   /* empty */
     | compdefs compdef
 ;
 
-compdef:    "DEFINE" "COMPONENT" TOK_ID parameters dependency share declare initialize trace save finally mcdisplay "END"
+compdef:    "DEFINE" "COMPONENT" TOK_ID parameters share declare initialize trace save finally display "END"
       {
         struct comp_def *c;
         palloc(c);
@@ -156,14 +155,21 @@ compdef:    "DEFINE" "COMPONENT" TOK_ID parameters dependency share declare init
         c->def_par = $4.def;
         c->set_par = $4.set;
         c->out_par = $4.out;
-        c->share_code = $6;
-        c->decl_code = $7;
-        c->init_code = $8;
-        c->trace_code = $9;
-        c->save_code = $10;
-        c->finally_code = $11;
-        c->mcdisplay_code = $12;
-        c->comp_inst_number = 0;
+        c->share_code = $5;
+        c->decl_code = $6;
+        c->init_code = $7;
+        c->trace_code = $8;
+        c->save_code = $9;
+        c->finally_code = $10;
+        c->display_code = $11;
+        c->flag_defined_structure=0;
+        c->flag_defined_share=0;
+        c->flag_defined_init=0;
+        c->flag_defined_save=0;
+        c->flag_defined_finally=0;
+        c->flag_defined_display=0;
+        c->flag_defined_trace=0;
+        c->counter_instances=0;
 
         /* Check definition and setting params for uniqueness */
         check_comp_formals(c->def_par, c->set_par, c->name);
@@ -171,7 +177,7 @@ compdef:    "DEFINE" "COMPONENT" TOK_ID parameters dependency share declare init
         symtab_add(read_components, c->name, c);
         if (verbose) fprintf(stderr, "Embedding component %s from file %s\n", c->name, c->source);
       }
-    | "DEFINE" "COMPONENT" TOK_ID "COPY" TOK_ID parameters dependency share declare initialize trace save finally mcdisplay "END"
+    | "DEFINE" "COMPONENT" TOK_ID "COPY" TOK_ID parameters share declare initialize trace save finally display "END"
       {
         /* create a copy of a comp, and initiate it with given blocks */
         /* all redefined blocks override */
@@ -192,14 +198,13 @@ compdef:    "DEFINE" "COMPONENT" TOK_ID parameters dependency share declare init
           c->out_par   = list_create(); list_cat(c->out_par, def->out_par);
           if (list_len($6.out)) list_cat(c->out_par,$6.out);
 
-          c->share_code = ($8->linenum ?  $8  : def->share_code);
-          c->decl_code  = ($9->linenum ?  $9  : def->decl_code);
-          c->init_code  = ($10->linenum ?  $10  : def->init_code);
-          c->trace_code = ($11->linenum ? $11 : def->trace_code);
-          c->save_code  = ($12->linenum ? $12 : def->save_code);
-          c->finally_code = ($13->linenum ? $13 : def->finally_code);
-          c->mcdisplay_code = ($14->linenum ? $14 : def->mcdisplay_code);
-          c->comp_inst_number = 0;
+          c->share_code = ($7->linenum ?  $7  : def->share_code);
+          c->decl_code  = ($8->linenum ?  $8  : def->decl_code);
+          c->init_code  = ($9->linenum ?  $9  : def->init_code);
+          c->trace_code = ($10->linenum ? $10 : def->trace_code);
+          c->save_code  = ($11->linenum ? $11 : def->save_code);
+          c->finally_code = ($12->linenum ? $12 : def->finally_code);
+          c->display_code = ($13->linenum ? $13 : def->display_code);
 
           /* Check definition and setting params for uniqueness */
           check_comp_formals(c->def_par, c->set_par, c->name);
@@ -211,7 +216,7 @@ compdef:    "DEFINE" "COMPONENT" TOK_ID parameters dependency share declare init
       }
 ;
 
-/* SHARE component block included once. Toggle comp_inst_number sign from neg to pos in cogen.c */
+/* SHARE component block included once. */
 share:    /* empty */
       {
         $$ = codeblock_new();
@@ -314,7 +319,11 @@ out_par:    /* empty */
       {
         $$ = list_create();
       }
-    | "OUTPUT" "PARAMETERS" formallist
+    | "OUTPUT" "PARAMETERS" comp_iformallist
+      {
+        $$ = $3;
+      }
+    | "PRIVATE" "PARAMETERS" comp_iformallist
       {
         $$ = $3;
       }
@@ -324,10 +333,10 @@ state_par:    /* empty */
       {
         /* Do nothing */
       }
-    | "STATE" "PARAMETERS" formallist
+    | "STATE" "PARAMETERS" comp_iformallist
       {
         /* Issue warning */
-        print_error(" %s is using STATE PARAMETERS\n    %s %s does NOT support this keyword. Please remove line %d\n", instr_current_filename, MCCODE_NAME,MCCODE_VERSION, instr_current_line);
+        print_error("ERROR: %s is using STATE PARAMETERS\n    %s %s does NOT support this keyword. Please remove line %d.\n", instr_current_filename, MCCODE_NAME,MCCODE_VERSION, instr_current_line);
       }
 ;
 
@@ -335,10 +344,10 @@ pol_par:    /* empty */
       {
         /* Do nothing */
       }
-    | "POLARISATION" "PARAMETERS" formallist
+    | "POLARISATION" "PARAMETERS" comp_iformallist
       {
         /* Issue warning */
-        print_error(" %s is using POLARISATION PARAMETERS\n    %s %s does NOT support this keyword. Please remove line %d\n", instr_current_filename, MCCODE_NAME,MCCODE_VERSION, instr_current_line);
+        print_error("ERROR: %s is using POLARISATION PARAMETERS\n    %s %s does NOT support this keyword. Please remove line %d.\n", instr_current_filename, MCCODE_NAME,MCCODE_VERSION, instr_current_line);
       }
 ;
 
@@ -381,8 +390,10 @@ comp_iformal:  TOK_ID TOK_ID
           formal->type = instr_type_int;
         } else if(!strcmp($1, "string")) {
           formal->type = instr_type_string;
+        } else if(!strcmp($1, "vector")) {
+          formal->type = instr_type_vector;
         } else {
-          print_error("Illegal type %s for component "
+          print_error("ERROR: Illegal type %s for component "
           "parameter %s at line %s:%d.\n", $1, $2, instr_current_filename, instr_current_line);
           formal->type = instr_type_double;
         }
@@ -395,8 +406,10 @@ comp_iformal:  TOK_ID TOK_ID
         palloc(formal);
         if(!strcmp($1, "char")) {
           formal->type = instr_type_string;
+        } else if(!strcmp($1, "double")) {
+          formal->type = instr_type_vector;
         } else {
-          print_error("Illegal type %s* for component "
+          print_error("ERROR: Illegal type %s* for component "
           "parameter %s at line %s:%d.\n", $1, $3, instr_current_filename, instr_current_line);
           formal->type = instr_type_double;
         }
@@ -432,8 +445,10 @@ comp_iformal:  TOK_ID TOK_ID
           formal->type = instr_type_int;
         } else if(!strcmp($1, "string")) {
           formal->type = instr_type_string;
+        } else if(!strcmp($1, "vector")) {
+          formal->type = instr_type_vector;
         } else {
-          print_error("Illegal type %s for component "
+          print_error("ERROR: Illegal type %s for component "
           "parameter %s at line %s:%d.\n", $1, $2, instr_current_filename, instr_current_line);
           formal->type = instr_type_double;
         }
@@ -451,8 +466,10 @@ comp_iformal:  TOK_ID TOK_ID
         formal->default_value = $5;
         if(!strcmp($1, "char")) {
           formal->type = instr_type_string;
+        } else if(!strcmp($1, "double")) {
+          formal->type = instr_type_vector;
         } else {
-          print_error("Illegal type %s* for component "
+          print_error("ERROR: Illegal type %s* for component "
           "parameter %s at line %s:%d.\n", $1, $3, instr_current_filename, instr_current_line);
           formal->type = instr_type_double;
         }
@@ -499,7 +516,7 @@ initialize:   /* empty */
       {
         $$ = codeblock_new();
       }
-    | "INITIALIZE" "COPY" TOK_ID
+    | "INITIALISE" "COPY" TOK_ID
       {
         struct comp_def *def;
         def = read_component($3);
@@ -508,7 +525,7 @@ initialize:   /* empty */
         else
           $$ = codeblock_new();
       }
-    | "INITIALIZE" "COPY" TOK_ID "EXTEND" codeblock
+    | "INITIALISE" "COPY" TOK_ID "EXTEND" codeblock
       {
         struct comp_def   *def;
         struct code_block *cb;
@@ -523,7 +540,7 @@ initialize:   /* empty */
         } 
         $$ = cb;
       }
-    | "INITIALIZE" codeblock
+    | "INITIALISE" codeblock
       {
         $$ = $2;
       }
@@ -597,34 +614,34 @@ finally:    /* empty */
       }
 ;
 
-mcdisplay:    /* empty */
+display:    /* empty */
       {
         $$ = codeblock_new();
       }
-    | "MCDISPLAY" codeblock
+    | "DISPLAY" codeblock
       {
         $$ = $2;
       }
-    | "MCDISPLAY" "COPY" TOK_ID
+    | "DISPLAY" "COPY" TOK_ID
       {
         struct comp_def *def;
         def = read_component($3);
         if (def)
-          $$ = def->mcdisplay_code;
+          $$ = def->display_code;
         else
           $$ = codeblock_new();
       }
-    | "MCDISPLAY" "COPY" TOK_ID "EXTEND" codeblock
+    | "DISPLAY" "COPY" TOK_ID "EXTEND" codeblock
       {
         struct comp_def *def;
         struct code_block *cb;
         cb = codeblock_new();
         def = read_component($3);
         if (def) {
-          cb->filename        = def->mcdisplay_code->filename;
-          cb->quoted_filename = def->mcdisplay_code->quoted_filename;
-          cb->linenum         = def->mcdisplay_code->linenum;
-          list_cat(cb->lines, def->mcdisplay_code->lines);
+          cb->filename        = def->display_code->filename;
+          cb->quoted_filename = def->display_code->quoted_filename;
+          cb->linenum         = def->display_code->linenum;
+          list_cat(cb->lines, def->display_code->lines);
           list_cat(cb->lines, $5->lines);
         }
         $$ = cb;
@@ -644,16 +661,16 @@ instrument:   "DEFINE" "INSTRUMENT" TOK_ID instrpar_list
           instrument_definition->has_included_instr++;
         }
       }
-      dependency declare initialize instr_trace save finally "END"
+      declare initialize instr_trace save finally "END"
       {
-        if (!instrument_definition->decls) instrument_definition->decls = $7;
-        else list_cat(instrument_definition->decls->lines, $7->lines);
-        if (!instrument_definition->inits) instrument_definition->inits = $8;
-        else list_cat(instrument_definition->inits->lines, $8->lines);
-        if (!instrument_definition->saves) instrument_definition->saves = $10;
-        else list_cat(instrument_definition->saves->lines, $10->lines);
-        if (!instrument_definition->finals) instrument_definition->finals = $11;
-        else list_cat(instrument_definition->finals->lines, $11->lines);
+        if (!instrument_definition->decls) instrument_definition->decls = $6;
+        else list_cat(instrument_definition->decls->lines, $6->lines);
+        if (!instrument_definition->inits) instrument_definition->inits = $7;
+        else list_cat(instrument_definition->inits->lines, $7->lines);
+        if (!instrument_definition->saves) instrument_definition->saves = $9;
+        else list_cat(instrument_definition->saves->lines, $9->lines);
+        if (!instrument_definition->finals) instrument_definition->finals = $10;
+        else list_cat(instrument_definition->finals->lines, $10->lines);
         instrument_definition->compmap = comp_instances;
         instrument_definition->groupmap = group_instances;
         instrument_definition->complist = comp_instances_list;
@@ -662,7 +679,7 @@ instrument:   "DEFINE" "INSTRUMENT" TOK_ID instrpar_list
         /* Check instrument parameters for uniqueness */
         check_instrument_formals(instrument_definition->formals,
                instrument_definition->name);
-        if (verbose && !error_encountered) fprintf(stderr, "Creating instrument %s (with %li component instances)\n", $3, comp_current_index);
+        if (verbose && !error_encountered) fprintf(stderr, "Creating instrument '%s' (with %li component instances)\n", $3, comp_current_index);
       }
 ;
 
@@ -707,7 +724,7 @@ instr_formal:   TOK_ID TOK_ID
         } else if(!strcmp($1, "string")) {
           formal->type = instr_type_string;
         } else {
-          print_error("Illegal type %s for instrument "
+          print_error("ERROR: Illegal type %s for instrument "
           "parameter %s at line %s:%d.\n", $1, $2, instr_current_filename, instr_current_line);
           formal->type = instr_type_double;
         }
@@ -720,8 +737,10 @@ instr_formal:   TOK_ID TOK_ID
         palloc(formal);
         if(!strcmp($1, "char")) {
           formal->type = instr_type_string;
+        } else if(!strcmp($1, "double")) {
+          formal->type = instr_type_vector;
         } else {
-          print_error("Illegal type $s* for instrument "
+          print_error("ERROR: Illegal type $s* for instrument "
           "parameter %s at line %s:%d.\n", $1, $3, instr_current_filename, instr_current_line);
           formal->type = instr_type_double;
         }
@@ -758,7 +777,7 @@ instr_formal:   TOK_ID TOK_ID
         } else if(!strcmp($1, "string")) {
           formal->type = instr_type_string;
         } else {
-          print_error("Illegal type %s for instrument "
+          print_error("ERROR: Illegal type %s for instrument "
           "parameter %s at line %s:%d.\n", $1, $2, instr_current_filename, instr_current_line);
           formal->type = instr_type_double;
         }
@@ -776,8 +795,10 @@ instr_formal:   TOK_ID TOK_ID
         formal->default_value = $5;
         if(!strcmp($1, "char")) {
           formal->type = instr_type_string;
+        } else if(!strcmp($1, "double")) {
+          formal->type = instr_type_vector;
         } else {
-          print_error("Illegal type %s* for instrument "
+          print_error("ERROR: Illegal type %s* for instrument "
           "parameter %s at line %s:%d.\n", $1, $3, instr_current_filename, instr_current_line);
           formal->type = instr_type_double;
         }
@@ -803,7 +824,7 @@ complist:   /* empty */
                         been used before. */
           if(symtab_lookup(comp_instances, $2->name))
           {
-            print_error("Multiple use of component instance name "
+            print_error("ERROR: Multiple use of component instance name "
             "'%s' at line %s:%d.\nPlease change the instance name.\n", $2->name, instr_current_filename, instr_current_line);
             /* Since this is an error condition, we do not
               worry about freeing the memory allocated for
@@ -820,42 +841,43 @@ complist:   /* empty */
               liter = list_iterate($2->def->out_par);
               while(par = list_next(liter)) {
                 if (!strcmp($2->name, par))
-                  print_error("Component instance name "
+                  print_error("ERROR: Component instance name "
               "'%s' matches an internal OUTPUT parameter of component class %s at "
               "line %s:%d.\nPlease change the instance name.\n", 
-              $2->name, $2->type, instr_current_filename, instr_current_line);
+              $2->name, $2->def->name, instr_current_filename, instr_current_line);
               }
               list_iterate_end(liter);
               
               liter = list_iterate($2->def->set_par);
               while(formal = list_next(liter)) {
                 if (!strcmp($2->name, formal->id))
-                  print_error("Component instance name "
+                  print_error("ERROR: Component instance name "
                   "'%s' matches an internal SETTING parameter of component class %s at "
                   "line %s:%d.\nPlease change the instance name.\n", 
-                  $2->name, $2->type, instr_current_filename, instr_current_line);
+                  $2->name, $2->def->name, instr_current_filename, instr_current_line);
               }
               list_iterate_end(liter);
               
               liter = list_iterate($2->def->def_par);
               while(formal = list_next(liter)) {
                 if (!strcmp($2->name, formal->id))
-                  print_error("Component instance name "
+                  print_error("ERROR: Component instance name "
                   "'%s' matches an internal DEFINITION parameter of component class %s at "
                   "line %s:%d.\nPlease change the instance name.\n", 
-                  $2->name, $2->type, instr_current_filename, instr_current_line);
+                  $2->name, $2->def->name, instr_current_filename, instr_current_line);
               }
               list_iterate_end(liter);
             }
             /* if we come there, instance is not an OUTPUT name */
             symtab_add(comp_instances, $2->name, $2);
             list_add(comp_instances_list, $2);
-            if (verbose) fprintf(stderr, "Component[%li]: %s = %s().\n", comp_current_index, $2->name, $2->type);
+            if (verbose && $2->def) 
+              fprintf(stderr, "Component[%li]: %s = %s().\n", comp_current_index, $2->name, $2->def->name);
           }
         } /* if shared */
         else
         {
-          if (verbose) fprintf(stderr, "Component[%li]: %s = %s() SKIPPED (REMOVABLE COMPONENT when included)\n", comp_current_index, $2->name, $2->type);
+          if (verbose && $2->def) fprintf(stderr, "Component[%li]: %s = %s() SKIPPED (REMOVABLE COMPONENT when included)\n", comp_current_index, $2->name, $2->def->name);
         }
       }
     | complist instrument
@@ -870,6 +892,18 @@ instname: "COPY" '(' TOK_ID ')'
         sprintf(str_index, "_%li", comp_current_index+1);
         $$ = str_cat($3, str_index, NULL);
       }
+    | "MYSELF"
+      {
+        char str_index[10];
+        sprintf(str_index, "_%li", comp_current_index+1);
+        $$ = str_cat("Comp", str_index, NULL);
+      }
+    | "COPY"
+      {
+        char str_index[10];
+        sprintf(str_index, "_%li", comp_current_index+1);
+        $$ = str_cat("Comp", str_index, NULL);
+      }
     | TOK_ID
       {
         $$ = $1;
@@ -882,7 +916,6 @@ instref: "COPY" '(' compref ')' actuallist /* make a copy of a previous instance
         struct comp_inst *comp;
         comp_src = $3;
         palloc(comp);
-        comp->type   = comp_src->type;
         comp->def    = comp_src->def;
         comp->extend = comp_src->extend;
         comp->group  = comp_src->group;
@@ -901,7 +934,6 @@ instref: "COPY" '(' compref ')' actuallist /* make a copy of a previous instance
         struct comp_inst *comp;
         comp_src = $3;
         palloc(comp);
-        comp->type   = comp_src->type;
         comp->defpar = comp_src->defpar;
         comp->setpar = comp_src->setpar;
         comp->def    = comp_src->def;
@@ -917,9 +949,8 @@ instref: "COPY" '(' compref ')' actuallist /* make a copy of a previous instance
         struct comp_def *def;
         struct comp_inst *comp;
         def = read_component($1);
-        if (def != NULL) def->comp_inst_number--;
+        
         palloc(comp);
-        comp->type         = $1;
         comp->def          = def;
         comp->extend = codeblock_new();
         comp->group  = NULL;
@@ -946,44 +977,45 @@ removable:    /* empty */
       }
 ;
 
-component: removable split "COMPONENT" instname '=' instref when place orientation groupref extend jumps
+component: removable split "COMPONENT" instname '=' instref 
       {
         struct comp_inst *comp;
 
-        comp = $6;
-        myself_comp = comp;
-        
-        if (comp->def != NULL) {
-          comp->def->comp_inst_number--;
-          comp->type = str_dup(comp->def->name);
-        } else 
-          comp->type = str_dup("Definition not found");
+        myself_comp = comp = $6;
 
         comp->name  = $4;
         comp->split = $2;
         comp->removable = $1;
-
-        if ($7) comp->when  = $7;
+      }
+      when place orientation groupref extend jumps
+      {
+        struct comp_inst *comp = myself_comp;
+        
+        if ($8) comp->when  = $8;
 
         palloc(comp->pos);
-        comp->pos->place           = $8.place;
-        comp->pos->place_rel       = $8.place_rel;
-        comp->pos->orientation     = $9.orientation;
+        comp->pos->place           = $9.place;
+        comp->pos->place_rel       = $9.place_rel;
+        comp->pos->orientation     = $10.orientation;
         comp->pos->orientation_rel =
-            $9.isdefault ? $8.place_rel : $9.orientation_rel;
+            $10.isdefault ? $9.place_rel : $10.orientation_rel;
 
-        if ($10) {
-          comp->group = $10;    /* component is part of an exclusive group */
+        if ($11) {
+          comp->group = $11;    /* component is part of an exclusive group */
           /* store first and last comp of group. Check if a SPLIT is inside */
           if (!comp->group->first_comp) comp->group->first_comp =comp->name;
           comp->group->last_comp=comp->name;
-          if (comp->split && !comp->group->split) comp->group->split = comp->split;
+          if (comp->split)
+            print_error("ERROR: Component %s=%s() at line %s:%d is in GROUP %s and has a SPLIT.\n"
+              "\tMove the SPLIT keyword before (outside) the component instance %s (first in GROUP)\n",
+              comp->name, comp->def->name, instr_current_filename, instr_current_line, $11->name,
+              comp->group->first_comp);
         }
-        if ($11->linenum)   comp->extend= $11;  /* EXTEND block*/
-        if (list_len($12))  comp->jump  = $12;
+        if ($12->linenum)   comp->extend= $12;  /* EXTEND block*/
+        if (list_len($13))  comp->jump  = $13;
         comp->index = ++comp_current_index;     /* index of comp instance */
 
-        debugn((DEBUG_HIGH, "Component[%i]: %s = %s().\n", comp_current_index, $4, $6->type));
+        debugn((DEBUG_HIGH, "Component[%i]: %s = %s().\n", comp_current_index, $4, $6->def->name));
         /* this comp will be 'previous' for the next, except if removed at include */
         if (!comp->removable) previous_comp = comp;
         $$ = comp;
@@ -1005,34 +1037,6 @@ split:    /* empty */
       }
 ;
 
-formallist:   '(' formals ')'
-      {
-        $$ = $2;
-      }
-;
-
-
-formals:    /* empty */
-      {
-        $$ = list_create();
-      }
-    | formals1
-      {
-        $$ = $1;
-      }
-;
-
-formals1:   TOK_ID
-      {
-        $$ = list_create();
-        list_add($$, $1);
-      }
-    | formals1 ',' TOK_ID
-      {
-        list_add($1, $3);
-        $$ = $1;
-      }
-;
 
 actuallist:   '(' actuals ')'
       {
@@ -1133,7 +1137,6 @@ groupdef:   TOK_ID
           group->index      = 0;
           group->first_comp = NULL;
           group->last_comp  = NULL;
-          group->split      = NULL;
           symtab_add(group_instances, $1, group);
           list_add(group_instances_list, group);
         }
@@ -1174,7 +1177,7 @@ compref: "PREVIOUS"
         ent = symtab_lookup(comp_instances, $1);
         comp = NULL;
         if(ent == NULL)
-          print_error("Reference to undefined component instance %s at line %s:%d.\n",
+          print_error("ERROR: Reference to undefined component instance %s at line %s:%d.\n",
           $1, instr_current_filename, instr_current_line);
         else
           comp = ent->val;
@@ -1250,27 +1253,27 @@ jumpcondition: "WHEN" exp
 
 jumpname: "PREVIOUS"
     {
-      $$.name  = NULL;
+      $$.name  = str_dup("PREVIOUS");
       $$.index = -1;
     }
   | "PREVIOUS" '(' TOK_NUMBER ')'
     {
-      $$.name  = NULL;
+      $$.name  = str_cat("PREVIOUS_", $3, NULL);
       $$.index = -atoi($3);
     }
   | "MYSELF"
     {
-      $$.name  = NULL;
+      $$.name  = str_dup("MYSELF");
       $$.index = 0;
     }
   | "NEXT"
     {
-      $$.name  = NULL;
+      $$.name  = str_dup("NEXT");;
       $$.index = +1;
     }
   | "NEXT" '(' TOK_NUMBER ')'
     {
-      $$.name  = NULL;
+      $$.name  = str_cat("NEXT_", $3, NULL);
       $$.index = +atoi($3);    }
   | TOK_ID
     {
@@ -1278,15 +1281,6 @@ jumpname: "PREVIOUS"
       $$.index = 0;
     }
 ;
-
-dependency: 
-    {
-    }
-  | "DEPENDENCY" TOK_STRING
-    {
-      strncat(instrument_definition->dependency, " ", 1024);
-      strncat(instrument_definition->dependency, $2, 1024);
-    }
 
 /* C expressions used to give component actual parameters **********************
    Top-level comma (',') operator NOT allowed. */
@@ -1317,7 +1311,7 @@ topatexp:   "PREVIOUS"
         if (previous_comp) {
           $$ = exp_ctoken(previous_comp->name);
         } else {
-          print_error(NULL, "Found invalid PREVIOUS reference at line %s:%d. Please fix (add a component instance before).\n", instr_current_filename, instr_current_line);
+          print_error("ERROR: Found invalid PREVIOUS reference at line %s:%d. Please fix (add a component instance before).\n", instr_current_filename, instr_current_line);
         }
       }
     | "MYSELF"
@@ -1527,20 +1521,26 @@ List group_instances_list;
 static char *output_filename;
 
 /* Verbose parsing/code generation */
-char verbose;
+char verbose = 0;
+
+/* include instrument source code in executable ? */
+char embed_instrument_file = 0;
 
 /* Map of already-read components. */
 Symtab read_components = NULL;
+
+/* name of executable, e.g. mcstas or mcxtrace */
+char *executable_name=NULL;
 
 /* Print a summary of the command usage and exit with error. */
 static void
 print_usage(void)
 {
-  fprintf(stderr, MCCODE_NAME " version " MCCODE_VERSION " (" MCCODE_DATE ")\n");
+  fprintf(stderr, MCCODE_STRING " version " MCCODE_VERSION " (" MCCODE_DATE ") " MCCODE_H "\n");
   fprintf(stderr, "Compiler of the " MCCODE_NAME " ray-trace simulation package\n");
   fprintf(stderr, "Usage:\n"
-    "  " MCCODE_NAME " [-o file] [-I dir1 ...] [-t] [-p] [-v] "
-    "[--no-main] [--no-runtime] [--verbose] file\n");
+    "  %s [-o file] [-I dir1 ...] [-t] [-p] [-v] "
+    "[--no-main] [--no-runtime] [--verbose] file\n", executable_name);
   fprintf(stderr, "      -o FILE --output-file=FILE Place C output in file FILE.\n");
   fprintf(stderr, "      -I DIR  --search-dir=DIR   Append DIR to the component search list. \n");
   fprintf(stderr, "      -t      --trace            Enable 'trace' mode for instrument display.\n");
@@ -1548,15 +1548,22 @@ print_usage(void)
   fprintf(stderr, "      --no-main                  Do not create main(), for external embedding.\n");
   fprintf(stderr, "      --no-runtime               Do not embed run-time libraries.\n");
   fprintf(stderr, "      --verbose                  Display compilation process steps.\n");
-  fprintf(stderr, "  The file will be processed and translated into a C code program.\n");
+  fprintf(stderr, "      --source                   Embed the instrument source code in executable.\n");
+  fprintf(stderr, "  The instrument description file will be processed and translated into a C code program.\n");
   fprintf(stderr, "  If run-time libraries are not embedded, you will have to pre-compile\n");
   fprintf(stderr, "    them (.c -> .o) before assembling the program.\n");
   fprintf(stderr, "  The default component search list is usually defined by the environment\n");
-  fprintf(stderr, "    variable '" MCCODE_STRING "' (default is " MCSTAS ") \n");
-  fprintf(stderr, "  Use 'mcrun' to both run " MCCODE_NAME " and the C compiler.\n");
-  fprintf(stderr, "  Use 'mcgui' to run the " MCCODE_NAME " GUI.\n");
+  fprintf(stderr, "    variable '" MCCODE_LIBENV "' %s (default is " 
+  #if MCCODE_PROJECT == 1
+    MCSTAS
+  #elif MCCODE_PROJECT == 2
+    MCXTRACE
+  #endif
+  ") \n", getenv(MCCODE_LIBENV) ? getenv(MCCODE_LIBENV) : "");
+  fprintf(stderr, "  Use '" ID_PRE "run' to both run " MCCODE_NAME " and the C compiler.\n");
+  fprintf(stderr, "  Use '" ID_PRE "gui' to run the " MCCODE_NAME " GUI.\n");
   fprintf(stderr, "SEE ALSO: mcrun, mcplot, mcdisplay, mcresplot, mcstas2vitess, mcgui, mcformat, mcdoc\n");
-  fprintf(stderr, "DOC:      Please visit " MCCODE_BUGREPORT "\n");
+  fprintf(stderr, "DOC:      Please visit <" MCCODE_BUGREPORT ">\n");
   exit(1);
 }
 
@@ -1564,9 +1571,9 @@ print_usage(void)
 static void
 print_version(void)
 {
-  printf(MCCODE_NAME " version " MCCODE_VERSION " (" MCCODE_DATE ")\n"
-    "Copyright (C) DTU Physics and Risoe National Laboratory, 1997-" MCCODE_YEAR "\n"
-    "Additions (C) Institut Laue Langevin, 2003-" MCCODE_YEAR "\n"
+  printf(MCCODE_NAME " version " MCCODE_VERSION " (" MCCODE_DATE ") " MCCODE_H "\n"
+    "Copyright (C) Risoe National Laboratory, 1997-2014\n"
+    "Additions (C) Institut Laue Langevin, 2003-2014\n"
     "All rights reserved\n");
   exit(0);
 }
@@ -1614,14 +1621,14 @@ parse_command_line(int argc, char *argv[])
 {
   int i;
 
-  output_filename = NULL;
-  verbose = 0;
-  instr_current_filename = NULL;
-  instrument_definition->use_default_main = 1;
+  output_filename                        = NULL;
+  verbose                                = 0;
+  instr_current_filename                 = NULL;
+  instrument_definition->use_default_main= 1;
   instrument_definition->include_runtime = 1;
-  instrument_definition->enable_trace = 0;
-  instrument_definition->portable = 0;
-  strcmp(instrument_definition->dependency, "-lm");
+  instrument_definition->enable_trace    = 0;
+  instrument_definition->portable        = 0;
+  executable_name                        = argv[0];
   for(i = 1; i < argc; i++)
   {
     if(!strcmp("-o", argv[i]) && (i + 1) < argc)
@@ -1654,6 +1661,8 @@ parse_command_line(int argc, char *argv[])
       print_version();
     else if(!strcmp("--verbose", argv[i]))
       verbose = 1;
+    else if(!strcmp("--source", argv[i]))
+      embed_instrument_file = 1;
     else if(!strcmp("--no-main", argv[i]))
       instrument_definition->use_default_main = 0;
     else if(!strcmp("--no-runtime", argv[i]))
@@ -1723,8 +1732,8 @@ main(int argc, char *argv[])
   instrument_definition->quoted_source =
     str_quote(instrument_definition->source);
   if (verbose) {
-    fprintf(stderr, MCCODE_NAME " version " MCCODE_VERSION "\n");
-    fprintf(stderr, "Analyzing file            %s\n", instrument_definition->quoted_source);
+    fprintf(stderr, MCCODE_NAME " version " MCCODE_VERSION " (" MCCODE_DATE ") " MCCODE_H "\n");
+    fprintf(stderr, "Analyzing file            '%s'\n", instrument_definition->quoted_source);
   }
   instr_current_line = 1;
   lex_new_file(file);
@@ -1735,17 +1744,15 @@ main(int argc, char *argv[])
   if (err != 0 && !error_encountered) error_encountered++;
   if(error_encountered != 0)
   {
-    print_error(MCCODE_NAME ": %i Errors encountered during parse of %s.\n",
+    print_error(MCCODE_NAME ": %i Errors encountered during parse of '%s'.\n",
       error_encountered, instr_current_filename);
     exit(1);
   }
   else
   {
-    if (verbose) fprintf(stderr, "Starting to create C code %s\n", output_filename);
+    if (verbose) fprintf(stderr, "Starting to create  C code '%s' ...\n", output_filename);
     cogen(output_filename, instrument_definition);
-    if (verbose) fprintf(stderr, "Generated          C code %s from %s\n",
-      output_filename, instrument_definition->source);
-    fprintf(stderr, "CFLAGS=%s\n", instrument_definition->dependency);
+    if (verbose) fprintf(stderr, "Generated           C code '%s'.\n", output_filename);
     exit(0);
   }
 }
@@ -1754,7 +1761,7 @@ main(int argc, char *argv[])
 int
 yyerror(char *s)
 {
-  print_error("%s at line %d.\n", s, instr_current_line);
+  print_error("ERROR: %s at line %d.\n", s, instr_current_line);
   return 0;
 }
 
@@ -1779,7 +1786,7 @@ check_comp_formals(List deflist, List setlist, char *compname)
   {
     entry = symtab_lookup(formals, formal->id);
     if(entry != NULL)
-      print_error("Definition parameter name %s is used multiple times "
+      print_error("ERROR: Definition parameter name %s is used multiple times "
       "in component %s\n", formal->id, compname);
     else
       symtab_add(formals, formal->id, NULL);
@@ -1790,7 +1797,7 @@ check_comp_formals(List deflist, List setlist, char *compname)
   {
     entry = symtab_lookup(formals, formal->id);
     if(entry != NULL)
-      print_error("Setting parameter name %s is used multiple times "
+      print_error("ERROR: Setting parameter name %s is used multiple times "
       "in component %s\n", formal->id, compname);
     else
       symtab_add(formals, formal->id, NULL);
@@ -1865,8 +1872,8 @@ comp_formals_actuals(struct comp_inst *comp, Symtab actuals)
         /* Use default value for unassigned optional parameter */
         symtab_add(defpar, formal->id, formal->default_value);
       } else {
-        print_error("Unassigned DEFINITION parameter %s for component %s() at line %s:%d. Please set its value.\n",
-              formal->id, comp->type,
+        print_error("ERROR: Unassigned DEFINITION parameter %s for component %s=%s() at line %s:%d. Please set its value.\n",
+              formal->id, comp->name, comp->def->name,
               instr_current_filename, instr_current_line);
         symtab_add(defpar, formal->id, exp_number("0.0"));
       }
@@ -1879,9 +1886,9 @@ comp_formals_actuals(struct comp_inst *comp, Symtab actuals)
          are assigned using #define's. */
       if(!exp_isvalue(entry->val))
       {
-        print_warn(NULL, "Using DEFINITION parameter of component %s() (potential syntax error) at line %s:%d\n"
+        print_warn(NULL, "Warning: Using DEFINITION parameter of component %s() (potential syntax error) at line %s:%d\n"
           "  %s=%s\n",
-          comp->type, instr_current_filename, instr_current_line,
+          comp->def->name, instr_current_filename, instr_current_line,
           formal->id, exp_tostring(entry->val));
       }
     }
@@ -1900,8 +1907,8 @@ comp_formals_actuals(struct comp_inst *comp, Symtab actuals)
         /* Use default value for unassigned optional parameter */
         symtab_add(setpar, formal->id, formal->default_value);
       } else {
-        print_error("Unassigned SETTING parameter %s for component %s() at line %s:%d. Please set its value.\n",
-              formal->id, comp->type,
+        print_error("ERROR: Unassigned SETTING parameter %s for component %s=%s() at line %s:%d. Please set its value.\n",
+              formal->id, comp->name, comp->def->name,
               instr_current_filename, instr_current_line);
         symtab_add(setpar, formal->id, exp_number("0.0"));
       }
@@ -1921,8 +1928,9 @@ comp_formals_actuals(struct comp_inst *comp, Symtab actuals)
       Symtab_handle siter2;
       struct Symtab_entry *entry2;
 
-      fprintf(stderr, "\nUnmatched actual parameter %s for component %s() at line %s:%d. Please change its name to a valid one:\n",
-        entry->name, comp->type,
+      fprintf(stderr, "\nERROR: Unmatched actual parameter %s for component %s=%s() at line %s:%d."
+        "Please change its name to a valid one:\n",
+        entry->name, comp->name, comp->def->name,
         instr_current_filename, instr_current_line);
       siter2 = symtab_iterate(defpar);
       fprintf(stderr,"  Definition parameters: ");
@@ -1947,9 +1955,9 @@ comp_formals_actuals(struct comp_inst *comp, Symtab actuals)
       print_error("\n");
       if (strlen(misspelled))
       	fprintf(stderr, "Info:    '%s' parameter name used in instrument matches\n"
-                        "         component %s parameter '%s' from library but\n"
+                        "         component %s=%s() parameter '%s' from library but\n"
                         "         may be misspelled. Check component instance.\n",
-                        entry->name, comp->type, misspelled);
+                        entry->name, comp->name, comp->def->name, misspelled);
     }
   }
   symtab_iterate_end(siter);
@@ -1991,9 +1999,9 @@ read_component(char *name)
     if(file == NULL)
     {
       print_error(
-        "Cannot find file containing definition of component '%s'.\n"
-        "Check the McStas library installation or your MCSTAS environment variable\n"
-        "or copy the component definition file locally.\n", name);
+        "ERROR: Cannot find file containing definition of component '%s'.\n"
+        "  Check the " MCCODE_LIBENV " library installation and environment variable\n"
+        "  or copy the component definition file locally.\n  Current library search path: %s\n", name, get_sys_dir());
       return NULL;
     }
     push_autoload(file);
@@ -2014,7 +2022,7 @@ read_component(char *name)
     }
     else
     {
-      print_error("Definition of component %s not found (file was found but does not contain the component definition).\n", name);
+      print_error("ERROR: Definition of component %s not found (file was found but does not contain the component definition).\n", name);
       return NULL;
     }
   }

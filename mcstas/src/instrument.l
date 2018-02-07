@@ -111,32 +111,34 @@ DECLARE       return TOK_DECLARE;
 DEFINE        return TOK_DEFINE;
 DEFINITION    return TOK_DEFINITION;
 END           return TOK_END;
-MCDISPLAY     return TOK_MCDISPLAY;
+MCDISPLAY     return TOK_DISPLAY;
+DISPLAY       return TOK_DISPLAY; /* DISPLAY is alias to MCDISPLAY */
 FINALLY       return TOK_FINALLY;
-INITIALIZE    return TOK_INITIALIZE;
+INITIALIZE    return TOK_INITIALISE;
+INITIALISE    return TOK_INITIALISE;  /* INITIALISE is alias to INITIALIZE */
 INSTRUMENT    return TOK_INSTRUMENT;
-OUTPUT        return TOK_OUTPUT;
+OUTPUT        return TOK_PRIVATE;
+PRIVATE       return TOK_PRIVATE; /* PRIVATE is alias to OUTPUT */
 PARAMETERS    return TOK_PARAMETERS;
 RELATIVE      return TOK_RELATIVE;
 ROTATED       return TOK_ROTATED;
 PREVIOUS      return TOK_PREVIOUS;
 SETTING       return TOK_SETTING;
-STATE         return TOK_STATE;
-POLARISATION  return TOK_POL;
+STATE         return TOK_STATE; /* obsolete -> error */
+POLARISATION  return TOK_POL;   /* obsolete -> error */
 TRACE         return TOK_TRACE;
 SHARE         return TOK_SHARE;
 EXTEND        return TOK_EXTEND;
-GROUP         return TOK_GROUP;
+GROUP         return TOK_GROUP;         /* extended McStas grammar */
 SAVE          return TOK_SAVE;
-JUMP          return TOK_JUMP;
-WHEN          return TOK_WHEN;
-NEXT          return TOK_NEXT;
-ITERATE       return TOK_ITERATE;
-MYSELF        return TOK_MYSELF;
-COPY          return TOK_COPY;
-SPLIT         return TOK_SPLIT;
-REMOVABLE     return TOK_REMOVABLE; 
-DEPENDENCY    return TOK_DEPENDENCY;
+JUMP          return TOK_JUMP;          /* extended McStas grammar */
+WHEN          return TOK_WHEN;          /* extended McStas grammar */
+NEXT          return TOK_NEXT;          /* extended McStas grammar */
+ITERATE       return TOK_ITERATE;       /* extended McStas grammar */
+MYSELF        return TOK_MYSELF;        /* extended McStas grammar */
+COPY          return TOK_COPY;          /* extended McStas grammar */
+SPLIT         return TOK_SPLIT;         /* extended McStas grammar */
+REMOVABLE     return TOK_REMOVABLE;     /* extended McStas grammar with include */
 
 "("|")"|"["|"]"|"{"|"}"|"," return yytext[0]; /* Punctuation. */
 "="|"*"       return yytext[0]; /* Operator. */
