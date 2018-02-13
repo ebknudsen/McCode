@@ -169,10 +169,7 @@ extern int    mcnumipar;                          /* number of instrument parame
 extern char   mcinstrument_name[], mcinstrument_source[]; /* instrument name and filename */
 extern char  *mcinstrument_exe;                           /* executable path = argv[0] or NULL */
 extern char   mcinstrument_code[];                        /* contains the initial 'instr' file */
-extern MCNUM  mccomp_storein[]; /* 11 coords * number of components in instrument */
-extern MCNUM  mcAbsorbProp[];
-extern MCNUM  mcScattered;      /* number of SCATTER calls in current component */
-extern MCNUM  mcRestore;        /* Flag to indicate if neutron needs to be restored */
+
 #ifndef MC_ANCIENT_COMPATIBILITY
 extern int mctraceenabled, mcdefaultmain;
 #endif
@@ -237,10 +234,12 @@ unsigned long long mcget_run_num(void);           /* wrapper to get mcrun_num=0:
 
 #ifndef NOSIGNALS
 #include <signal.h>
-#define SIG_MESSAGE(msg) strcpy(mcsig_message, msg);
+char  *mcsig_message;
+#define SIG_MESSAGE(msg) mcsig_message=(char *)(msg);
 #else
-#define SIG_MESSAGE(msg)
+#define SIG_MESSAGE
 #endif /* !NOSIGNALS */
+
 
 /* Useful macros and constants ============================================== */
 
@@ -333,9 +332,7 @@ unsigned long long mcget_run_num(void);           /* wrapper to get mcrun_num=0:
          "POS: %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g\n", \
          name, c.x, c.y, c.z, t[0][0], t[0][1], t[0][2], \
          t[1][0], t[1][1], t[1][2], t[2][0], t[2][1], t[2][2]); \
-  mcAccumulatedILength += coords_len(coords_sub(mcLastComp,c)); \
-  printf("Component %30s AT (%g,%g,%g)    %g m from origin\n", name, c.x, c.y, c.z, mcAccumulatedILength); \
-  mcLastComp=c;\
+  printf("Component %30s AT (%g,%g,%g)\n", name, c.x, c.y, c.z); \
   }
 #define DEBUG_INSTR_END() if(!mcdotrace); else printf("INSTRUMENT END:\n");
 #define DEBUG_ENTER() if(!mcdotrace); else printf("ENTER:\n");
