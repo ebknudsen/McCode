@@ -75,29 +75,30 @@
 
 DEFINE COMPONENT Monochromator_2foc
 DEFINITION PARAMETERS ()
-SETTING PARAMETERS (string reflect=0, zwidth=0.01, yheight=0.01, gap=0.0005, NH=11, NV=11, mosaich=30.0, mosaicv=30.0, r0=0.7, Q=1.8734, RV=0, RH=0, DM=0, mosaic=0, width=0, height=0, verbose=0)
+SETTING PARAMETERS (string reflect=0, zwidth=0.01, yheight=0.01, gap=0.0005, NH=11, NV=11, mosaich=30.0, mosaicv=30.0, r0=0.7, Q=1.8734, RV=0, RH=0, DM=0, Mosaic=0, width=0, height=0, verbose=0)
 OUTPUT PARAMETERS (mos_y, mos_z,  mono_Q, SlabWidth, SlabHeight, rTable)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */
 SHARE
 %{
 %include "read_table-lib"
-%}
-DECLARE
-%{
 #ifndef DIV_CUTOFF
 #define DIV_CUTOFF 2            /* ~ 10^-5 cutoff. */
 #endif
+%}
+DECLARE
+%{
 double mos_y; /* mosaic, in radians */
 double mos_z;
 double mono_Q;
-double SlabWidth, SlabHeight;
+double SlabWidth;
+double SlabHeight;
 t_Table rTable;
 %}
 
 INITIALIZE
 %{
-if (mosaic != 0) {
-    mos_y = mosaic;
+if (Mosaic != 0) {
+    mos_y = Mosaic;
     mos_z = mos_y; }
   else {
     mos_y = mosaich;
