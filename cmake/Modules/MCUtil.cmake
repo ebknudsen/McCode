@@ -90,6 +90,10 @@ macro(setupMCCODE FLAVOR)
     set(MCCODE_PREFIX     "mx")
   endif()
 
+  # Set fallback "year"
+  if("${MCCODE_YEAR}" STREQUAL "")
+    set(MCCODE_YEAR "2100")
+  endif()
 
   set_property(DIRECTORY ${CMAKE_SOURCE_DIR} APPEND PROPERTY COMPILE_DEFINITIONS
     NAME="${NAME}" FLAVOR="${FLAVOR}" FLAVOR_UPPER="${FLAVOR_UPPER}"
