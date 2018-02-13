@@ -547,7 +547,7 @@ DECLARE
 
 INITIALIZE
 %{
-  columns = (int[])format;
+  columns = (int[])Lazy;
 
   int i=0;
   struct line_data *L;
