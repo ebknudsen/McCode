@@ -2,6 +2,10 @@
 SET(CMAKE_SYSTEM_NAME "Linux")
 SET(ARCH   "i386")
 
+# OpenCL
+set(OPENCL_INCLUDE "CL/cl.h")
+set(OPENCL_CFLAGS "-lOpenCL")
+
 # Commands for running various external tools
 set(BROWSER "xdg-open")
 set(VRMLVIEW "whitedune")

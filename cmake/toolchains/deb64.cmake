@@ -4,7 +4,7 @@ SET(ARCH   "amd64")
 
 # OpenCL
 set(OPENCL_INCLUDE "CL/cl.h")
-set(OPENCL_CFLAGS "")
+set(OPENCL_CFLAGS "-lOpenCL")
 
 # Commands for running various external tools
 set(BROWSER "xdg-open")
