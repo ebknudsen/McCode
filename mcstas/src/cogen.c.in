@@ -1806,6 +1806,7 @@ cogen_header(struct instr_def *instr, char *output_name)
   coutf(" * Instrument: %s (%s)", instr->source, instr->name);
   coutf(" * Date:       %s", date);
   coutf(" * File:       %s", output_name);
+  coutf(" * CFLAGS=%s", instr->dependency);
   cout(" */");
   cout("");
   coutf("#define MCCODE_STRING \"%s\"", MCCODE_STRING);

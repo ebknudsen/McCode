@@ -62,6 +62,7 @@ use Config;
      CFLAGS => '@CFLAGS@',
      CFLAGS_PLACEMENT => '1',
      LDFLAGS => '@LDFLAGS@',
+     OPENCL => '@OPENCL_CFLAGS@',
      MCCODE => '@FLAVOR@',
      PKGNAME => '@MCCODE_NAME@',
      PARTICLE=> '@MCCODE_PARTICLE@',

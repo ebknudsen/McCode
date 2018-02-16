@@ -2,6 +2,10 @@
 set(CMAKE_SYSTEM_NAME "Darwin")
 set(ARCH   "amd64")
 
+# OpenCL
+set(OPENCL_INCLUDE "OpenCL/opencl.h")
+set(OPENCL_CFLAGS "-I/System/Library/Frameworks/OpenCL.framework/Headers -framework OpenCL")
+
 # Commands for running various external tools
 set(CC "gcc")
 set(BROWSER "open")

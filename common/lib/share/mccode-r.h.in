@@ -291,7 +291,7 @@ char  *mcsig_message;
 * after #define C sample, MC_GETPAR(C,x) would refer to component C, not to
 * component sample. Such are the joys of ANSI C.
 /* number of SCATTER calls in current comp: mcScattered defined in generated C code */
-* Anyway the usage of MCGETPAR requires that we use sometimes bare names...
+/* Anyway the usage of MCGETPAR requires that we use sometimes bare names...
 */
 #define MC_GETPAR2(comp, par) (mcinstance_ ## comp->parameters.par)
 #define MC_GETPAR(comp, par) MC_GETPAR2(comp,par)
@@ -394,6 +394,12 @@ void mcdis_sphere(double x, double y, double z, double r, int N);
 #  define MC_RAND_MAX 0x7fffffff
 #  define random mc_random
 #  define srandom mc_srandom
+#elif MC_RAND_ALG == 3
+  /* "Mersenne Twister" generate by opencl with GPU. */
+#  define MC_RAND_MAX ((unsigned int) 0xffffffff) 
+#  define random  mt_random_opencl
+#  define srandom mt_srandom_opencl
+//#  define srandom mt_srandom
 #else
 #  error "Bad value for random number generator choice."
 #endif
@@ -403,6 +409,11 @@ mc_int32_t mc_random(void);
 void mc_srandom (unsigned int x);
 unsigned long mt_random(void);
 void mt_srandom (unsigned long x);
+
+#ifdef USE_OPENCL
+#include "opencl-lib.h"
+#include "opencl-lib.c"
+#endif
 
 double rand01();
 double randpm1();

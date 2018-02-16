@@ -17,6 +17,7 @@
 * Modified by: EF, PW, 2015: powder/PG and texture mode
 * Modified by: PW, May 2017: Remove statement about being under validation
 * Modified by: PW, June 2017: Doc updates
+* Modified by: PW, Feb 2018: GPU edits
 *
 * Mosaic single crystal with multiple scattering vectors, optimised for speed
 * with large crystals and many reflections.
@@ -287,6 +288,7 @@ SHARE
 /* used for reading data table from file */
 %include "read_table-lib"
 %include "interoff-lib"
+  %include "opencl-lib"
 /* Declare structures and functions only once in each instrument. */
 #ifndef SINGLE_CRYSTAL_DECL
 #define SINGLE_CRYSTAL_DECL
@@ -789,7 +791,96 @@ double tau;                 /* Length of (tau_x, tau_y, tau_z) */
     this function returns:
       tau_count (return), coh_refl, coh_xsect, T (updated elements in the array up to [j])
    */
-  int hkl_search(struct hkl_data *L, struct tau_data *T, int count, double V0,
+
+#ifdef USE_OPENCL // when using OpenCL
+int hkl_search_opencl(struct hkl_data *h_L, struct tau_data* h_T, int count, double V0, 
+  double kix, double kiy, double kiz, double tau_max,
+  double* h_coh_refl, double* h_coh_xsect, struct opencl_context oclContext,
+  cl_mem d_L, cl_mem d_T, cl_mem d_tau_count, cl_mem d_coh_refl, cl_mem d_coh_xsect)
+{ 
+    cl_int             ciErr1;                              // Error code var
+    size_t             globalWorkSize[1] = {4096};          // 1D var for Total # of work items
+    size_t             localWorkSize[1] = {64};            // 1D var for # of work items in the work group	
+    
+    int h_tau_count=0;
+
+    //printf("In GPU-based hkl_search");
+
+    //  Using GPU(s)...
+    if (oclContext.Kernel == NULL || oclContext.GPUContext == NULL) {
+      printf("OpenCL Kernel could not be initialized\n");
+      return(-10); // OpenCL Kernel could not be initialized
+    }
+    
+    // Write data 
+    int iDevice = 0;
+    ciErr1 = clEnqueueWriteBuffer(oclContext.CommandQueue[iDevice], d_L, CL_TRUE, 0, sizeof(struct hkl_data)*count, h_L, 0, NULL, NULL);
+    if (ciErr1 !=CL_SUCCESS) {
+      return(-1);
+    }
+    ciErr1 = clEnqueueWriteBuffer(oclContext.CommandQueue[iDevice], d_T, CL_TRUE, 0, sizeof(struct tau_data)*count, h_T, 0, NULL, NULL);
+    if (ciErr1 !=CL_SUCCESS) {
+      return(-2);
+    }
+    ciErr1 = clEnqueueWriteBuffer(oclContext.CommandQueue[iDevice], d_tau_count, CL_TRUE, 0, sizeof(int), &h_tau_count, 0, NULL, NULL);
+    if (ciErr1 !=CL_SUCCESS){
+      return(-3);
+    }
+    ciErr1 = clEnqueueWriteBuffer(oclContext.CommandQueue[iDevice], d_coh_refl, CL_TRUE, 0, sizeof(double), h_coh_refl, 0, NULL, NULL); 
+    if (ciErr1 !=CL_SUCCESS){
+      return(-4);
+    }
+    ciErr1 = clEnqueueWriteBuffer(oclContext.CommandQueue[iDevice], d_coh_xsect, CL_TRUE, 0, sizeof(double), h_coh_xsect , 0, NULL, NULL); 
+    if (ciErr1 !=CL_SUCCESS) {
+      return(-5);
+    }
+
+    clFinish(oclContext.CommandQueue[iDevice]);    
+	
+    ciErr1  = clSetKernelArg(oclContext.Kernel, 0, sizeof(cl_mem), (void*)&d_L);
+    ciErr1 |= clSetKernelArg(oclContext.Kernel, 1, sizeof(cl_mem), (void*)&d_T);
+    ciErr1 |= clSetKernelArg(oclContext.Kernel, 2, sizeof(int),    (void*)&count);
+    ciErr1 |= clSetKernelArg(oclContext.Kernel, 3, sizeof(double), (void*)&V0);
+    ciErr1 |= clSetKernelArg(oclContext.Kernel, 4, sizeof(double), (void*)&kix);
+    ciErr1 |= clSetKernelArg(oclContext.Kernel, 5, sizeof(double), (void*)&kiy);
+    ciErr1 |= clSetKernelArg(oclContext.Kernel, 6, sizeof(double), (void*)&kiz);
+    ciErr1 |= clSetKernelArg(oclContext.Kernel, 7, sizeof(double), (void*)&tau_max);
+    ciErr1 |= clSetKernelArg(oclContext.Kernel, 8, sizeof(cl_mem), (void*)&d_tau_count);
+    ciErr1 |= clSetKernelArg(oclContext.Kernel, 9, sizeof(cl_mem), (void*)&d_coh_refl);
+    ciErr1 |= clSetKernelArg(oclContext.Kernel,10, sizeof(cl_mem), (void*)&d_coh_xsect);
+    if (ciErr1 !=CL_SUCCESS) return(0);
+
+    ciErr1 = clEnqueueNDRangeKernel(oclContext.CommandQueue[iDevice], oclContext.Kernel, 1, NULL, 
+        globalWorkSize, localWorkSize, 0, NULL, NULL); 
+    if (ciErr1 !=CL_SUCCESS) return (0);
+                     	
+    clFinish(oclContext.CommandQueue[iDevice]);
+
+    //Read back results...
+    ciErr1 = clEnqueueReadBuffer(oclContext.CommandQueue[iDevice], d_T, CL_TRUE, 0, sizeof(struct tau_data)*count, h_T, 0, NULL, NULL);
+    if (ciErr1 !=CL_SUCCESS) {
+      return(-6);
+    }
+    
+    ciErr1 = clEnqueueReadBuffer(oclContext.CommandQueue[iDevice], d_tau_count, CL_TRUE, 0, sizeof(int), &h_tau_count, 0, NULL, NULL);
+    if (ciErr1 !=CL_SUCCESS) {
+      return (-7); 
+    }
+    
+    ciErr1 = clEnqueueReadBuffer(oclContext.CommandQueue[iDevice], d_coh_refl, CL_TRUE, 0, sizeof(double), h_coh_refl, 0, NULL, NULL);
+    if (ciErr1 !=CL_SUCCESS) {
+      return (-8);      
+    }
+    
+    ciErr1 = clEnqueueReadBuffer(oclContext.CommandQueue[iDevice], d_coh_xsect, CL_TRUE, 0, sizeof(double), h_coh_xsect, 0, NULL, NULL);
+    if (ciErr1 !=CL_SUCCESS) {
+      return (-9);
+    }
+    return h_tau_count;
+} 
+#endif 
+  // non OpenCL case
+  int hkl_search(struct hkl_data *L, struct tau_data *T, int count, double V0, 
     double kix, double kiy, double kiz, double tau_max,
     double *coh_refl, double *coh_xsect)
   {
@@ -940,6 +1031,12 @@ DECLARE
 %{
   struct hkl_info_struct hkl_info;
   off_struct             offdata;
+  
+  #ifdef USE_OPENCL
+  struct opencl_context oclContext_SX;
+  cl_mem             d_T=NULL, d_tau_count=NULL, d_coh_refl=NULL, d_coh_xsect=NULL;    //OpenCL device buffers
+  cl_mem             d_L=NULL;
+  #endif
 %}
 
 INITIALIZE
@@ -1012,15 +1109,33 @@ INITIALIZE
   printf("Single_crystal: %s: Vc=%g [Angs] sigma_abs=%g [barn] sigma_inc=%g [barn] reflections=%s\n",
       NAME_CURRENT_COMP, hkl_info.V0, hkl_info.sigma_a, hkl_info.sigma_i,
       reflections && strlen(reflections) ? reflections : "NULL");
-
-  if (powder && PG)
-    exit(fprintf(stderr,"Single_crystal: %s: powder and PG modes can not be used together!\n"
-	     "ERROR           Please use EITHER powder or PG mode.\n", NAME_CURRENT_COMP));
-
-  if (powder && !(order==1)) {
-    fprintf(stderr,"Single_crystal: %s: powder mode means implicit choice of no multiple scattering!\n"
-	    "WARNING setting order=1\n", NAME_CURRENT_COMP);
-    order=1;
+      
+  #ifdef USE_OPENCL
+  oclContext_SX = oclInitKernel("hkl_search.cl", 1);
+  
+  if (oclContext_SX.Kernel) {
+    int iDevice;
+    int nDevice=1;
+    for (iDevice = 0; iDevice < nDevice; iDevice++) {
+      cl_int             ciErr1;                              // Error code var
+      //  Initialization: load MT parameters and init host buffers    
+      d_L = clCreateBuffer(oclContext_SX.GPUContext, CL_MEM_READ_WRITE, sizeof(struct hkl_data)*hkl_info.count, NULL, &ciErr1);
+      if (ciErr1 !=CL_SUCCESS) { oclContext_SX.Kernel=NULL; break; }
+    
+      d_T = clCreateBuffer(oclContext_SX.GPUContext, CL_MEM_READ_WRITE, sizeof(struct tau_data)*hkl_info.count, NULL, &ciErr1);
+      if (ciErr1 !=CL_SUCCESS) { oclContext_SX.Kernel=NULL; break; }
+              
+      d_tau_count = clCreateBuffer(oclContext_SX.GPUContext, CL_MEM_READ_WRITE, sizeof(int), NULL, &ciErr1);
+      if (ciErr1 !=CL_SUCCESS) { oclContext_SX.Kernel=NULL; break; }
+         
+      d_coh_refl = clCreateBuffer(oclContext_SX.GPUContext, CL_MEM_READ_WRITE, sizeof(double), NULL, &ciErr1);
+      if (ciErr1 !=CL_SUCCESS) { oclContext_SX.Kernel=NULL; break; }
+          
+      d_coh_xsect = clCreateBuffer(oclContext_SX.GPUContext, CL_MEM_READ_WRITE, sizeof(double), NULL, &ciErr1);
+      if (ciErr1 !=CL_SUCCESS) { oclContext_SX.Kernel=NULL; break; }
+      clFinish(oclContext_SX.CommandQueue[iDevice]);
+      
+    }
   }
 
   if (PG && !(order==1)) {
@@ -1174,11 +1289,26 @@ TRACE
         double coh_xsect = 0, coh_refl = 0;
 
         /* call hkl_search */
-        hkl_info.tau_count = hkl_search(L, T, hkl_info.count, hkl_info.V0,
+        #ifdef USE_OPENCL
+        if (oclContext_SX.Kernel != NULL){ // the Kernel could be initialised
+          hkl_info.tau_count = hkl_search_opencl(L, T, hkl_info.count, hkl_info.V0, 
               kix, kiy, kiz, tau_max,
-              &coh_refl, &coh_xsect); /* CPU consuming */
-
-        /* store ki so that we can check for further SPLIT iterations */
+              &coh_refl, &coh_xsect, oclContext_SX,
+              d_L, d_T, d_tau_count, d_coh_refl, d_coh_xsect);
+	  if (hkl_info.tau_count != 0)
+	    printf("\nGPU hkl_info.tau_count:%i\n",hkl_info.tau_count);
+        }
+        else {
+	  printf("Reverting to CPU search!\n");
+        #endif
+        hkl_info.tau_count = hkl_search(L, T, hkl_info.count, hkl_info.V0, 
+              kix, kiy, kiz, tau_max,
+              &coh_refl, &coh_xsect);
+		  if (hkl_info.tau_count != 0)
+		    printf("\nCPU hkl_info.tau_count:%i\n",hkl_info.tau_count);
+        #ifdef USE_OPENCL   
+	}
+	#endif        /* store ki so that we can check for further SPLIT iterations */
         if (event_counter == 0 ) { /* only for incoming neutron */
           hkl_info.kix = kix;
           hkl_info.kiy = kiy;
@@ -1348,6 +1478,23 @@ FINALLY
         "  in the instrument description %s.\n",
         NAME_CURRENT_COMP, (int)split_optimal, NAME_CURRENT_COMP, mcinstrument_source);
   }
+  #ifdef USE_OPENCL
+  if (oclContext_SX.Kernel) {
+    int iDevice=0;
+    // clear OpenCL memory
+   
+    if (oclContext_SX.GPUContext)            clReleaseContext(oclContext_SX.GPUContext);
+    if (oclContext_SX.Kernel)                clReleaseKernel(oclContext_SX.Kernel);    
+    if (oclContext_SX.CommandQueue[iDevice]) clReleaseCommandQueue(oclContext_SX.CommandQueue[iDevice]);
+    
+    if (d_L)          clReleaseMemObject(d_L);
+    if (d_T)          clReleaseMemObject(d_T);     
+    if (d_tau_count)  clReleaseMemObject(d_tau_count);
+    if (d_coh_refl)   clReleaseMemObject(d_coh_refl);
+    if (d_coh_xsect)  clReleaseMemObject(d_coh_xsect);
+
+  }
+  #endif
   );
 %}
 

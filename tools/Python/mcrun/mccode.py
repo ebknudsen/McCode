@@ -160,13 +160,15 @@ class McStas:
                     label,flags = line.split('=',1)
                     
                     MCCODE_LIB = self.options.mccode_lib
+                    OPENCL = mccode_config.compilation['OPENCLFLAGS']
                     # On windows, replace \ by / for safety
                     if os.name == 'nt':
                         MCCODE_LIB = re.sub(r'\\','/', MCCODE_LIB)
                         
-                        flags = re.sub(r'\@MCCODE_LIB\@', re.sub(r'\\','/', MCCODE_LIB), flags)
-                        flags = flags.split(' ')
-                        cflags += flags
+                    flags = re.sub(r'\@MCCODE_LIB\@', re.sub(r'\\','/', MCCODE_LIB), flags)
+                    flags = re.sub(r'\@OPENCL_CFLAGS\@', re.sub(r'\\','/', OPENCL), flags)
+                    flags = flags.split(' ')
+                    cflags += flags
             except: 
                 print("WARNING: Skipping codeline: \n %s \n - due to non-utf8 characters" % line)
         

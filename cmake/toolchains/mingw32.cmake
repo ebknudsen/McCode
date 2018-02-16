@@ -2,6 +2,10 @@
 SET(CMAKE_SYSTEM_NAME "Windows")
 SET(ARCH   "i386")
 
+# OpenCL
+set(OPENCL_INCLUDE "CL/opencl.h")
+set(OPENCL_CFLAGS "")
+
 # which compilers to use for C and C++
 SET(CMAKE_C_COMPILER i686-w64-mingw32-gcc)
 SET(CMAKE_CXX_COMPILER i686-w64-mingw32-g++)

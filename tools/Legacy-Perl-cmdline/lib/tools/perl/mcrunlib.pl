@@ -289,6 +289,8 @@ sub get_out_file_next {
       }
       # Replace any @MCCODE_LIB@ by the McStas system path
       $mcstas_cflags =~ s/\@MCCODE_LIB\@/${MCSTAS::sys_dir}/g;
+      # Replace any @OPENCL_CFLAGS@ by the OpenCL CFLAGS
+      $mcstas_cflags =~ s/\@OPENCL_CFLAGS\@/${MCSTAS::mcstas_config{OPENCL}}/g;
     }
     my $libs = "-lm ";
     if ($v->{'mpi'} && $MCSTAS::mcstas_config{MPICC} ne "no") {
