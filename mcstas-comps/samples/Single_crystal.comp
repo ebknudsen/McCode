@@ -271,7 +271,7 @@ vector ki.
 */
 
 DEFINE COMPONENT Single_crystal
-DEFINITION PARAMETERS(mosaic_AB=Mosaic_AB_Undefined)
+DEFINITION PARAMETERS()
 SETTING PARAMETERS(string reflections=0, string geometry=0,
 xwidth=0, yheight=0, zdepth=0, radius=0, delta_d_d=1e-4,
 mosaic = -1, mosaic_a = -1, mosaic_b = -1, mosaic_c = -1,
@@ -616,7 +616,7 @@ double tau;                 /* Length of (tau_x, tau_y, tau_z) */
       sig1 = FWHM2RMS*info->m_delta_d_d*list[i].tau;
 
       /* Find two arbitrary axes perpendicular to tau and each other. */
-      normal_vec(b1[0], b1[1], b1[2],
+      normal_vec(&b1[0], &b1[1], &b1[2],
                  list[i].u1x, list[i].u1y, list[i].u1z);
       vec_prod(b2[0], b2[1], b2[2],
                list[i].u1x, list[i].u1y, list[i].u1z,
@@ -934,7 +934,7 @@ int hkl_search_opencl(struct hkl_data *h_L, struct tau_data* h_T, int count, dou
           T[j].oy = oy;
           T[j].oz = oz;
           /* Compute unit vectors b1 and b2 that span the tangent plane. */
-          normal_vec(b1x, b1y, b1z, nx, ny, nz);
+          normal_vec(&b1x, &b1y, &b1z, nx, ny, nz);
           vec_prod(b2x, b2y, b2z, nx, ny, nz, b1x, b1y, b1z);
           T[j].b1x = b1x;
           T[j].b1y = b1y;
@@ -1022,6 +1022,13 @@ int hkl_search_opencl(struct hkl_data *h_L, struct tau_data* h_T, int count, dou
       *nx = nvx; *ny = nvy; *nz = nvz;
     }
 
+  #ifdef USE_OPENCL
+  struct opencl_context oclContext_SX;
+  cl_mem             d_T=NULL, d_tau_count=NULL, d_coh_refl=NULL, d_coh_xsect=NULL;    //OpenCL device buffers
+  cl_mem             d_L=NULL;
+  #endif
+
+
 
 #endif /* !SINGLE_CRYSTAL_DECL */
 %}
@@ -1031,16 +1038,14 @@ DECLARE
 %{
   struct hkl_info_struct hkl_info;
   off_struct             offdata;
-  
-  #ifdef USE_OPENCL
-  struct opencl_context oclContext_SX;
-  cl_mem             d_T=NULL, d_tau_count=NULL, d_coh_refl=NULL, d_coh_xsect=NULL;    //OpenCL device buffers
-  cl_mem             d_L=NULL;
-  #endif
 %}
 
 INITIALIZE
 %{
+
+
+
+  #define mosaic_AB {0,0, 0,0,0, 0,0,0}
   double as, bs, cs;
   int i=0;
 
@@ -1137,6 +1142,7 @@ INITIALIZE
       
     }
   }
+  #endif
 
   if (PG && !(order==1)) {
     fprintf(stderr,"Single_crystal: %s: PG mode means implicit choice of no multiple scattering!\n"
@@ -1298,17 +1304,13 @@ TRACE
 	  if (hkl_info.tau_count != 0)
 	    printf("\nGPU hkl_info.tau_count:%i\n",hkl_info.tau_count);
         }
-        else {
-	  printf("Reverting to CPU search!\n");
+        else 
         #endif
-        hkl_info.tau_count = hkl_search(L, T, hkl_info.count, hkl_info.V0, 
+	  hkl_info.tau_count = hkl_search(L, T, hkl_info.count, hkl_info.V0, 
               kix, kiy, kiz, tau_max,
               &coh_refl, &coh_xsect);
-		  if (hkl_info.tau_count != 0)
-		    printf("\nCPU hkl_info.tau_count:%i\n",hkl_info.tau_count);
-        #ifdef USE_OPENCL   
-	}
-	#endif        /* store ki so that we can check for further SPLIT iterations */
+	
+        /* store ki so that we can check for further SPLIT iterations */
         if (event_counter == 0 ) { /* only for incoming neutron */
           hkl_info.kix = kix;
           hkl_info.kiy = kiy;
