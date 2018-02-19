@@ -527,9 +527,9 @@ TRACE
     /* spectral dependency from files or Maxwellians */
     if (flux_file && strlen(flux_file) && strcmp(flux_file,"NULL") && strcmp(flux_file,"0"))
     {
-       double xwidth=Table_Value(pTable, lambda, 1);
-       if (flux_file_log) xwidth=exp(xwidth);
-       p *= xwidth;
+       double binwidth=Table_Value(pTable, lambda, 1);
+       if (flux_file_log) binwidth=exp(binwidth);
+       p *= binwidth;
     }
     else if (T1 > 0 && I1 > 0)
     {
