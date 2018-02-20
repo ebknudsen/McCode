@@ -6,18 +6,24 @@
 # available
 #
 
-if [ "x$MCSTAS" = "x" ]; then
-    echo "Please define the MCSTAS environment variable for locating instrs!"
-    exit
-fi
-
 if [ "x$1" = "x" ]; then
     echo "Please give an input instrument filename"
     exit
 fi
 
-FILE=$MCSTAS/examples/$1
-    
+DIRNAME=`dirname $1`
+
+if [ "x$DIRNAME" = "x" ]; then
+    if [ "x$MCSTAS" = "x" ]; then
+	echo "Please define the MCSTAS environment variable for locating instrs!"
+	exit
+    else
+	FILE=$MCSTAS/examples/$1
+    fi
+else
+    FILE=$1;
+fi
+
 if [ -f $FILE ]; then
     echo "File $FILE exists, proceeding!"
     INSTR=`basename -s.instr $1`
