@@ -100,28 +100,28 @@
 * imperfections in his physical machine and correct for them.
 *
 * Example: PSD_Detector(xwidth=0.192, yheight=0.192, nx=64, ny=64,
-*                       zdepth=0.03, threshold=100, borderx=-1, bordery=-1,
+*                       zdepth=0.03, Threshold=100, borderx=-1, bordery=-1,
 *                       PressureConv=5, PressureStop=1,
 *                       FN_Conv="Gas_tables/He3inHe.table", FN_Stop="Gas_tables/He3inCF4.table",
 *                       xChDivRelSigma=0, yChDivRelSigma=0,
 *                       filename="BIDIM19.psd")
 *
 * Example: PSD_Detector(xwidth=0.26, yheight=0.26, nx=128, ny=128,
-*                       zdepth=0.03, threshold=100, borderx=-1, bordery=-1,
+*                       zdepth=0.03, Threshold=100, borderx=-1, bordery=-1,
 *                       PressureConv=5, PressureStop=1,
 *                       FN_Conv="Gas_tables/He3inHe.table", FN_Stop="Gas_tables/He3inCF4.table",
 *                       xChDivRelSigma=0, yChDivRelSigma=0,
 *                       filename="BIDIM26.psd")
 *
 * Example: PSD_Detector(radius=0.0127, yheight=0.20, nx=1, ny=128,
-*                       threshold=100, borderx=-1,
+*                       Threshold=100, borderx=-1,
 *                       PressureConv=9.9, PressureStop=0.1,
 *                       FN_Conv="Gas_tables/He3inHe.table", FN_Stop="Gas_tables/He3inCO2.table",
 *                       yChDivRelSigma=0.006,
 *                       filename="ReuterStokes.psd")
 *
 * Example: PSD_Detector(awidth=1.533, yheight=0.4, nx=640, ny=256,
-*                       radius=0.73, zdepth=0.032, dc=0.026, threshold=100,
+*                       radius=0.73, zdepth=0.032, dc=0.026, Threshold=100,
 *                       borderx=-1, bordery=-1,
 *                       PressureConv=5, PressureStop=1,
 *                       FN_Conv="Gas_tables/He3inHe.table", FN_Stop="Gas_tables/He3inCF4.table",
@@ -145,7 +145,7 @@
 * PressureConv: [bar]   Pressure of gaseous thermal-neutron converter (e.g. He-3) 
 * FN_Stop: [text]       Filename of the stopping power table of the stopping gas 
 * PressureStop: [bar]   Pressure of stopping gas 
-* threshold: [keV]      Energy threshold for acceptance of an event 
+* Threshold: [keV]      Energy threshold for acceptance of an event 
 * filename: [text]      Name of file in which to store the detector image. The name of the component is used if file name is not specified 
 * interpolate: [1]      Performs energy interpolation if true 
 * verbose: [1]          Gives more information and spectrum 
@@ -174,7 +174,7 @@
 DEFINE COMPONENT PSD_Detector
 DEFINITION PARAMETERS (nx=128, ny=128)
 SETTING PARAMETERS (xwidth=0, radius=0, awidth=0, yheight=0, zdepth=0.03,
-threshold=100, PressureConv=5, PressureStop=1, interpolate=1, p_interact=0,
+Threshold=100, PressureConv=5, PressureStop=1, interpolate=1, p_interact=0,
 verbose=0, LensOn=1, dc=0, borderx=-2, bordery=-2, xChDivRelSigma=0,
 yChDivRelSigma=0, bufsize=0, restore_neutron=0, angle=0,
 string type=0, string filename=0,
@@ -546,7 +546,7 @@ INITIALIZE
     PHSpectrum2[i] = 0;
   }
 
-  if (threshold<0) threshold=0;
+  if (Threshold<0) Threshold=0;
 
   Table_Read(&Part_He_3_n,FN_Conv,3); // the absorption cross section for 0.18 nm neutrons in the converter is read from the file
   if (!Part_He_3_n.rows) {
@@ -1067,7 +1067,7 @@ TRACE
            SensVolCumul += p*pa; /* probability that a signal was produced in the
           sensitive volume, though not necessarily above the threshold.
           Note that, AT THIS POINT, the p has not been multiplied by pa yet. */
-          if (Energy>threshold) {
+          if (Energy>Threshold) {
             // if the particles have deposited sufficient energy to be
             // recognised as a neutron event (and not a gamma event)
             double P = p*pa;
@@ -1178,12 +1178,12 @@ SAVE
                    1-SensVolCumul/AbsCumul );
     fprintf(stdout,"  Fraction of neutrons not counted because their signal is reduced below\n"
                    "%g keV due to the wall effect is %g.\n",
-                   threshold,1-DetCumul/SensVolCumul );
+                   Threshold,1-DetCumul/SensVolCumul );
     fprintf(stdout,"  Theoretical limit to the position resolution in this gas is %g m FWHM\n"
                    "  (of the rectangular distribution). This implies a sigma of %g m.\n",
                    2*(M1P1[nH_p]-M1T1[nH_t]),(M1P1[nH_p]-M1T1[nH_t])/sqrt(3) );
 
-    snprintf(xlabelstr,64,"Energy [keV], threshold set to %g keV",threshold);
+    snprintf(xlabelstr,64,"Energy [keV], threshold set to %g keV",Threshold);
     DETECTOR_OUT_1D(
       "Pulse Height Spectrum",
       xlabelstr,
