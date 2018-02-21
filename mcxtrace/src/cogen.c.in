@@ -1530,7 +1530,7 @@ int cogen_trace(struct instr_def *instr)
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "SCATTERED", "scattered");
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "RESTORE"  , "restore");
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "absorbed");
-    cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE "comp); } while(0)");
+    cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); ABSORBED++; return(" ID_PRE "comp); } while(0)");
     cout( "#define " ID_PRE "instance_MYSELF " ID_PRE "comp");
     
     liter = list_iterate(instr->complist);
@@ -1559,7 +1559,7 @@ int cogen_trace(struct instr_def *instr)
   coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "SCATTERED", "scattered");
   coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "RESTORE"  , "restore");
   coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "absorbed");
-  cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE MCCODE_PARTICLE ");} while(0)");
+  cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); ABSORBED++; return(" ID_PRE MCCODE_PARTICLE ");} while(0)");
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL)
     warnings += cogen_comp_trace(comp, instr);

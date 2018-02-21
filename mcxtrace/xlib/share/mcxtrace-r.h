@@ -81,9 +81,9 @@
 #define mcPROP_P0(P) \
   do { \
     MCNUM mc_dl,mc_k; \
-    if(k ## P == 0) { mcAbsorbProp[INDEX_CURRENT_COMP]++; ABSORB; }; \
+    if(k ## P == 0) { mcinstrument->counter_AbsorbProp[INDEX_CURRENT_COMP]++; ABSORB; }; \
     mc_k=sqrt(scalar_prod(kx,ky,kz,kx,ky,kz));\
-    mc_dl= -(## P) * mc_k / k ## P;\
+    mc_dl= - P * mc_k / k ## P;\
     if(mc_dl<0 && mcallowbackprop==0) { mcinstrument->counter_AbsorbProp[INDEX_CURRENT_COMP]++; ABSORB; };\
     PROP_DL(mc_dl);\
   } while(0)
