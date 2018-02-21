@@ -49,10 +49,10 @@ AT (0,0,5) RELATIVE source
 COMPONENT Sample_pos = Arm()
 AT (0,0,0.10) RELATIVE slit
 
-COMPONENT Sample = Arm(/*Single_crystal(
+COMPONENT Sample = Single_crystal(
           xwidth=0.01, yheight=0.01, zdepth=0.01,
           delta_d_d=1e-4, mosaic = 5, sigma_inc=0,
-          reflections=sample, order=1*/)
+          reflections=sample, order=1)
 AT (0,0,0.10) RELATIVE Sample_pos
 //ROTATED (5, 10, 15) RELATIVE Sample_pos
 EXTEND %{
