@@ -23,82 +23,42 @@
 #ifndef MCXTRACE_H
 
 /*******************************************************************************
-* mcstore_xray: stores neutron coodinates into global array (per component)
-*******************************************************************************/
-void
-mcstore_xray(MCNUM *s, int index, double x, double y, double z,
-               double kx, double ky, double kz, double phi, double t,
-               double Ex, double Ey, double Ez, double p)
-{
-    double *dptr = &s[12*index];
-    *dptr++  = x;
-    *dptr++  = y ;
-    *dptr++  = z ;
-    *dptr++  = kx;
-    *dptr++  = ky;
-    *dptr++  = kz;
-    *dptr++  = phi;
-    *dptr++  = t;
-    *dptr++  = Ex;
-    *dptr++  = Ey;
-    *dptr++  = Ez;
-    *dptr    = p ;
-}
-
-/*******************************************************************************
-* mcrestore_xray: restores neutron coodinates from global array
-*******************************************************************************/
-void
-mcrestore_xray(MCNUM *s, int index, double *x, double *y, double *z,
-               double *kx, double *ky, double *kz, double *phi, double *t,
-               double *Ex, double *Ey, double *Ez, double *p)
-{
-    double *dptr = &s[12*index];
-    *x  =  *dptr++;
-    *y  =  *dptr++;
-    *z  =  *dptr++;
-    *kx =  *dptr++;
-    *ky =  *dptr++;
-    *kz =  *dptr++;
-    *phi=  *dptr++;
-    *t  =  *dptr++;
-    *Ex =  *dptr++;
-    *Ey =  *dptr++;
-    *Ez =  *dptr++;
-    *p  =  *dptr;
-} /* mcrestore_xray */
-
-/*******************************************************************************
 * mcsetstate: transfer parameters into global McXtrace variables 
 *******************************************************************************/
-void
+mcparticle
 mcsetstate(double x, double y, double z, double kx, double ky, double kz,
            double phi, double t, double Ex, double Ey, double Ez, double p)
 {
-  extern double mcnx, mcny, mcnz, mcnkx, mcnky, mcnkz;
-  extern double mcnphi, mcnt, mcnEx, mcnEy, mcnEz, mcnp;
+  mcparticle mcphoton;
+  
+  mcphoton.x = x;
+  mcphoton.y = y;
+  mcphoton.z = z;
+  mcphoton.kx = kx;
+  mcphoton.ky = ky;
+  mcphoton.kz = kz;
+  mcphoton.phi = phi;
+  mcphoton.t = t;
+  mcphoton.Ex = Ex;
+  mcphoton.Ey = Ey;
+  mcphoton.Ez = Ez;
+  mcphoton.p = p;
+  mcphoton.uid       = mcget_run_num();
+  mcphoton.index     = 1;
+  mcphoton.absorbed  = 0;
+  mcphoton.restore   = 0;
+  mcphoton.scattered = 0;
 
-  mcnx = x;
-  mcny = y;
-  mcnz = z;
-  mcnkx = kx;
-  mcnky = ky;
-  mcnkz = kz;
-  mcnphi = phi;
-  mcnt = t;
-  mcnEx = Ex;
-  mcnEy = Ey;
-  mcnEz = Ez;
-  mcnp = p;
+  return (mcphoton);
 } /* mcsetstate */
 
 /*******************************************************************************
 * mcgenstate: set default xray parameters 
 *******************************************************************************/
-void
+mcparticle
 mcgenstate(void)
 {
-  mcsetstate(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1);
+  return (mcsetstate(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1));
   /* old initialisation: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
 }
 
@@ -209,7 +169,7 @@ int box_intersect(double *dl_in, double *dl_out,
  * cylinder_intersect: compute intersection with a cylinder
  * returns 0 when no intersection is found
  *      or 1/2/4/8/16 bits depending on intersection,
- *     and resulting times l0 and l1
+ *     and resulting lengths l0 and l1
  * Written by: EK 11.6.09 
  *******************************************************************************/
 int
