@@ -68,6 +68,7 @@ macro(setupMCCODE FLAVOR)
     set(MCCODE_LIBENV    "${FLAVOR_UPPER}")
 
     set(MCCODE_PARTICLE  "neutron")
+    set(MCCODE_PARTICLE_CODE 2112)
     set(MCCODE_PROJECT    1)
 
     set(MCCODE_PREFIX     "mc")
@@ -86,6 +87,7 @@ macro(setupMCCODE FLAVOR)
 
     set(MCCODE_PARTICLE "xray")
     set(MCCODE_PROJECT   2)
+    set(MCCODE_PARTICLE_CODE 22)
 
     set(MCCODE_PREFIX     "mx")
   endif()

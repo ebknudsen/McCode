@@ -2671,12 +2671,19 @@ mccoordschange(Coords a, Rotation t, mcparticle *particle)
   particle->y = b.y;
   particle->z = b.z;
 
-  if (particle->vz != 0.0 || particle->vx != 0.0 || particle->vy != 0.0) 
-    mccoordschange_polarisation(t, &(particle->vx), &(particle->vy), &(particle->vz));
+#if MCCODE_PARTICLE_CODE == 2112
+    if (particle->vz != 0.0 || particle->vx != 0.0 || particle->vy != 0.0) 
+      mccoordschange_polarisation(t, &(particle->vx), &(particle->vy), &(particle->vz));
 
-  if (particle->sz != 0.0 || particle->sx != 0.0 || particle->sy != 0.0) 
-    mccoordschange_polarisation(t, &(particle->sx), &(particle->sy), &(particle->sz));
-
+    if (particle->sz != 0.0 || particle->sx != 0.0 || particle->sy != 0.0) 
+      mccoordschange_polarisation(t, &(particle->sx), &(particle->sy), &(particle->sz));
+#elif MCCODE_PARTICLE_CODE == 22
+    if (particle->kz != 0.0 || particle->kx != 0.0 || particle->ky != 0.0) 
+      mccoordschange_polarisation(t, &(particle->kx), &(particle->ky), &(particle->kz));
+  
+    if (particle->Ez != 0.0 || particle->Ex != 0.0 || particle->Ey != 0.0) 
+      mccoordschange_polarisation(t, &(particle->Ex), &(particle->Ey), &(particle->Ez));
+#endif  
 }
 
 /*******************************************************************************
@@ -3957,14 +3964,22 @@ mcseed=(long)ct;
 #endif
 
 #ifndef NEUTRONICS
+#if MCCODE_PARTICLE_CODE == 2112
   mcparticle mcneutron = mcgenstate(); // initial particle
+#elif MCCODE_PARTICLE_CODE == 22
+  mcparticle mcxray = mcgenstate(); // initial particle
+#endif
 #endif
 
 /* main particle event loop */
 while(mcrun_num < mcncount || mcrun_num < mcget_ncount())
   {
     /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
+#if MCCODE_PARTICLE_CODE == 2112
     mcraytrace(mcneutron);
+#elif MCCODE_PARTICLE_CODE == 22
+    mcraytrace(mcxray);
+#endif
     mcrun_num++;
   }
 
