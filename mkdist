@@ -492,6 +492,12 @@ make_OSXapp() {
     simple_cpack_file APP "${NAME}-OSX" ".app";
 }
 
+make_justinstall() {
+    # Default to Linux64 toolchain when something else was chosen                                                                                                          
+    sane_toolchain "grep linux" linux64;
+    simple_cpack_file NONE "${NAME}" "";
+}
+
 make_nsis() {
     # Default to mingw32 when toolchain is incompatible
     sane_toolchain "grep mingw" mingw32;

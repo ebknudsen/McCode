@@ -1,0 +1,51 @@
+#!/bin/sh
+
+if [ "x$1" = "x" ]; then
+    # No arguments
+    echo Please provide one argument,e.g : $0 2.0
+    exit 1;
+fi
+
+module load cmake/3.10.1 gcc/5.5.0
+git submodule init && git submodule update
+
+export MCINSTALL_PREFIX=/projects/p_gpuhack18_5/
+
+# 64-bit
+./mkdist mcstas $1 "" "" linux64 "" -- justinstall
+./mkdist mcstas-comps $1 "" "" linux64 "" -- justinstall
+./mkdist mcstas-tools-perl-cmdline $1 tools/Legacy-Perl-cmdline/ "" linux64 "" -- justinstall
+./mkdist mcstas-tools-python-mcplot-pyqtgraph $1 tools/Python/mcplot/pyqtgraph/ "" linux64 "" -- justinstall
+./mkdist mcstas-tools-python-mcplot-matplotlib $1 tools/Python/mcplot/matplotlib/ "" linux64 "" -- justinstall
+./mkdist mcstas-tools-python-mcrun $1 tools/Python/mcrun/ "" linux64 "" -- justinstall
+./mkdist mcstas-tools-python-mcgui $1 tools/Python/mcgui/ "" linux64 "" -- justinstall
+./mkdist mcstas-tools-python-mccodelib $1 tools/Python/mccodelib/ "" linux64 "" -- justinstall 
+./mkdist mcstas-tools-python-mcdisplay-webgl $1 tools/Python/mcdisplay/webgl/ "" linux64 "" -- justinstall
+./mkdist mcstas-tools-python-mcdisplay-pyqtgraph $1 tools/Python/mcdisplay/pyqtgraph/ "" linux64 "" -- justinstall 
+./mkdist mcstas-clusterscripts $1 tools/cluster-scripts/ "" linux64 "" -- justinstall
+
+WORKDIR=`pwd`
+for dir in `ls dist | grep .work`
+do
+    cd dist/${dir}
+    make install
+    cd $WORKDIR
+done
+
+# Put a miniconda link inthere:
+ln -s /projects/p_gpuhack18_5/miniconda3 /projects/p_gpuhack18_5/mcstas/$1/miniconda3
+
+# Ensure ~/privatemodules/mcstas is in place
+mkdir -p ~/privatemodules
+mkdir -p ~/privatemodules/mcstas
+ln -s /projects/p_gpuhack18_5/mcstas/$1/module ~/privatemodules/mcstas/$1
+
+module use  ~/privatemodules/mcstas
+
+echo
+echo DONE installing your mcstas-$1 build to /projects/p_gpuhack18_5/mcstas/$1
+echo module file for load available at /projects/p_gpuhack18_5/mcstas/$1/module
+echo and put in your ~/privatemodules/mcstas/$1
+echo
+
+
