@@ -41,6 +41,8 @@ DEFINE INSTRUMENT ILL_IN5(lambda=4.5,dlambda=0.05,speed=8500, ratio=0.5, string 
 DECLARE
 %{
 
+#define ntubes 384
+
 //---Guide (1st part of guide) --------------------------------------
   double L_Guide1, L_Guide21;
   double L_Guide22, L_Guide23;             // gerade dimensions
@@ -424,7 +426,7 @@ COMPONENT arm2 = Arm()
 AT (0,0,L_Collimator+L_CollSample+0.025)  RELATIVE Collimator
 ROTATED (0,det_angle,0) RELATIVE Collimator
 
-COMPONENT SAMPLE = Isotropic_Sqw(
+SPLIT COMPONENT SAMPLE = Isotropic_Sqw(
   radius = radius, thickness=thickness, yheight = height,
   Sqw_coh=coh, Sqw_inc=inc, p_interact=0.9,
   order = order, d_phi = 180/PI*atan(1.5/4)*2, verbose=1)
@@ -454,7 +456,7 @@ AT (0,0,0) RELATIVE center_det
 COMPONENT hous = PowderN(
   reflections=housing, radius = 4.0-0.00001, thickness = 0.0005,
   yheight = 3.0,p_transmit=0.8)
-  //WHEN (housing && strcmp(housing,"0") && strcmp(housing,"NULL"))
+WHEN (housing && strcmp(housing,"0") && strcmp(housing,"NULL"))
 AT (0,0,0) RELATIVE center_det
 ROTATED (0,0,0) RELATIVE center_det
 
@@ -462,8 +464,8 @@ ROTATED (0,0,0) RELATIVE center_det
 
 COMPONENT Det_PSD = PSD_Detector(
     yheight = 3.0, radius = 4.0, zdepth = 0.02600, awidth=(ang_fin-ang_ini)*PI/180*4.0,
-    nx = 384, ny = 128, //type = "events",
-    PressureConv = 4.75, PressureStop = 1.25, Threshold=100,
+    nx = ntubes, ny = 128, //type = "events",
+    PressureConv = 4.75, PressureStop = 1.25, threshold=100,
     borderx=-1, bordery=-1, LensOn = 1, filename = "in5det.dat",
     FN_Conv="Gas_tables/He3inHe.table", FN_Stop="Gas_tables/He3inCF4.table")
 AT (0,0,0) RELATIVE center_det
