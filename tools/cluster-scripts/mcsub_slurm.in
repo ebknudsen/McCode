@@ -69,8 +69,8 @@ die "Usage: $0 [options] [@MCCODE_PREFIX@run params]
     print $OUT "# the --exclusive is needed when running OpenMPI\n";
     print $OUT "# it will all cores on the allocated nodes\n";
     print $OUT "#SBATCH --exclusive \n";
-    print $OUT "module load openmpi/2.1.0-intel";
-    print $OUT "module use  ~gpu29/privatemodules/";
+    print $OUT "module load openmpi/2.1.0-intel\n";
+    print $OUT "module use  ~gpu29/privatemodules/\n";
     print $OUT "module load @FLAVOR@/$mccode_version\n";
     print $OUT "\n\n";
     print $OUT "### Set up @MCCODE_PREFIX@run line\n";
