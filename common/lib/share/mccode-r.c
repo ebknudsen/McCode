@@ -1885,7 +1885,9 @@ FILE *mcsiminfo_init(FILE *f)
 *******************************************************************************/
 void mcsiminfo_close()
 {
-  MPI_MASTER(
+#ifdef USE_MPI  
+  if(mpi_node_rank == mpi_node_root) {
+#endif
   if(mcsiminfo_file && !mcdisable_output_files) {
 #ifdef USE_NEXUS
     if (mcformat && strcasestr(mcformat, "NeXus")) {
@@ -1894,10 +1896,15 @@ void mcsiminfo_close()
       nxprintf(nxhandle, "duration", "%li", (long)t-mcstartdate);
       NXclosegroup(nxhandle); /* NXentry */
       NXclose(&nxhandle);
-    } else
+    } else {
 #endif
       fclose(mcsiminfo_file);
-    );
+#ifdef USE_NEXUS
+    }
+#endif
+#ifdef USE_MPI  
+  }
+#endif
     mcsiminfo_file = NULL;
   }
 } /* mcsiminfo_close */
@@ -2069,19 +2076,22 @@ mcuse_dir(char *dir)
     mcdirname = dir+strlen("file://");
   
   
-  
-  MPI_MASTER(
+#ifdef USE_MPI
+  if(mpi_node_rank == mpi_node_root) {
+#endif
     if(mkdir(mcdirname, 0777)) {
 #ifndef DANSE
       fprintf(stderr, "Error: unable to create directory '%s' (mcuse_dir)\n", dir);
       fprintf(stderr, "(Maybe the directory already exists?)\n");
 #endif
 #ifdef USE_MPI
-    MPI_Abort(MPI_COMM_WORLD, -1);
+      MPI_Abort(MPI_COMM_WORLD, -1);
 #endif
     exit(-1);
     }
-  ); /* MPI_MASTER */
+#ifdef USE_MPI
+    }
+#endif
   
   /* remove trailing PATHSEP (if any) */
   while (strlen(mcdirname) && mcdirname[strlen(mcdirname) - 1] == MC_PATHSEP_C)
@@ -3975,11 +3985,7 @@ mcseed=(long)ct;
 while(mcrun_num < mcncount || mcrun_num < mcget_ncount())
   {
     /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
-#if MCCODE_PARTICLE_CODE == 2112
     mcraytrace(mcneutron);
-#elif MCCODE_PARTICLE_CODE == 22
-    mcraytrace(mcxray);
-#endif
     mcrun_num++;
   }
 

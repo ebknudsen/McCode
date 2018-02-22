@@ -1464,7 +1464,10 @@ TRACE
 
 FINALLY
 %{
-  MPI_MASTER(
+#ifdef USE_MPI
+  if(mpi_node_rank == mpi_node_root) {
+#endif
+
   if (hkl_info.flag_warning)
     fprintf(stderr, "Single_crystal: %s: Error message was repeated %i times with absorbed neutrons.\n",
       NAME_CURRENT_COMP, hkl_info.flag_warning);
@@ -1497,7 +1500,10 @@ FINALLY
 
   }
   #endif
-  );
+
+#ifdef USE_MPI
+  }
+#endif
 %}
 
 MCDISPLAY
