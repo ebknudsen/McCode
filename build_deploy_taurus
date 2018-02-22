@@ -33,19 +33,21 @@ do
 done
 
 # Put a miniconda link inthere:
-ln -s /projects/p_gpuhack18_5/miniconda3 /projects/p_gpuhack18_5/mcstas/$1/miniconda3
+ln -sf /projects/p_gpuhack18_5/miniconda3 /projects/p_gpuhack18_5/mcstas/$1/miniconda3
 
 # Ensure ~/privatemodules/mcstas is in place
 mkdir -p ~/privatemodules
 mkdir -p ~/privatemodules/mcstas
-ln -s /projects/p_gpuhack18_5/mcstas/$1/module ~/privatemodules/mcstas/$1
+cp /projects/p_gpuhack18_5/mcstas/$1/module ~/privatemodules/mcstas/$1
 
-module use  ~/privatemodules/mcstas
+module use  ~/privatemodules/
 
 echo
 echo DONE installing your mcstas-$1 build to /projects/p_gpuhack18_5/mcstas/$1
 echo module file for load available at /projects/p_gpuhack18_5/mcstas/$1/module
 echo and put in your ~/privatemodules/mcstas/$1
 echo
+echo -\> Ready for load by
+echo   module load mcstas/$1
 
 
