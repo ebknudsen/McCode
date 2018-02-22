@@ -15,6 +15,7 @@ export MCINSTALL_PREFIX=/projects/p_gpuhack18_5/
 ./mkdist mcstas $1 "" "" linux64 "" -- justinstall
 ./mkdist mcstas-comps $1 "" "" linux64 "" -- justinstall
 ./mkdist mcstas-tools-perl-cmdline $1 tools/Legacy-Perl-cmdline/ "" linux64 "" -- justinstall
+./mkdist mcstas-tools-perl $1 tools/Legacy-Perl/ "" linux64 "" -- justinstall
 ./mkdist mcstas-tools-python-mcplot-pyqtgraph $1 tools/Python/mcplot/pyqtgraph/ "" linux64 "" -- justinstall
 ./mkdist mcstas-tools-python-mcplot-matplotlib $1 tools/Python/mcplot/matplotlib/ "" linux64 "" -- justinstall
 ./mkdist mcstas-tools-python-mcrun $1 tools/Python/mcrun/ "" linux64 "" -- justinstall
