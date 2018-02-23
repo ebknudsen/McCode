@@ -48,9 +48,9 @@ if [ -f $FILE ]; then
   export HEAPPROFILE=$INSTR/heapprof
   export CPUPROFILE=$INSTR/cpuprof
   ./$INSTR.out $2 -n1e6 -d$INSTR/googlemem_outputdir
-  pprof ./$INSTR.out ./$INSTR/heapprof* --web &
+  pprof ./$INSTR.out ./$INSTR/heapprof* --svg > $INSTR/heapprof.svg
   sleep 10
-  pprof ./$INSTR.out ./$INSTR/cpuprof* --web
+  pprof ./$INSTR.out ./$INSTR/cpuprof* --svg > $INSTR/cpuprof.svg
   
 else
   echo "File $FILE does not exist."
