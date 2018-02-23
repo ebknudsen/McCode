@@ -42,7 +42,7 @@ if [ -f $FILE ]; then
   mcrun $INSTR.instr $2 -n1e6 -d$INSTR/gprof_outputdir
   gprof $INSTR.out gmon.out > $INSTR/gprof_analysis.txt
   echo "Compilig for google performance tool profiling..."
-  export MCSTAS_CFLAGS_OVERRIDE="-g -lm /projects/p_gpuhack18_5/lib/libtcmalloc_and_profiler.so.4"
+  export MCSTAS_CFLAGS_OVERRIDE="-g -lm -L/projects/p_gpuhack18_5/lib/ -ltcmalloc_and_profiler"
   mcrun -c -n0 $INSTR.instr &> $INSTR/googlemem_stdout_stderr
   echo "Compile done. Starting simulation:"
   export HEAPPROFILE=$INSTR/heapprof
