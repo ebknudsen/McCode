@@ -1,0 +1,54 @@
+#!/bin/sh
+
+if [ "x$1" = "x" ]; then
+    # No arguments
+    echo Please provide one argument,e.g : $0 2.0
+    exit 1;
+fi
+
+module load cmake/3.10.1 gcc/5.5.0
+git submodule init && git submodule update
+
+export MCINSTALL_PREFIX=/projects/p_gpuhack18_5/
+
+# 64-bit
+./mkdist mcxtrace $1 "" "" linux64 "" -- justinstall
+./mkdist mcxtrace-comps $1 "" "" linux64 "" -- justinstall
+./mkdist mcxtrace-tools-perl-cmdline $1 tools/Legacy-Perl-cmdline/ "" linux64 "" -- justinstall
+./mkdist mcxtrace-tools-perl $1 tools/Legacy-Perl/ "" linux64 "" -- justinstall
+./mkdist mcxtrace-tools-python-mxplot-pyqtgraph $1 tools/Python/mcplot/pyqtgraph/ "" linux64 "" -- justinstall
+./mkdist mcxtrace-tools-python-mxplot-matplotlib $1 tools/Python/mcplot/matplotlib/ "" linux64 "" -- justinstall
+./mkdist mcxtrace-tools-python-mxrun $1 tools/Python/mcrun/ "" linux64 "" -- justinstall
+./mkdist mcxtrace-tools-python-mcgui $1 tools/Python/mcgui/ "" linux64 "" -- justinstall
+./mkdist mcxtrace-tools-python-mccodelib $1 tools/Python/mccodelib/ "" linux64 "" -- justinstall 
+./mkdist mcxtrace-tools-python-mxdisplay-webgl $1 tools/Python/mcdisplay/webgl/ "" linux64 "" -- justinstall
+./mkdist mcxtrace-tools-python-mxdisplay-pyqtgraph $1 tools/Python/mcdisplay/pyqtgraph/ "" linux64 "" -- justinstall 
+./mkdist mcxtrace-clusterscripts $1 tools/cluster-scripts/ "" linux64 "" -- justinstall
+
+WORKDIR=`pwd`
+for dir in `ls dist | grep .work | grep mcxtrace`
+do
+    cd dist/${dir}
+    make install
+    cd $WORKDIR
+done
+
+# Put a miniconda link inthere:
+ln -sf /projects/p_gpuhack18_5/miniconda3 /projects/p_gpuhack18_5/mcxtrace/$1/miniconda3
+
+# Ensure ~/privatemodules/mcxtrace is in place
+mkdir -p ~/privatemodules
+mkdir -p ~/privatemodules/mcxtrace
+cp /projects/p_gpuhack18_5/mcxtrace/$1/module ~/privatemodules/mcxtrace/$1
+
+module use  ~/privatemodules/
+
+echo
+echo DONE installing your mcxtrace-$1 build to /projects/p_gpuhack18_5/mcxtrace/$1
+echo module file for load available at /projects/p_gpuhack18_5/mcxtrace/$1/module
+echo and put in your ~/privatemodules/mcxtrace/$1
+echo
+echo -\> Ready for load by
+echo   module load mcxtrace/$1
+
+
