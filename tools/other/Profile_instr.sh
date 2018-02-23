@@ -42,15 +42,15 @@ if [ -f $FILE ]; then
   mcrun $INSTR.instr $2 -n1e6 -d$INSTR/gprof_outputdir
   gprof $INSTR.out gmon.out > $INSTR/gprof_analysis.txt
   echo "Compilig for google performance tool profiling..."
-  export MCSTAS_CFLAGS_OVERRIDE="-g -lm /usr/lib/libtcmalloc_and_profiler.so.4"
+  export MCSTAS_CFLAGS_OVERRIDE="-g -lm /projects/p_gpuhack18_5/lib/libtcmalloc_and_profiler.so.4"
   mcrun -c -n0 $INSTR.instr &> $INSTR/googlemem_stdout_stderr
   echo "Compile done. Starting simulation:"
   export HEAPPROFILE=$INSTR/heapprof
   export CPUPROFILE=$INSTR/cpuprof
   ./$INSTR.out $2 -n1e6 -d$INSTR/googlemem_outputdir
-  google-pprof ./$INSTR.out ./$INSTR/heapprof* --web &
+  pprof ./$INSTR.out ./$INSTR/heapprof* --web &
   sleep 10
-  google-pprof ./$INSTR.out ./$INSTR/cpuprof* --web
+  pprof ./$INSTR.out ./$INSTR/cpuprof* --web
   
 else
   echo "File $FILE does not exist."
