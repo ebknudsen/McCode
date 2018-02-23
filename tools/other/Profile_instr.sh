@@ -26,7 +26,7 @@ fi
 
 if [ -f $FILE ]; then
     echo "File $FILE exists, proceeding!"
-    INSTR=`basename -s.instr $1`
+    INSTR=`basename $1 .instr`
     if [ -f $INSTR.instr ]; then
 	echo "Removing existing output data!"
 	rm -rf $INSTR*
