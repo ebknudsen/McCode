@@ -82,15 +82,10 @@
 * These values are not read if entered as component parameters (Vc=...)
 *
 * The signification of the columns in the numerical block may be
-* set using the 'format' parameter. Built-in formats are:
-*   format=Crystallographica
-*   format=Fullprof
-*   format=Lazy
-* and these specifications it is important NOT to use quotes, as shown.
-*
-* An other possibility to define other formats is to set directly
-* the signification of the columns as a vector of indexes in the order
+* set using the 'format' parameter, by defining signification of the 
+* columns as a vector of indexes in the order
 *   format={j,d,F2,DW,delta_d_d/d,1/2d,q,F,Strain}
+*
 * Signification of the symbols is given below. Indices start at 1.
 * Indices with zero means that the column are not present, so that:
 *   Crystallographica={ 4,5,7,0,0,0,0,0,0 }
@@ -547,6 +542,7 @@ DECLARE
 
 INITIALIZE
 %{
+  /* We ought to clean up the columns variable as format is now a proper vector/array */
   columns = format;
 
   int i=0;

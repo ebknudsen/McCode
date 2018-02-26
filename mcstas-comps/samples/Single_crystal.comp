@@ -272,7 +272,7 @@ vector ki.
 
 DEFINE COMPONENT Single_crystal
 DEFINITION PARAMETERS()
-SETTING PARAMETERS(string reflections=0, string geometry=0,
+SETTING PARAMETERS(string reflections=0, string geometry=0, vector mosaic_AB={0,0, 0,0,0, 0,0,0},
 xwidth=0, yheight=0, zdepth=0, radius=0, delta_d_d=1e-4,
 mosaic = -1, mosaic_a = -1, mosaic_b = -1, mosaic_c = -1,
 recip_cell=0, barns=0,
@@ -1043,9 +1043,6 @@ DECLARE
 INITIALIZE
 %{
 
-
-
-  #define mosaic_AB {0,0, 0,0,0, 0,0,0}
   double as, bs, cs;
   int i=0;
 
@@ -1080,8 +1077,8 @@ INITIALIZE
   hkl_info.nb_reuses = hkl_info.nb_refl = hkl_info.nb_refl_count = 0;
   hkl_info.tau_count = 0;
 
-  /*this is necessary to allow a numerical array to be passed through as a DEFINITION parameter*/
-  double mosaic_ABin[]=mosaic_AB;
+  /* ought to be cleaned up as mosaic_AB now is a proper vector/array and not a define */
+  double* mosaic_ABin = mosaic_AB;
   /* Read in structure factors, and do some pre-calculations. */
   if (!read_hkl_data(reflections, &hkl_info, mosaic, mosaic_a, mosaic_b, mosaic_c, mosaic_ABin)) {
     printf("Single_crystal: %s: Error: Aborting.\n", NAME_CURRENT_COMP);
