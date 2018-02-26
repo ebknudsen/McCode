@@ -70,7 +70,7 @@ INITIALIZE
 %}
 TRACE
 %{
-  double l0, l1, phi, theta;
+  double l0, l1, psi, theta;
   int i,j;
 
   if(sphere_intersect(&l0, &l1, x, y, z, kx, ky, kz, radius) && l1 > 0)
@@ -79,10 +79,10 @@ TRACE
       l0 = l1;
     /* t0 is now time of intersection with the sphere. */
     PROP_DL(l0);
-    phi = atan2(x,z);
-    i = floor(nx*(phi/(2*PI)+0.5));
+    psi = atan2(x,z);
+    i = floor(nx*(psi/(2*PI)+0.5));
     if(i >= nx)
-      i = nx-1;                      /* Special case for phi = PI. */
+      i = nx-1;                      /* Special case for psi = PI. */
     else if(i < 0)
       i = 0;
     theta=asin(y/radius);
