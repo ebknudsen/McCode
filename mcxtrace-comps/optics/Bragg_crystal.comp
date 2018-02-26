@@ -225,8 +225,7 @@ DECLARE
         double rho,At,f_rel,f_nt;
         t_Table m_t;
         t_Table f0_t;
-    }prms;
-    
+    } prms;
 %}
 
 INITIALIZE
@@ -348,8 +347,8 @@ TRACE
             /* resolve incoming polarization into sig and pi bits, and scale by sqrt(reflectivity) which is amplitude scale */
             double Esig=(Ex*sig_x+Ey*sig_y+Ez*sig_z), Epi=(Ex*pi_x+Ey*pi_y+Ez*pi_z);
             if(Esig==0 && Epi==0) { /* someone didn't set the polarization direction; set it now to a random value and it will propagate */
-                double phi=rand01()*PI/2;
-                Esig=cos(phi); Epi=sin(phi);
+                double Phi=rand01()*PI/2;
+                Esig=cos(Phi); Epi=sin(Phi);
             }
             Esig=Esig*sqrt(Rsig);
             Epi=Epi*sqrt(Rpi);
