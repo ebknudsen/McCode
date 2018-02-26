@@ -3985,7 +3985,11 @@ mcseed=(long)ct;
 while(mcrun_num < mcncount || mcrun_num < mcget_ncount())
   {
     /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
+#if MCCODE_PARTICLE_CODE == 2112
     mcraytrace(mcneutron);
+#elif MCCODE_PARTICLE_CODE == 22
+    mcraytrace(mcxray);
+#endif
     mcrun_num++;
   }
 
