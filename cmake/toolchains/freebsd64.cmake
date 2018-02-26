@@ -2,6 +2,10 @@
 SET(CMAKE_SYSTEM_NAME "FreeBSD")
 SET(ARCH   "amd64")
 
+# OpenCL
+set(OPENCL_INCLUDE "CL/cl.h")
+set(OPENCL_CFLAGS "-lOpenCL")
+
 # Commands for running various external tools
 set(BROWSER "xdg-open")
 set(VRMLVIEW "whitedune")
