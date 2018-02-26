@@ -27,9 +27,15 @@ SETTING PARAMETERS ( radius=1, length=0.2, width=0.2, R0=1)
 OUTPUT PARAMETERS(prms,prmsp)
 /* X-ray parameters: (x,y,z,kx,ky,kz,phi,t,Ex,Ey,Ez,p) */ 
 
-DECLARE
+SHARE
 %{
 #include <complex.h>
+%}
+
+
+
+DECLARE
+%{
   %include "read_table-lib"
   struct {
     int Z;
