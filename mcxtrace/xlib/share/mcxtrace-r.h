@@ -62,11 +62,11 @@
 
 #define mcPROP_DL(dl) \
   do { \
-    MCNUM k=sqrt( scalar_prod(kx,ky,kz,kx,ky,kz));\
-    x += (dl)*kx/k;\
-    y += (dl)*ky/k;\
-    z += (dl)*kz/k;\
-    phi += 1e10*k*(dl);\
+    MCNUM __k=sqrt( scalar_prod(kx,ky,kz,kx,ky,kz));\
+    x += (dl)*kx/__k;\
+    y += (dl)*ky/__k;\
+    z += (dl)*kz/__k;\
+    phi += 1e10*__k*(dl);\
     t += (dl)/((double)M_C);\
   }while (0)
 
