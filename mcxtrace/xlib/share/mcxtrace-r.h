@@ -47,6 +47,15 @@
 #define SCATTER do {DEBUG_SCATTER(); SCATTERED++;} while(0)
 #define RESTORE_XRAY(index, ...) RESTORE=index;
 
+#define ALLOW_BACKPROP \
+  do { \
+    mcallowbackprop = 1; \
+  } while(0)
+
+#define DISALLOW_BACKPROP \
+  do { \
+    mcallowbackprop = 0; \
+  } while(0)
 
 /*An interrupt a'la mcMagnet should be inserted below if there's non-zero permeability*/
 /*perhaps some kind of PROP_POL*/
