@@ -31,7 +31,7 @@
 *******************************************************************************/
 
 /* Change name of instrument and input parameters with default values */
-DEFINE INSTRUMENT MAXII_711(R=-100,phi_mirror=3,phi_mono=9.25, chi=0, ome=0,phi=0,tth=0)
+DEFINE INSTRUMENT MAXII_711(R=-100,phi_mirror=3,phi_mono=9.25, chi=0, ome=0,psi=0,tth=0)
 
 /* The DECLARE section allows us to declare variables or  small      */
 /* functions in C syntax. These may be used in the whole instrument. */
@@ -81,6 +81,8 @@ COMPONENT mirror_mount = Arm()
 AT(0,0,10) RELATIVE source
 ROTATED (0,0,-90) RELATIVE source
 
+
+
 COMPONENT mirror = Mirror_curved(
      coating = "Pt.txt", radius = R, length = 1.2, width = 0.1)
 AT (0, 0, 0) RELATIVE mirror_mount
@@ -102,10 +104,6 @@ COMPONENT mirror_exit_psd = PSD_monitor(
 filename="mi_psd.dat", xwidth=0.02, yheight=0.02)
 AT (0,0,0.001) RELATIVE PREVIOUS
 
-//COMPONENT be_window = Filter(
-//    xwidth = 0.1, yheight = 0.1, zdepth = 100e-6)
-//  AT (0, 0, 2.5) RELATIVE mirror_exit
-
 COMPONENT slit_main = Slit(
     xwidth = 1e-2, yheight = 1e-2)
 AT (0, 0, 3.5) RELATIVE mirror_exit
@@ -114,8 +112,7 @@ COMPONENT mono_mount = Arm()
 AT( 0,0,5) RELATIVE mirror_exit
 ROTATED (0,0,90) RELATIVE mirror_exit
 
-//COMPONENT monochromator = Arm()
-COMPONENT monochromator = Perfect_crystal(
+COMPONENT monochromator = Bragg_crystal(
      length = 30e-2, width = 5e-2, alpha = 0)
 AT (0, 0, 0) RELATIVE mono_mount
 ROTATED (phi_mono,0,0) RELATIVE mono_mount
@@ -155,15 +152,15 @@ COMPONENT sample_rot_chi = Arm()
 AT(0,0,0)RELATIVE sample_rot_ome
 ROTATED (chi,0,0) RELATIVE sample_rot_ome
 
-COMPONENT sample_rot_phi = Arm()
+COMPONENT sample_rot_psi = Arm()
   AT(0,0,0)RELATIVE sample_rot_chi
-ROTATED (0,phi,0) RELATIVE sample_rot_chi
+ROTATED (0,psi,0) RELATIVE sample_rot_chi
 
 COMPONENT sample = PowderN(
     radius=0.0010,yheight=1e-3,reflections="C_diamond.laz",material="C.txt",format=Lazy,d_phi=160,
     barns=1,p_inc=0    
 )
-AT(0,0,0) RELATIVE sample_rot_phi
+AT(0,0,0) RELATIVE sample_rot_psi
 EXTEND
 %{
   if(!SCATTERED)ABSORB;
