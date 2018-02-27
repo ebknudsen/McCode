@@ -1650,7 +1650,7 @@ int cogen_trace(struct instr_def *instr)
       cogen_defundef(comp, comp->def->out_par, GLOBAL_INSTANCE_PAR_REF);
 
       // define instrument state parameters (not in conflict with comp)
-      cogen_defundef(comp, instr->formals, INSTRUMENT_PAR_VALUE); /* print warning if conflicting parameter found ? */
+      //cogen_defundef(comp, instr->formals, INSTRUMENT_PAR_VALUE); /* print warning if conflicting parameter found ? */
     }
     // coordinate transformations (wrt to PREVIOUS)
     coutf("      " ID_PRE "coordschange(" 
@@ -1721,7 +1721,7 @@ int cogen_trace(struct instr_def *instr)
       cogen_defundef(comp, comp->def->def_par, PAR_UNDEF);
       cogen_defundef(comp, comp->def->set_par, PAR_UNDEF);
       cogen_defundef(comp, comp->def->out_par, PAR_UNDEF);
-      cogen_defundef(NULL, instr->formals, PAR_UNDEF);
+      //cogen_defundef(NULL, instr->formals, PAR_UNDEF);
       cout("      #undef " ID_PRE "instance_MYSELF");
     }
     cout("      break;");
