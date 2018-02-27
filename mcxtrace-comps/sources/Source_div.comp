@@ -186,20 +186,18 @@ TRACE
 
 MCDISPLAY
 %{
-  
-  double dist=1;
   multiline(5, -xwidth/2.0, -yheight/2.0, 0.0,
                 xwidth/2.0, -yheight/2.0, 0.0,
                 xwidth/2.0,  yheight/2.0, 0.0,
                -xwidth/2.0,  yheight/2.0, 0.0,
                -xwidth/2.0, -yheight/2.0, 0.0);
   if (focus_aw){
-    dashed_line(0,0,0, tan(focus_aw/2.0)*dist,0,dist,4);
-    dashed_line(0,0,0,-tan(focus_aw/2.0)*dist,0,dist,4);
+    dashed_line(0,0,0, tan(focus_aw/2.0),0,1,4);
+    dashed_line(0,0,0,-tan(focus_aw/2.0),0,1,4);
   }
   if (focus_ah){
-    dashed_line(0,0,0,0, tan(focus_ah/2.0)*dist,dist,4);
-    dashed_line(0,0,0,0,-tan(focus_ah/2.0)*dist,dist,4);
+    dashed_line(0,0,0,0, tan(focus_ah/2.0),1,4);
+    dashed_line(0,0,0,0,-tan(focus_ah/2.0),1,4);
   }
 %}
 
