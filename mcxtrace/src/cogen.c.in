@@ -1,8 +1,8 @@
 /*******************************************************************************
 *
-* McStas, neutron ray-tracing package
+* McXtrace, xray ray-tracing package
 *         Copyright (C) 1997-2006, All rights reserved
-*         Risoe National Laboratory, Roskilde, Denmark
+*         DTU Physics, Kgs. Lyngby, Denmark
 *         Institut Laue Langevin, Grenoble, France
 *         Copenhagen University, Copenhagen, Denmark
 *
@@ -1620,11 +1620,11 @@ int cogen_trace(struct instr_def *instr)
   list_iterate_end(liter);
 
   cout("");
-  cout("  /* the main iteration loop for one incoming neutron */");
-  cout("  while (!ABSORBED) { /* iterate neutron event until absorbed */");
+  cout("  /* the main iteration loop for one incoming xray */");
+  cout("  while (!ABSORBED) { /* iterate xray event until absorbed */");
   cout("    " ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_save = " ID_PRE MCCODE_PARTICLE "_particle;");
   cout("    " ID_PRE "ret++;");
-  cout("    switch (" ID_PRE MCCODE_PARTICLE "->index) { /* send neutron event to component instance */");
+  cout("    switch (" ID_PRE MCCODE_PARTICLE "->index) { /* send xray event to component instance */");
   cout("    case 0:");
   
   /* now we produce the list of 'case' statements for each component index, with the attached logic */
@@ -1721,7 +1721,7 @@ int cogen_trace(struct instr_def *instr)
   
   /* write de default case */
   cout("    default: /* last case: END -> ABSORB */");
-  cout("      ABSORBED=1; // normal end of neutron when no other logic/grammar");
+  cout("      ABSORBED=1; // normal end of xray when no other logic/grammar");
   cout("    } /* end switch component */");
   
   // split counters are handled here, unrolled from last to 1st
@@ -1730,13 +1730,13 @@ int cogen_trace(struct instr_def *instr)
     if (comp && comp->split) {
       coutf("    if (" ID_PRE "instrument->logic.Split_%s-- > 0) " 
         ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE "instrument->logic.Split_%s_particle;"
-        " /* put initial neutron back to split point */",
+        " /* put initial xray back to split point */",
         comp->name, comp->name);
     }
   }
   list_iterate_end(liter);
   
-  cout("    /* if RESTORE, keep propagation, but restore neutron state */");
+  cout("    /* if RESTORE, keep propagation, but restore xray state */");
   cout("    if (RESTORE)");
   cout("      { " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE MCCODE_PARTICLE "_save; }");
   cout("    " ID_PRE MCCODE_PARTICLE "->index++; /* we go to next comp normally */");
@@ -1831,7 +1831,7 @@ cogen_header(struct instr_def *instr, char *output_name)
   /* these are needed for SCATTERED, ABSORB and RESTORE macros */
   cout("  long absorbed;  /* flag set to TRUE when this event is to be removed/ignored */");
   cout("  long scattered; /* flag set to TRUE when this event has interacted with the last component instance */");
-  cout("  long restore;   /* set to true if neutron event must be restored */");
+  cout("  long restore;   /* set to true if xray event must be restored */");
   cout("};");
   cout("typedef struct " ID_PRE "particle_struct " ID_PRE "particle;");
   cout("");
