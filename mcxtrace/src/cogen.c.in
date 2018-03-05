@@ -1624,13 +1624,13 @@ int cogen_trace(struct instr_def *instr)
   cout("  while (!ABSORBED) { /* iterate xray event until absorbed */");
   cout("    " ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_save = " ID_PRE MCCODE_PARTICLE "_particle;");
   cout("    " ID_PRE "ret++;");
-  cout("    switch (" ID_PRE MCCODE_PARTICLE "->index) { /* send xray event to component instance */");
-  cout("    case 0:");
+  //cout("    switch (" ID_PRE MCCODE_PARTICLE "->index) { /* send neutron event to component instance */");
+  //cout("    case 0:");
   
   /* now we produce the list of 'case' statements for each component index, with the attached logic */
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL) {
-    coutf("    case %i:", comp->index);
+    coutf("    if (" ID_PRE MCCODE_PARTICLE "->index == %i ) {", comp->index);
     coutf("      /* component %s=%s() [%i] parameters */", comp->name, comp->def->name, comp->index);
 
     if (comp->split || comp->when || list_len(comp->jump) > 0) {
@@ -1655,7 +1655,7 @@ int cogen_trace(struct instr_def *instr)
     // SPLIT counters are initiated once
     if (comp->split) {
       char *exp=exp_tostring(comp->split);
-      coutf("      if (!" ID_PRE "instrument->logic.Split_%s) { /* store initial SPLIT particle */", comp->name);
+      coutf("      if (" ID_PRE "instrument->logic.Split_%s < 0) { /* store initial SPLIT particle */", comp->name);
       coutf("        p /= %s > 0 ? %s : 1;", exp, exp);
       coutf("        " ID_PRE "instrument->logic.Split_%s=%s > 0 ? %s : 1;", comp->name, exp, exp);
       coutf("        " ID_PRE "instrument->logic.Split_%s_particle=" ID_PRE MCCODE_PARTICLE "_particle;", comp->name); // SPLIT
@@ -1714,7 +1714,8 @@ int cogen_trace(struct instr_def *instr)
       //cogen_defundef(NULL, instr->formals, PAR_UNDEF);
       cout("      #undef " ID_PRE "instance_MYSELF");
     }
-    cout("      break;");
+    cout(" /* End of trace block #i */ ");
+    cout(" }");
     
   } /* end while comp list (case) */
   list_iterate_end(liter);
@@ -1728,10 +1729,12 @@ int cogen_trace(struct instr_def *instr)
   liter = list_iterate_back(instr->complist);
   while((comp = list_previous(liter)) != NULL) {
     if (comp && comp->split) {
-      coutf("    if (" ID_PRE "instrument->logic.Split_%s-- > 0) " 
-        ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE "instrument->logic.Split_%s_particle;"
+      coutf("    if (" ID_PRE "instrument->logic.Split_%s > 0) {", comp->name);
+      coutf("      " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE "instrument->logic.Split_%s_particle;"
         " /* put initial xray back to split point */",
-        comp->name, comp->name);
+        comp->name);
+      coutf("      " ID_PRE "instrument->logic.Split_%s--; mcneutron->index--; /* compensate for next comp below */", comp->name);
+      cout("    } /* end SPLIT */");
     }
   }
   list_iterate_end(liter);
