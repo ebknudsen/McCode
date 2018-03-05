@@ -33,6 +33,7 @@ do
     cd $WORKDIR
 done
 
+
 # Put a miniconda link inthere:
 ln -sf /projects/p_gpuhack18_5/miniconda3 /projects/p_gpuhack18_5/mcstas/$1/miniconda3
 
@@ -42,6 +43,8 @@ mkdir -p ~/privatemodules/mcstas
 cp /projects/p_gpuhack18_5/mcstas/$1/module ~/privatemodules/mcstas/$1
 
 module use  ~/privatemodules/
+
+chmod -R g+rw MCINSTALL_PREFIX/mcstas/$1
 
 echo
 echo DONE installing your mcstas-$1 build to /projects/p_gpuhack18_5/mcstas/$1
