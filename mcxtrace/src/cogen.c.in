@@ -315,11 +315,10 @@ embed_file(char *name)
 * cogen_defundef: define/undefine a symbol from a List
 * input:  a list
 *         a flag: GLOBAL_INSTANCE_PAR_VALUE=define with component name, 
-*                 LOCAL_INSTANCE_PAR_VALUE=define with 'comp' as structure name, 
-*                 INSTRUMENT_PAR_VALUE=define with 'instrument_name' as structure name
-*                 GLOBAL_INSTANCE_PAR_REF=define with component name pointer, 
-*                 LOCAL_INSTANCE_PAR_VALUE=define with 'comp' as structure name pointer, 
-*                 PAR_UNDEF=un-define
+*                 LOCAL_INSTANCE_PAR_VALUE =define with 'comp' as structure name, 
+*                 INSTRUMENT_PAR_VALUE     =define with 'instrument_name' as structure name
+*                 GLOBAL_INSTANCE_PAR_REF  =define with component name pointer, 
+*                 PAR_UNDEF                =un-define
 *
 * code is generated in function [comp]_[section=init/save/finally/display]
 * called by: cogen_comp_[section]
@@ -1126,13 +1125,13 @@ int cogen_decls(struct instr_def *instr)
         while(this_jump = list_next(liter2)) {
           /* create counter for JUMP iteration */
           if (this_jump->iterate)
-            coutf("  long Jump_%s_%s;", comp->name, this_jump->target);
+            coutf("  long Jump_%s_%s; /* the JUMP connection <from>_<to> */", comp->name, this_jump->target);
         }
         list_iterate_end(liter2);
       }
       if (comp->split) {
-        coutf("  long Split_%s;", comp->name);
-        coutf("  " ID_PRE "particle Split_%s_particle;", comp->name);
+        coutf("  long Split_%s; /* this is the SPLIT counter decremented down to 0 */", comp->name);
+        coutf("  " ID_PRE "particle Split_%s_particle; /* this is the particle to duplicate */", comp->name);
       }
     }
     cout("};");
@@ -1277,13 +1276,13 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
   cout( "#define " ID_PRE "instance_MYSELF " ID_PRE "comp");
   if (!strcmp(section, "DISPLAY")) {
     /* User DECLARE code from component definitions (for each instance). */
-    cout("  #define magnify mcdis_magnify");
-    cout("  #define line mcdis_line");
+    cout("  #define magnify     mcdis_magnify");
+    cout("  #define line        mcdis_line");
     cout("  #define dashed_line mcdis_dashed_line");
-    cout("  #define multiline mcdis_multiline");
-    cout("  #define rectangle mcdis_rectangle");
-    cout("  #define box mcdis_box");
-    cout("  #define circle mcdis_circle");
+    cout("  #define multiline   mcdis_multiline");
+    cout("  #define rectangle   mcdis_rectangle");
+    cout("  #define box         mcdis_box");
+    cout("  #define circle      mcdis_circle");
   }
     
   /* first the common definition code if any (when no definition parameter exist) */
@@ -1579,9 +1578,9 @@ int cogen_trace(struct instr_def *instr)
   coutf("int %s%s(" ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_particle) { /* called by %scode_main for %s:%s */", 
     ID_PRE, "raytrace", 
     ID_PRE, instr->name, "TRACE");
-  cout("  int " ID_PRE "ret=0; /* return: number of components travelled */");
   cout("  " ID_PRE "particle *" ID_PRE MCCODE_PARTICLE " = &" ID_PRE MCCODE_PARTICLE "_particle;");
   cout("");
+  cout("  int flag_split = 0;");
   cout("  /* init variables and counters for TRACE */");
   
   cout("  #define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(ABSORBED);} while(0)");
@@ -1613,7 +1612,7 @@ int cogen_trace(struct instr_def *instr)
       list_iterate_end(liter2);
     }
     if (comp->split) {
-      coutf("  " ID_PRE "instrument->logic.Split_%s=0;", comp->name);
+      coutf("  " ID_PRE "instrument->logic.Split_%s=-1;", comp->name);
       coutf("  " ID_PRE "instrument->logic.Split_%s_particle=" ID_PRE MCCODE_PARTICLE "_particle;", comp->name);
     }
   }
@@ -1621,11 +1620,11 @@ int cogen_trace(struct instr_def *instr)
 
   cout("");
   cout("  /* the main iteration loop for one incoming xray */");
-  cout("  while (!ABSORBED) { /* iterate xray event until absorbed */");
+  cout("  while (!ABSORBED || flag_split) { /* iterate neutron event until absorbed */");
   cout("    " ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_save = " ID_PRE MCCODE_PARTICLE "_particle;");
-  cout("    " ID_PRE "ret++;");
+  cout("    flag_split=0; /* is activated in case we are in a SPLIT */");
   //cout("    switch (" ID_PRE MCCODE_PARTICLE "->index) { /* send neutron event to component instance */");
-  //cout("    case 0:");
+  cout("    /* send neutron event to component instance */");
   
   /* now we produce the list of 'case' statements for each component index, with the attached logic */
   liter = list_iterate(instr->complist);
@@ -1714,16 +1713,19 @@ int cogen_trace(struct instr_def *instr)
       //cogen_defundef(NULL, instr->formals, PAR_UNDEF);
       cout("      #undef " ID_PRE "instance_MYSELF");
     }
-    cout(" /* End of trace block #i */ ");
-    cout(" }");
+    cout("    } else");
     
   } /* end while comp list (case) */
   list_iterate_end(liter);
   
   /* write de default case */
-  cout("    default: /* last case: END -> ABSORB */");
   cout("      ABSORBED=1; // normal end of xray when no other logic/grammar");
-  cout("    } /* end switch component */");
+  cout("    /* end if (components) */");
+  
+  cout("    if (RESTORE) /* keep propagation and restore neutron (even when ABSORBED in the same loop) */");
+  cout("      { " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE MCCODE_PARTICLE "_save; }");
+  
+  cout("    " ID_PRE MCCODE_PARTICLE "->index++; /* we go to next comp normally */");
   
   // split counters are handled here, unrolled from last to 1st
   liter = list_iterate_back(instr->complist);
@@ -1733,16 +1735,12 @@ int cogen_trace(struct instr_def *instr)
       coutf("      " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE "instrument->logic.Split_%s_particle;"
         " /* put initial xray back to split point */",
         comp->name);
-      coutf("      " ID_PRE "instrument->logic.Split_%s--; mcneutron->index--; /* compensate for next comp below */", comp->name);
-      cout("    } /* end SPLIT */");
+      coutf("      " ID_PRE "instrument->logic.Split_%s--; /* compensate for next comp below */", comp->name);
+      cout( "      flag_split=1;");
+      cout("    }");
     }
   }
   list_iterate_end(liter);
-  
-  cout("    /* if RESTORE, keep propagation, but restore xray state */");
-  cout("    if (RESTORE)");
-  cout("      { " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE MCCODE_PARTICLE "_save; }");
-  cout("    " ID_PRE MCCODE_PARTICLE "->index++; /* we go to next comp normally */");
       
   cout("  } /* end while not absorbed */");
   cout("");
@@ -1760,7 +1758,7 @@ int cogen_trace(struct instr_def *instr)
   cout("  #undef ABSORB");
   
   cout("");
-  cout("  return(" ID_PRE "ret);");
+  cout("  return(" ID_PRE MCCODE_PARTICLE "->index);");
   coutf("} /* " ID_PRE "%s */", "raytrace");
   
   return(warnings);
