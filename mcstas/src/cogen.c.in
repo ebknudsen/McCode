@@ -1588,9 +1588,9 @@ int cogen_trace(struct instr_def *instr)
   coutf("int %s%s(" ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_particle) { /* called by %scode_main for %s:%s */", 
     ID_PRE, "raytrace", 
     ID_PRE, instr->name, "TRACE");
-  cout("  int " ID_PRE "ret=0; /* return: number of components travelled */");
   cout("  " ID_PRE "particle *" ID_PRE MCCODE_PARTICLE " = &" ID_PRE MCCODE_PARTICLE "_particle;");
   cout("");
+  cout("  int flag_split = 0;");
   cout("  /* init variables and counters for TRACE */");
   
   cout("  #define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(ABSORBED);} while(0)");
@@ -1630,11 +1630,11 @@ int cogen_trace(struct instr_def *instr)
 
   cout("");
   cout("  /* the main iteration loop for one incoming neutron */");
-  cout("  while (!ABSORBED) { /* iterate neutron event until absorbed */");
+  cout("  while (!ABSORBED || flag_split) { /* iterate neutron event until absorbed */");
   cout("    " ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_save = " ID_PRE MCCODE_PARTICLE "_particle;");
-  cout("    " ID_PRE "ret++;");
-  //cout("    switch (" ID_PRE MCCODE_PARTICLE "->index) { /* send neutron event to component instance */");
-  //cout("    case 0:");
+  cout("    flag_split=0; /* is activated in case we are in a SPLIT */");
+  
+  cout("    /* send neutron event to component instance */");
   
   /* now we produce the list of 'case' statements for each component index, with the attached logic */
   liter = list_iterate(instr->complist);
@@ -1723,16 +1723,19 @@ int cogen_trace(struct instr_def *instr)
       //cogen_defundef(NULL, instr->formals, PAR_UNDEF);
       cout("      #undef " ID_PRE "instance_MYSELF");
     }
-    cout(" /* End of trace block #i */ ");
-    cout(" }");
+    cout("    } else");
     
   } /* end while comp list (case) */
   list_iterate_end(liter);
   
-  /* write de default case */
-  cout("    default: /* last case: END -> ABSORB */");
+  /* write default case */
   cout("      ABSORBED=1; // normal end of neutron when no other logic/grammar");
-  cout("    } /* end switch component */");
+  cout("    /* end if (components) */");
+  
+  cout("    if (RESTORE) /* keep propagation and restore neutron (even when ABSORBED in the same loop) */");
+  cout("      { " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE MCCODE_PARTICLE "_save; }");
+  
+  cout("    " ID_PRE MCCODE_PARTICLE "->index++; /* we go to next comp normally */");
   
   // split counters are handled here, unrolled from last to 1st
   liter = list_iterate_back(instr->complist);
@@ -1742,18 +1745,14 @@ int cogen_trace(struct instr_def *instr)
       coutf("      " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE "instrument->logic.Split_%s_particle;"
         " /* put initial neutron back to split point */",
         comp->name);
-      coutf("      " ID_PRE "instrument->logic.Split_%s--; mcneutron->index--; /* compensate for next comp below */", comp->name);
-      cout("    } /* end SPLIT */");
+      coutf("      " ID_PRE "instrument->logic.Split_%s--; /* compensate for next comp below */", comp->name);
+      cout( "      flag_split=1;");
+      cout("    }");
     }
   }
   list_iterate_end(liter);
-  
-  cout("    /* if RESTORE, keep propagation, but restore neutron state */");
-  cout("    if (RESTORE)");
-  cout("      { " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE MCCODE_PARTICLE "_save; }");
-  cout("    " ID_PRE MCCODE_PARTICLE "->index++; /* we go to next comp normally */");
       
-  cout("  } /* end while not absorbed */");
+  cout("  } /* end while not ABSORBED, or in a SPLIT */");
   cout("");
   cout("  DEBUG_LEAVE()");
   /* Debugging (final state). */
@@ -1769,7 +1768,7 @@ int cogen_trace(struct instr_def *instr)
   cout("  #undef ABSORB");
   
   cout("");
-  cout("  return(" ID_PRE "ret);");
+  cout("  return(" ID_PRE MCCODE_PARTICLE "->index);");
   coutf("} /* " ID_PRE "%s */", "raytrace");
   
   return(warnings);
