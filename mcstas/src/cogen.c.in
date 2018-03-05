@@ -318,11 +318,10 @@ embed_file(char *name)
 * cogen_defundef: define/undefine a symbol from a List
 * input:  a list
 *         a flag: GLOBAL_INSTANCE_PAR_VALUE=define with component name, 
-*                 LOCAL_INSTANCE_PAR_VALUE=define with 'comp' as structure name, 
-*                 INSTRUMENT_PAR_VALUE=define with 'instrument_name' as structure name
-*                 GLOBAL_INSTANCE_PAR_REF=define with component name pointer, 
-*                 LOCAL_INSTANCE_PAR_VALUE=define with 'comp' as structure name pointer, 
-*                 PAR_UNDEF=un-define
+*                 LOCAL_INSTANCE_PAR_VALUE =define with 'comp' as structure name, 
+*                 INSTRUMENT_PAR_VALUE     =define with 'instrument_name' as structure name
+*                 GLOBAL_INSTANCE_PAR_REF  =define with component name pointer, 
+*                 PAR_UNDEF                =un-define
 *
 * code is generated in function [comp]_[section=init/save/finally/display]
 * called by: cogen_comp_[section]
@@ -1076,7 +1075,7 @@ int cogen_decls(struct instr_def *instr)
   cout("");
   
   /* 1. particle definition */
-  /* moved to cohen_header, as this is needed in mccode-r */
+  /* moved to cogen_header, as this is needed in mccode-r */
   
   /* 2. Global variables for instrument parameters. */
   cout("/* Instrument parameters: structure and a table for the initialisation");
@@ -1129,13 +1128,13 @@ int cogen_decls(struct instr_def *instr)
         while(this_jump = list_next(liter2)) {
           /* create counter for JUMP iteration */
           if (this_jump->iterate)
-            coutf("  long Jump_%s_%s;", comp->name, this_jump->target);
+            coutf("  long Jump_%s_%s; /* the JUMP connection <from>_<to> */", comp->name, this_jump->target);
         }
         list_iterate_end(liter2);
       }
       if (comp->split) {
-        coutf("  long Split_%s;", comp->name);
-        coutf("  " ID_PRE "particle Split_%s_particle;", comp->name);
+        coutf("  long Split_%s; /* this is the SPLIT counter decremented down to 0 */", comp->name);
+        coutf("  " ID_PRE "particle Split_%s_particle; /* this is the particle to duplicate */", comp->name);
       }
     }
     cout("};");
@@ -1280,13 +1279,13 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
   cout( "#define " ID_PRE "instance_MYSELF " ID_PRE "comp");
   if (!strcmp(section, "DISPLAY")) {
     /* User DECLARE code from component definitions (for each instance). */
-    cout("  #define magnify mcdis_magnify");
-    cout("  #define line mcdis_line");
+    cout("  #define magnify     mcdis_magnify");
+    cout("  #define line        mcdis_line");
     cout("  #define dashed_line mcdis_dashed_line");
-    cout("  #define multiline mcdis_multiline");
-    cout("  #define rectangle mcdis_rectangle");
-    cout("  #define box mcdis_box");
-    cout("  #define circle mcdis_circle");
+    cout("  #define multiline   mcdis_multiline");
+    cout("  #define rectangle   mcdis_rectangle");
+    cout("  #define box         mcdis_box");
+    cout("  #define circle      mcdis_circle");
   }
     
   /* first the common definition code if any (when no definition parameter exist) */
@@ -1623,7 +1622,7 @@ int cogen_trace(struct instr_def *instr)
       list_iterate_end(liter2);
     }
     if (comp->split) {
-      coutf("  " ID_PRE "instrument->logic.Split_%s=0;", comp->name);
+      coutf("  " ID_PRE "instrument->logic.Split_%s=-1;", comp->name);
       coutf("  " ID_PRE "instrument->logic.Split_%s_particle=" ID_PRE MCCODE_PARTICLE "_particle;", comp->name);
     }
   }
@@ -1665,7 +1664,7 @@ int cogen_trace(struct instr_def *instr)
     // SPLIT counters are initiated once
     if (comp->split) {
       char *exp=exp_tostring(comp->split);
-      coutf("      if (!" ID_PRE "instrument->logic.Split_%s) { /* store initial SPLIT particle */", comp->name);
+      coutf("      if (" ID_PRE "instrument->logic.Split_%s < 0) { /* store initial SPLIT particle */", comp->name);
       coutf("        p /= %s > 0 ? %s : 1;", exp, exp);
       coutf("        " ID_PRE "instrument->logic.Split_%s=%s > 0 ? %s : 1;", comp->name, exp, exp);
       coutf("        " ID_PRE "instrument->logic.Split_%s_particle=" ID_PRE MCCODE_PARTICLE "_particle;", comp->name); // SPLIT
@@ -1738,10 +1737,12 @@ int cogen_trace(struct instr_def *instr)
   liter = list_iterate_back(instr->complist);
   while((comp = list_previous(liter)) != NULL) {
     if (comp && comp->split) {
-      coutf("    if (" ID_PRE "instrument->logic.Split_%s-- > 0) " 
-        ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE "instrument->logic.Split_%s_particle;"
+      coutf("    if (" ID_PRE "instrument->logic.Split_%s > 0) {", comp->name);
+      coutf("      " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE "instrument->logic.Split_%s_particle;"
         " /* put initial neutron back to split point */",
-        comp->name, comp->name);
+        comp->name);
+      coutf("      " ID_PRE "instrument->logic.Split_%s--; mcneutron->index--; /* compensate for next comp below */", comp->name);
+      cout("    } /* end SPLIT */");
     }
   }
   list_iterate_end(liter);
