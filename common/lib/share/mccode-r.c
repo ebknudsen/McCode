@@ -3988,6 +3988,7 @@ while(mcrun_num < mcncount || mcrun_num < mcget_ncount()) {
     mcraytrace(mcneutron);
 #elif MCCODE_PARTICLE_CODE == 22
     mcraytrace(mcxray);
+    mcrun_num++;
 #endif
   }
 
