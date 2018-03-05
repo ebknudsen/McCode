@@ -3982,15 +3982,21 @@ mcseed=(long)ct;
 #endif
 
 /* main particle event loop */
-while(mcrun_num < mcncount || mcrun_num < mcget_ncount())
-  {
+#ifdef EXP_OPENACC_CPU
+#pragma acc parallel loop
+  for (unsigned long long mycnt=0 ; mycnt < mcncount ; mycnt++) {
+#else
+while(mcrun_num < mcncount || mcrun_num < mcget_ncount()) {
+#endif
     /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
 #if MCCODE_PARTICLE_CODE == 2112
     mcraytrace(mcneutron);
 #elif MCCODE_PARTICLE_CODE == 22
     mcraytrace(mcxray);
 #endif
+#ifndef EXP_OPENACC_CPU
     mcrun_num++;
+#endif
   }
 
 #ifdef USE_MPI
