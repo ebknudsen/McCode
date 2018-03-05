@@ -1586,9 +1586,6 @@ int cogen_trace(struct instr_def *instr)
   cout("");
   
   /* Experimental support for OpenACC CPU parallelisation */
-  cout("#ifdef EXP_OPENACC_CPU");
-  cout("#pragma acc routine seq");
-  cout("#endif");
   /* then write the main code, which calls component ones */
   coutf("int %s%s(" ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_particle) { /* called by %scode_main for %s:%s */", 
     ID_PRE, "raytrace", 
