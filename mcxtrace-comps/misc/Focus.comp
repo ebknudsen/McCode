@@ -44,10 +44,12 @@ DECLARE
 
 INITIALIZE
 %{
-  if ((fabs(focus_xw) < 1e-9) || (fabs(focus_yh) < 1e-9)) {
+
+/*  if ((fabs(focus_xw) < 1e-9) || (fabs(focus_yh) < 1e-9)) {
     fprintf(stderr,"%s: you have to specify a target area\n", NAME_CURRENT_COMP); 
     exit(0);
   }
+*/
 %}
 
 TRACE
@@ -64,7 +66,7 @@ TRACE
   /*
    * "focus" target code stolen from slit.comp
    */
-  if (fabs(focus_xw) > 1e-9 ){
+  if (fabs(focus_xw) > 1e-12 ){
      /*
       * focusing occurs only through the phase shift introduced above
       */
@@ -79,7 +81,7 @@ TRACE
      double xf,yf,zf;
      randvec_target_rect_real(&xf, &yf, &zf, &pdir,
          focus_x0-posx,focus_y0-posy,dist, focus_xw, focus_yh, 
-         ROT_A_CURRENT_COMP, x, y, z, 0);
+         ROT_A_CURRENT_COMP, x, y, z, 2);
      
      kx=(xf-x); ky=(yf-y); kz=(zf-z);
      NORM(kx,ky,kz);
@@ -92,7 +94,7 @@ TRACE
 MCDISPLAY
 %{
  // nothing to display, really
-  
+  magnify("xy");
   rectangle("xy",0,0,0,2.0,2.0);
 %}
 

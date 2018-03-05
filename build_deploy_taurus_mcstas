@@ -33,6 +33,7 @@ do
     cd $WORKDIR
 done
 
+
 # Put a miniconda link inthere:
 ln -sf /projects/p_gpuhack18_5/miniconda3 /projects/p_gpuhack18_5/mcstas/$1/miniconda3
 

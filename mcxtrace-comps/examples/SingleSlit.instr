@@ -1,0 +1,79 @@
+/*******************************************************************************
+* Instrument: <instrument name>
+*
+* %I
+* Written by: <your name (email)>
+* Date: <current date>
+* Origin: <your institution>
+* Release: <McXtrace V.X.X>
+* Version: <instrument version>
+* %INSTRUMENT_SITE: Templates
+*
+* <instrument short description>
+*
+* %D
+* <instrument description>
+*
+* Example: <parameters=values>
+*
+* %P
+* <parameter1>: [<unit>] <parameter1 description>
+* ...
+* 
+* %L
+* <reference/HTML link>
+*
+* %E
+*******************************************************************************/
+DEFINE INSTRUMENT template_body_simple(Par1=1)
+
+DECLARE
+%{
+%}
+
+INITIALIZE
+%{
+%}
+
+TRACE
+
+COMPONENT origin = Progress_bar()
+AT (0, 0, 0) RELATIVE ABSOLUTE
+
+// insert components here (e.g. Insert -> Source -> ...)
+COMPONENT source_div = Source_div(
+    xwidth=1.5e-6, 
+    yheight=1.5e-6, 
+    focus_aw=0, 
+    focus_ah=0, 
+    E0=12, 
+    randomphase=0)
+AT (0, 0, 0) RELATIVE PREVIOUS
+
+
+
+COMPONENT slit = Slit(
+    xwidth=1e-6, 
+    yheight=0.5e-6,
+    dist=1,
+    focus_xw=5e-4, 
+    focus_yh=5e-4 
+)
+AT (0, 0, 1) RELATIVE PREVIOUS 
+
+
+
+COMPONENT psd_monitor_coh = PSD_monitor_coh(
+    nx=500,  
+    ny=500, 
+    filename="lastDet", 
+    xwidth=5e-4, 
+    yheight=5e-4)
+AT (0, 0, 1) RELATIVE PREVIOUS
+
+
+FINALLY
+%{
+%}
+
+END
