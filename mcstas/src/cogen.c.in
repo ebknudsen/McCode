@@ -1623,7 +1623,7 @@ int cogen_trace(struct instr_def *instr)
       list_iterate_end(liter2);
     }
     if (comp->split) {
-      split_counts++; /* this is the number of active/intricated SPLITS */
+      split_counts++; /* this is the number of active/imbricated SPLITS */
       coutf("  " ID_PRE "instrument->logic.Split_%s=-1;", comp->name);
       coutf("  " ID_PRE "instrument->logic.Split_%s_particle=" ID_PRE MCCODE_PARTICLE "_particle;", comp->name);
     }
@@ -1632,17 +1632,19 @@ int cogen_trace(struct instr_def *instr)
 
   cout("");
   cout("  /* the main iteration loop for one incoming neutron */");
-  cout("  do {");
+  cout("  do { /* while in a SPLIT */");
   cout("    while (!ABSORBED) { /* iterate neutron event until absorbed */");
   cout("      " ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_save = " ID_PRE MCCODE_PARTICLE "_particle;");
 
   
   cout("      /* send neutron event to component instance */");
+  cout("      switch (" ID_PRE MCCODE_PARTICLE "->index) { /* send neutron event to component instance */");
+  cout("      case 0:");
   
   /* now we produce the list of 'case' statements for each component index, with the attached logic */
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL) {
-    coutf("      if (" ID_PRE MCCODE_PARTICLE "->index == %i ) {", comp->index);
+    coutf("      case %i:", comp->index);
     coutf("        /* component %s=%s() [%i] parameters */", comp->name, comp->def->name, comp->index);
 
     if (comp->split || comp->when || list_len(comp->jump) > 0) {
@@ -1714,7 +1716,7 @@ int cogen_trace(struct instr_def *instr)
           coutf("        else " ID_PRE "instrument->logic.Jump_%s_%s=0; /* reset Jump loop and go forward */",
             comp->name, this_jump->target);
         } else {
-          coutf("        if (%s)", exp);
+          coutf("        if (%s) /* conditional JUMP to %s */", exp, this_jump->target);
           coutf("          { " ID_PRE MCCODE_PARTICLE "->index=%i; break; }", this_jump->target_index);
         }
       }
@@ -1727,14 +1729,15 @@ int cogen_trace(struct instr_def *instr)
       //cogen_defundef(NULL, instr->formals, PAR_UNDEF);
       cout("        #undef " ID_PRE "instance_MYSELF");
     }
-    cout("      } else");
+    cout("        break;");
     
   } /* end while comp list (case) */
   list_iterate_end(liter);
   
   /* write default case */
+  cout("      default:");
   cout("        ABSORBED=1; // normal end of neutron when no other logic/grammar");
-  cout("      /* end if (components) */");
+  cout("      } /* end switch (components) */");
   cout("");
   cout("      if (RESTORE) /* keep propagation and restore neutron (even when ABSORBED in the same loop) */");
   cout("        { " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE MCCODE_PARTICLE "_save; }");
@@ -1746,15 +1749,14 @@ int cogen_trace(struct instr_def *instr)
   liter = list_iterate_back(instr->complist);
   while((comp = list_previous(liter)) != NULL) {
     if (comp && comp->split) {
-      coutf("    if (flag_split <=%d && " ID_PRE "instrument->logic.Split_%s > 0) {", 
+      coutf("    if (flag_split <= %d && " ID_PRE "instrument->logic.Split_%s > 0) {", 
         split_counts--, comp->name);
       coutf("      " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE "instrument->logic.Split_%s_particle;"
         " /* put initial neutron back to split point */",
         comp->name);
       coutf("      " ID_PRE "instrument->logic.Split_%s--; /* compensate for next comp below */", comp->name);
       coutf("      if (" ID_PRE "instrument->logic.Split_%s == 0) {", comp->name);
-      cout( "        flag_split--; /* this loop ended */");
-      cout( "        if (flag_split >= 1) /* an other external loop is running */");
+      cout( "        if (--flag_split >= 1) /* an other external loop is running */");
       coutf("          " ID_PRE "instrument->logic.Split_%s = -1; /* trigger new internal loop */", 
         comp->name);
       cout( "      }");
