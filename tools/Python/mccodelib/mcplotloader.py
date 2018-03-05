@@ -198,7 +198,7 @@ def _parse_2D_monitor(text):
     try:
         # load essential header data
         '''# component: detector'''
-        m = re.search('\# component: ([\w]+)\n', text)
+        m = re.search('\# component: ([\w]*)\n', text)
         data.component = m.group(1)
         '''# filename: PSD.dat'''
         m = re.search('\# filename: ([\-\+\w\.\,]+)\n', text)
