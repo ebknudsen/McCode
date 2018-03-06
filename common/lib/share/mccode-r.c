@@ -2367,8 +2367,8 @@ void mcdis_sphere(double x, double y, double z, double r, int N){
 *******************************************************************************/
 
 /* coords_set: Assign coordinates. */
-Coords
-coords_set(MCNUM x, MCNUM y, MCNUM z)
+#pragma acc routine seq
+Coords coords_set(MCNUM x, MCNUM y, MCNUM z)
 {
   Coords a;
 
@@ -2379,8 +2379,8 @@ coords_set(MCNUM x, MCNUM y, MCNUM z)
 }
 
 /* coords_get: get coordinates. Required when 'x','y','z' are #defined as ray pars */
-Coords
-coords_get(Coords a, MCNUM *x, MCNUM *y, MCNUM *z)
+#pragma acc routine seq
+Coords coords_get(Coords a, MCNUM *x, MCNUM *y, MCNUM *z)
 {
   *x = a.x;
   *y = a.y;
@@ -2389,8 +2389,8 @@ coords_get(Coords a, MCNUM *x, MCNUM *y, MCNUM *z)
 }
 
 /* coords_add: Add two coordinates. */
-Coords
-coords_add(Coords a, Coords b)
+#pragma acc routine seq
+Coords coords_add(Coords a, Coords b)
 {
   Coords c;
 
@@ -2402,8 +2402,8 @@ coords_add(Coords a, Coords b)
 }
 
 /* coords_sub: Subtract two coordinates. */
-Coords
-coords_sub(Coords a, Coords b)
+#pragma acc routine seq
+Coords coords_sub(Coords a, Coords b)
 {
   Coords c;
 
@@ -2415,8 +2415,8 @@ coords_sub(Coords a, Coords b)
 }
 
 /* coords_neg: Negate coordinates. */
-Coords
-coords_neg(Coords a)
+#pragma acc routine seq
+Coords coords_neg(Coords a)
 {
   Coords b;
 
@@ -2427,6 +2427,7 @@ coords_neg(Coords a)
 }
 
 /* coords_scale: Scale a vector. */
+#pragma acc routine seq
 Coords coords_scale(Coords b, double scale) {
   Coords a;
 
@@ -2437,6 +2438,7 @@ Coords coords_scale(Coords b, double scale) {
 }
 
 /* coords_sp: Scalar product: a . b */
+#pragma acc routine seq
 double coords_sp(Coords a, Coords b) {
   double value;
 
@@ -2445,6 +2447,7 @@ double coords_sp(Coords a, Coords b) {
 }
 
 /* coords_xp: Cross product: a = b x c. */
+#pragma acc routine seq
 Coords coords_xp(Coords b, Coords c) {
   Coords a;
 
@@ -2460,6 +2463,7 @@ double coords_len(Coords a) {
 }
 
 /* coords_mirror: Mirror a in plane (through the origin) defined by normal n*/
+#pragma acc routine seq
 Coords coords_mirror(Coords a, Coords n) {
   double t = scalar_prod(n.x, n.y, n.z, n.x, n.y, n.z);
   Coords b;
@@ -2477,9 +2481,10 @@ Coords coords_mirror(Coords a, Coords n) {
 }
 
 /* coords_print: Print out vector values. */
+#pragma acc routine seq
 void coords_print(Coords a) {
 
-  fprintf(stdout, "(%f, %f, %f)\n", a.x, a.y, a.z);
+  //  fprintf(stdout, "(%f, %f, %f)\n", a.x, a.y, a.z);
   return;
 }
 
@@ -2559,8 +2564,8 @@ rot_set_rotation(Rotation t, double phx, double phy, double phz)
 /*******************************************************************************
 * rot_test_identity: Test if rotation is identity
 *******************************************************************************/
-int
-rot_test_identity(Rotation t)
+#pragma acc routine seq
+int rot_test_identity(Rotation t)
 {
   return (t[0][0] + t[1][1] + t[2][2] == 3);
 }
@@ -2571,8 +2576,8 @@ rot_test_identity(Rotation t)
 * equal to doing first T2, then T1.
 * Note that T3 must not alias (use the same array as) T1 or T2.
 *******************************************************************************/
-void
-rot_mul(Rotation t1, Rotation t2, Rotation t3)
+#pragma acc routine seq
+void rot_mul(Rotation t1, Rotation t2, Rotation t3)
 {
   if (rot_test_identity(t1)) {
     rot_copy(t3, t2);
@@ -2589,8 +2594,8 @@ rot_mul(Rotation t1, Rotation t2, Rotation t3)
 /*******************************************************************************
 * rot_copy: Copy a rotation transformation (arrays cannot be assigned in C).
 *******************************************************************************/
-void
-rot_copy(Rotation dest, Rotation src)
+#pragma acc routine seq
+void rot_copy(Rotation dest, Rotation src)
 {
   int i,j;
   for(i = 0; i < 3; i++)
@@ -2601,8 +2606,8 @@ rot_copy(Rotation dest, Rotation src)
 /*******************************************************************************
 * rot_transpose: Matrix transposition, which is inversion for Rotation matrices
 *******************************************************************************/
-void
-rot_transpose(Rotation src, Rotation dst)
+#pragma acc routine seq
+void rot_transpose(Rotation src, Rotation dst)
 {
   dst[0][0] = src[0][0];
   dst[0][1] = src[1][0];
@@ -2618,8 +2623,8 @@ rot_transpose(Rotation src, Rotation dst)
 /*******************************************************************************
 * rot_apply: returns t*a
 *******************************************************************************/
-Coords
-rot_apply(Rotation t, Coords a)
+#pragma acc routine seq
+Coords rot_apply(Rotation t, Coords a)
 {
   Coords b;
   if (rot_test_identity(t)) {
@@ -2647,7 +2652,8 @@ void rot_print(Rotation rot) {
 /**
  * Vector product: used by vec_prod (mccode-r.h). Use coords_xp for Coords.
  */
-mcstatic inline void vec_prod_func(double *x, double *y, double *z,
+#pragma acc routine seq
+inline void vec_prod_func(double *x, double *y, double *z,
 		double x1, double y1, double z1,
 		double x2, double y2, double z2) {
     *x = (y1)*(z2) - (y2)*(z1);
@@ -2658,7 +2664,8 @@ mcstatic inline void vec_prod_func(double *x, double *y, double *z,
 /**
  * Scalar product: use coords_sp for Coords.
  */
-mcstatic inline double scalar_prod(
+#pragma acc routine seq
+inline double scalar_prod(
 		double x1, double y1, double z1,
 		double x2, double y2, double z2) {
 	return ((x1 * x2) + (y1 * y2) + (z1 * z2));
@@ -2667,8 +2674,8 @@ mcstatic inline double scalar_prod(
 /*******************************************************************************
 * mccoordschange: applies rotation to (x y z) and (vx vy vz) and Spin (sx,sy,sz)
 *******************************************************************************/
-void
-mccoordschange(Coords a, Rotation t, mcparticle *particle)
+#pragma acc routine seq
+void mccoordschange(Coords a, Rotation t, mcparticle *particle)
 {
   Coords b, c;
 
@@ -2699,8 +2706,8 @@ mccoordschange(Coords a, Rotation t, mcparticle *particle)
 /*******************************************************************************
 * mccoordschange_polarisation: applies rotation to vector (sx sy sz)
 *******************************************************************************/
-void
-mccoordschange_polarisation(Rotation t, double *sx, double *sy, double *sz)
+#pragma acc routine seq
+void mccoordschange_polarisation(Rotation t, double *sx, double *sy, double *sz)
 {
   Coords b, c;
 
@@ -2716,6 +2723,7 @@ mccoordschange_polarisation(Rotation t, double *sx, double *sy, double *sz)
 /* SECTION: vector math  ==================================================== */
 
 /* normal_vec_func: Compute normal vector to (x,y,z). */
+#pragma acc routine seq
 void normal_vec(double *nx, double *ny, double *nz,
                 double x, double y, double z)
 {
@@ -2775,6 +2783,7 @@ void normal_vec(double *nx, double *ny, double *nz,
  * so that A = 0.5 n.g; B = n.v; C = n.(r-W);
  * Without acceleration, t=-n.(r-W)/n.v
  ******************************************************************************/
+#pragma acc routine seq
 int solve_2nd_order(double *t1, double *t2,
                   double A,  double B,  double C)
 {
@@ -2822,8 +2831,8 @@ int solve_2nd_order(double *t1, double *t2,
  * with given radius.
  * If radius is zero, choose random direction in full 4PI, no target.
  ******************************************************************************/
-void
-randvec_target_circle(double *xo, double *yo, double *zo, double *solid_angle,
+#pragma acc routine seq
+void randvec_target_circle(double *xo, double *yo, double *zo, double *solid_angle,
                double xi, double yi, double zi, double radius)
 {
   double l2, phi, theta, nx, ny, nz, xt, yt, zt, xu, yu, zu;
@@ -2887,8 +2896,8 @@ randvec_target_circle(double *xo, double *yo, double *zo, double *solid_angle,
  * width=phi_y=[0,2*PI] (radians)
  * If height or width is zero, choose random direction in full 4PI, no target.
  *******************************************************************************/
-void
-randvec_target_rect_angular(double *xo, double *yo, double *zo, double *solid_angle,
+#pragma acc routine seq
+void randvec_target_rect_angular(double *xo, double *yo, double *zo, double *solid_angle,
                double xi, double yi, double zi, double width, double height, Rotation A)
 {
   double theta, phi, nx, ny, nz, xt, yt, zt, xu, yu, zu;
@@ -2963,9 +2972,8 @@ randvec_target_rect_angular(double *xo, double *yo, double *zo, double *solid_an
  * a define (see mcstas-r.h) pointing here. If you use the old rouine, you are NOT
  * taking the local emmission coordinate into account.
 *******************************************************************************/
-
-void
-randvec_target_rect_real(double *xo, double *yo, double *zo, double *solid_angle,
+#pragma acc routine seq
+void randvec_target_rect_real(double *xo, double *yo, double *zo, double *solid_angle,
                double xi, double yi, double zi,
                double width, double height, Rotation A,
                double lx, double ly, double lz, int order)
@@ -3216,10 +3224,12 @@ mc_srandom (unsigned int x)
 #define UPPER_MASK 0x80000000UL /* most significant w-r bits */
 #define LOWER_MASK 0x7fffffffUL /* least significant r bits */
 
-static unsigned long mt[N]; /* the array for the state vector  */
-static int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
+unsigned long mt[N]; /* the array for the state vector  */
+int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
+#pragma acc create( mt, mti )
 
 /* initializes mt[N] with a seed */
+#pragma acc routine seq
 void mt_srandom(unsigned long s)
 {
     mt[0]= s & 0xffffffffUL;
@@ -3264,10 +3274,12 @@ void init_by_array(unsigned long init_key[], unsigned long key_length)
 }
 
 /* generates a random number on [0,0xffffffff]-interval */
+#pragma acc routine seq
 unsigned long mt_random(void)
 {
     unsigned long y;
-    static unsigned long mag01[2]={0x0UL, MATRIX_A};
+    unsigned long mag01[2]={0x0UL, MATRIX_A};
+#pragma acc create ( mag01 )
     /* mag01[x] = x * MATRIX_A  for x=0,1 */
 
     if (mti >= N) { /* generate N words at one time */
@@ -3311,12 +3323,19 @@ unsigned long mt_random(void)
 
 /* End of McCode random number routine. */
 
-/* randnorm: generate a random number from normal law */
-double
-randnorm(void)
+#pragma acc routine seq
+double randjunk()
 {
-  static double v1, v2, s;
-  static int phase = 0;
+  return 0.5;
+}
+
+
+/* randnorm: generate a random number from normal law */
+#pragma acc routine seq
+double randnorm(void)
+{
+  double v1, v2, s;
+  int phase = 0;
   double X, u1, u2;
 
   if(phase == 0)
@@ -3344,6 +3363,7 @@ randnorm(void)
 /**
  * Generate a random number from -1 to 1 with triangle distribution
  */
+#pragma acc routine seq
 double randtriangle(void) {
 	double randnum = rand01();
 	if (randnum>0.5) return(1-sqrt(2*(randnum-0.5)));
@@ -3353,6 +3373,7 @@ double randtriangle(void) {
 /**
  * Random number between 0.0 and 1.0 (including?)
  */
+#pragma acc routine seq
 double rand01() {
 	double randnum;
 	randnum = (double) random();
@@ -3363,6 +3384,7 @@ double rand01() {
 /**
  * Return a random number between 1 and -1
  */
+#pragma acc routine seq
 double randpm1() {
 	double randnum;
 	randnum = (double) random();
@@ -3374,6 +3396,7 @@ double randpm1() {
 /**
  * Return a random number between 0 and max.
  */
+#pragma acc routine seq
 double rand0max(double max) {
 	double randnum;
 	randnum = (double) random();
@@ -3384,6 +3407,7 @@ double rand0max(double max) {
 /**
  * Return a random number between min and max.
  */
+#pragma acc routine seq
 double randminmax(double min, double max) {
 	return rand0max(max - min) + max;
 }

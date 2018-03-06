@@ -51,7 +51,7 @@
    be made static. */
 
 #ifdef MC_EMBEDDED_RUNTIME
-#define mcstatic static
+#define mcstatic 
 #else
 #define mcstatic
 #endif
@@ -382,11 +382,12 @@ void mcdis_sphere(double x, double y, double z, double r, int N);
 
 /* selection of random number generator. default is MT */
 #ifndef MC_RAND_ALG
-#define MC_RAND_ALG 1
+#define MC_RAND_ALG 0
 #endif
 
 #if MC_RAND_ALG == 0
    /* Use system random() (not recommended). */
+#define random randjunk
 #  define MC_RAND_MAX RAND_MAX
 #elif MC_RAND_ALG == 1
    /* "Mersenne Twister", by Makoto Matsumoto and Takuji Nishimura. */
@@ -419,6 +420,8 @@ void mt_srandom (unsigned long x);
 #include "opencl-lib.c"
 #endif
 
+
+double randjunk();
 double rand01();
 double randpm1();
 double rand0max(double max);
@@ -444,6 +447,7 @@ mcstatic inline void vec_prod_func(double *x, double *y, double *z,
 mcstatic inline double scalar_prod(
 		double x1, double y1, double z1, double x2, double y2, double z2);
 
+#pragma acc routine seq
 #define NORM(x,y,z) \
 	norm_func(&x, &y, &z)
 mcstatic inline void norm_func(double *x, double *y, double *z) {
