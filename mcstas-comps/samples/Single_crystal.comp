@@ -1183,7 +1183,7 @@ TRACE
   double coh_xlen;              /* Coherent cross section and length */
   double tot_xsect, tot_xlen;   /* Total cross section and length */
   double z1, z2, y1, y2;        /* Temporaries to choose kf from 2D Gauss */
-  double adjust, r, sum;        /* Temporaries */
+  double adjust, sum;           /* Temporaries */
 
   double p_trans;               /* Transmission probability */
   double mc_trans, mc_interact; /* Transmission, interaction MC choices */
@@ -1404,7 +1404,7 @@ TRACE
         {
           if (hkl_info.flag_warning < 100)
             fprintf(stderr, "Single_crystal: Error: Illegal tau search "
-              "(r=%g, sum=%g, j=%i, tau_count=%i).\n", r, sum, j , hkl_info.tau_count);
+              "(sum=%g, j=%i, tau_count=%i).\n", sum, j , hkl_info.tau_count);
           hkl_info.flag_warning++;
           j = hkl_info.tau_count - 1;
         }
