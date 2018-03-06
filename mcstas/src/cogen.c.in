@@ -1638,13 +1638,11 @@ int cogen_trace(struct instr_def *instr)
 
   
   cout("      /* send neutron event to component instance */");
-  cout("      switch (" ID_PRE MCCODE_PARTICLE "->index) { /* send neutron event to component instance */");
-  cout("      case 0:");
   
   /* now we produce the list of 'case' statements for each component index, with the attached logic */
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL) {
-    coutf("      case %i:", comp->index);
+    coutf("      if (" ID_PRE MCCODE_PARTICLE "->index == %i) {", comp->index);
     coutf("        /* component %s=%s() [%i] parameters */", comp->name, comp->def->name, comp->index);
 
     if (comp->split || comp->when || list_len(comp->jump) > 0) {
@@ -1729,15 +1727,13 @@ int cogen_trace(struct instr_def *instr)
       //cogen_defundef(NULL, instr->formals, PAR_UNDEF);
       cout("        #undef " ID_PRE "instance_MYSELF");
     }
-    cout("        break;");
+    cout("      } else");
     
   } /* end while comp list (case) */
   list_iterate_end(liter);
   
   /* write default case */
-  cout("      default:");
   cout("        ABSORBED=1; // normal end of neutron when no other logic/grammar");
-  cout("      } /* end switch (components) */");
   cout("");
   cout("      if (RESTORE) /* keep propagation and restore neutron (even when ABSORBED in the same loop) */");
   cout("        { " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE MCCODE_PARTICLE "_save; }");
