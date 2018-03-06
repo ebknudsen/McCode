@@ -390,6 +390,47 @@ static void cogen_defundef(struct comp_inst *comp, List l, char define_it)
 } /* cogen_defundef */
 
 /* *****************************************************************************
+* cogen_comp_init_defpar: write the definition parameters in INIT
+* input:  a component instance structure pointer (not modified)
+*
+* code is generated in function [comp]_init
+* called by: cogen_comp_init
+***************************************************************************** */
+int cogen_comp_init_defpar(struct comp_inst *comp)
+{
+  int warnings=0;
+  
+  if(list_len(comp->def->def_par) > 0)
+  {
+    List_handle liter;                /* For list iteration. */
+    
+    liter = list_iterate(comp->def->def_par);
+    struct comp_iformal *c_formal;/* Name of component formal input parameter */
+    
+    while(c_formal = list_next(liter))
+    {
+      struct Symtab_entry *entry = symtab_lookup(comp->defpar, c_formal->id);
+      char                *val   = exp_tostring(entry->val);
+      coutf("  #define %s (%s)", c_formal->id, val);
+      if (c_formal->type == instr_type_string || c_formal->type == instr_type_vector)
+      {
+        /* a string definition parameter should be converted into a setting parameter to avoid e.g.
+         * warning: format ‘%s’ expects type ‘char *’, but argument X has type ‘int’    */
+        fprintf(stderr,"Warning: Component %s=%s(string or vector %s) DEFINITION \n"
+                       "         parameter may be changed into a SETTING parameter\n"
+                       "         File: %s\n",
+        	comp->name, comp->def->name, c_formal->id, comp->def->source);
+        warnings++;
+		  }
+      str_free(val);
+    }
+    list_iterate_end(liter);
+  }
+
+  return(warnings);
+} /* cogen_comp_init_defpar */
+
+/* *****************************************************************************
 * cogen_comp_declare: write the declaration part from the component instance
 *   that is the component parameter structure, with positioning stuff
 * input:  a component instance structure pointer (not modified)
@@ -590,47 +631,6 @@ static void cogen_comp_init_par(struct comp_inst *comp, struct instr_def *instr,
 } /* cogen_comp_init_par */
 
 /* *****************************************************************************
-* cogen_comp_init_defpar: write the definition parameters in INIT
-* input:  a component instance structure pointer (not modified)
-*
-* code is generated in function [comp]_init
-* called by: cogen_comp_init
-***************************************************************************** */
-int cogen_comp_init_defpar(struct comp_inst *comp)
-{
-  int warnings=0;
-  
-  if(list_len(comp->def->def_par) > 0)
-  {
-    List_handle liter;                /* For list iteration. */
-    
-    liter = list_iterate(comp->def->def_par);
-    struct comp_iformal *c_formal;/* Name of component formal input parameter */
-    
-    while(c_formal = list_next(liter))
-    {
-      struct Symtab_entry *entry = symtab_lookup(comp->defpar, c_formal->id);
-      char                *val   = exp_tostring(entry->val);
-      coutf("  #define %s (%s)", c_formal->id, val);
-      if (c_formal->type == instr_type_string || c_formal->type == instr_type_vector)
-      {
-        /* a string definition parameter should be converted into a setting parameter to avoid e.g.
-         * warning: format ‘%s’ expects type ‘char *’, but argument X has type ‘int’    */
-        fprintf(stderr,"Warning: Component %s=%s(string or vector %s) DEFINITION \n"
-                       "         parameter may be changed into a SETTING parameter\n"
-                       "         File: %s\n",
-        	comp->name, comp->def->name, c_formal->id, comp->def->source);
-        warnings++;
-		  }
-      str_free(val);
-    }
-    list_iterate_end(liter);
-  }
-
-  return(warnings);
-} /* cogen_comp_init_defpar */
-
-/* *****************************************************************************
 * cogen_comp_init_position: write the position/rotation data
 * input:  a component instance structure pointer (not modified)
 *         previous component pointer or NULL (for relative stuff)
@@ -824,9 +824,11 @@ int cogen_comp_section(struct comp_inst *comp,
   int    flag_define_aliases=1;
   
   /* nothing to do when no component code, except for INITIALISE and TRACE with EXTEND*/
-  if (strcmp(section, "INITIALISE") && strcmp(section, "TRACE") && list_len(code->lines) <= 0)
+  if (strcmp(section, "INITIALISE") && strcmp(section, "TRACE") 
+    && code && list_len(code->lines) <= 0)
     return(0); /* no [section] code to write */
-  if (!strcmp(section, "TRACE") && list_len(code->lines) <= 0 && list_len(comp->extend->lines) <= 0)
+  if (!strcmp(section, "TRACE") && code && list_len(code->lines) <= 0 
+    && list_len(comp->extend->lines) <= 0)
     return(0); /* no TRACE code and no EXTEND to write */
   
   coutf("/* component %s=%s() %s */",
@@ -851,7 +853,9 @@ int cogen_comp_section(struct comp_inst *comp,
     /* init parameters. These can then be used in position/rotation syntax */
     /* all these parameters have a #define pointing to the real name space in structure */
     coutf("  SIG_MESSAGE(\"[%sinstance_%s_%s] component %s=%s() %s [%s:%i]\");", 
-        ID_PRE, comp->name, section_lower, comp->name, comp->def->name, section, code->quoted_filename, code->linenum);
+        ID_PRE, comp->name, section_lower, comp->name, comp->def->name, section, 
+        code && code->quoted_filename ? code->quoted_filename : comp->def->name, 
+        code && code->linenum > 0 ? code->linenum : 0);
 
   if (!strcmp(section, "TRACE")) {
     
@@ -864,7 +868,7 @@ int cogen_comp_section(struct comp_inst *comp,
     coutf("  " ID_PRE "instrument->counter_P[%i]  += p;", comp->index); 
     coutf("  " ID_PRE "instrument->counter_P2[%i] += p*p;", comp->index);
     
-  } else if (!strcmp(section, "DISPLAY") && list_len(code->lines) > 0) {
+  } else if (!strcmp(section, "DISPLAY") && code && list_len(code->lines) > 0) {
     char *quoted_name = str_quote(comp->name);
     coutf("  printf(\"MCDISPLAY: component %%s\\n\", \"%s\");", quoted_name);
     str_free(quoted_name);
@@ -884,7 +888,7 @@ int cogen_comp_section(struct comp_inst *comp,
   /* Users initializations. Embraced as it may contain local C definitions */
 
   /* if there are definition parameters, we must put the specific code here */
-  if (list_len(code->lines) > 0) {
+  if (code && list_len(code->lines) > 0) {
     if (list_len(comp->def->def_par) > 0 || comp->def->counter_instances == 1) {
       if (!strcmp(section, "TRACE")) {
         cout("  ABSORBED=SCATTERED=RESTORE=0;");
@@ -951,7 +955,8 @@ int cogen_comp_setpos(struct comp_inst *comp, struct comp_inst *last, struct ins
   /* all these parameters have a #define pointing to the real name space in structure */
   coutf("  SIG_MESSAGE(\"[%sinstance_%s_%s] component %s=%s() %s [%s:%i]\");", 
       ID_PRE, comp->name, "setpos", comp->name, comp->def->name, "SETTING", 
-        comp->def->init_code->quoted_filename, comp->def->init_code->linenum);
+        comp->def->init_code && comp->def->init_code->quoted_filename ? comp->def->init_code->quoted_filename : comp->def->name, 
+        comp->def->init_code && comp->def->init_code->linenum > 0 ? comp->def->init_code->linenum : 0);
   
   coutf("  stracpy(" ID_PRE "instance_%s->name, \"%s\", 16384);", comp->name, comp->name);
   coutf("  stracpy(" ID_PRE "instance_%s->type, \"%s\", 16384);", comp->name, comp->def->name);
@@ -1607,23 +1612,13 @@ int cogen_trace(struct instr_def *instr)
   cout("  " ID_PRE "particle *" ID_PRE MCCODE_PARTICLE " = &" ID_PRE MCCODE_PARTICLE "_particle;");
   cout("");
   cout("  /* init variables and counters for TRACE */");
-  cout("  int flag_split=0; /* is activated in case we are in a SPLIT */");
   
   cout("  #define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(ABSORBED);} while(0)");
   
   /* Debugging (initial state). */
   cout("  DEBUG_ENTER();");
   cout("  DEBUG_STATE();");
-    
-  /* init counters */
-  if (list_len(instr->grouplist)) {
-    struct group_inst *group;
-    liter = list_iterate(instr->grouplist);
-    while(group = list_next(liter))
-      coutf("  " ID_PRE "instrument->logic.Group_%s=0;", group->name);
-    list_iterate_end(liter);
-  }
-
+  
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL) {
     if (list_len(comp->jump) > 0) { // JUMP ITERATE counters
@@ -1634,149 +1629,138 @@ int cogen_trace(struct instr_def *instr)
         /* create counter for JUMP iteration */
         if (this_jump->iterate)
           coutf("  " ID_PRE "instrument->logic.Jump_%s_%s=0;", comp->name, this_jump->target);
+        /* check that the target_index is defined, else search for the target comp index */
+        if (!this_jump->target_index) {
+          List_handle liter3 = list_iterate(instr->complist);
+          struct comp_inst *target=NULL;
+          while((target = list_next(liter3)) != NULL) {
+            if (!strcmp(target->name, this_jump->target))
+              this_jump->target_index = target->index;
+          }
+          list_iterate_end(liter3);
+        }
+        if (!this_jump->target_index) /* JUMP e.g. PREVIOUS/NEXT is relative -> absolute */
+          this_jump->target_index += comp->index;
       }
       list_iterate_end(liter2);
     }
-    if (comp->split) {
-      split_counts++; /* this is the number of active/imbricated SPLITS */
-      coutf("  " ID_PRE "instrument->logic.Split_%s=-1;", comp->name);
-      coutf("  " ID_PRE "instrument->logic.Split_%s_particle=" ID_PRE MCCODE_PARTICLE "_particle;", comp->name);
-    }
   }
-  list_iterate_end(liter);
 
   cout("");
   cout("  /* the main iteration loop for one incoming neutron */");
-  cout("  do { /* while in a SPLIT */");
-  cout("    while (!ABSORBED) { /* iterate neutron event until absorbed */");
-  cout("      " ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_save = " ID_PRE MCCODE_PARTICLE "_particle;");
+  cout("  while (!ABSORBED) { /* iterate neutron event until absorbed */");
 
+  cout("    /* send neutron event to component instance, one after the other */");
   
-  cout("      /* send neutron event to component instance */");
-  
-  /* now we produce the list of 'case' statements for each component index, with the attached logic */
+  /* now we produce the list of statements for each component index, with the attached logic */
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL) {
-    coutf("      if (" ID_PRE MCCODE_PARTICLE "->index == %i) {", comp->index);
-    coutf("        /* component %s=%s() [%i] parameters */", comp->name, comp->def->name, comp->index);
+  
+    /* the SPLIT loop must be set before we enter further component blocks */
+    if (comp->split) {
+      char *exp=exp_tostring(comp->split);
+      
+      coutf("    /* start SPLIT at %s */", comp->name);
+      
+      coutf("    " ID_PRE "instrument->logic.Split_%s_particle=" ID_PRE MCCODE_PARTICLE "_particle;", comp->name); // store incoming particle state at SPLIT
+      coutf("    if (" ID_PRE MCCODE_PARTICLE "->index == %i) ", comp->index);
+      coutf("    for (" ID_PRE "instrument->logic.Split_%s = 0; " 
+                          ID_PRE "instrument->logic.Split_%s< %s; " 
+                          ID_PRE "instrument->logic.Split_%s++) {", 
+        comp->name, comp->name, exp, comp->name);
+      str_free(exp);
+      cout( "    {");
+    } // for split
+    else
+      coutf("    if (" ID_PRE MCCODE_PARTICLE "->index == %i) {", comp->index);
+      
+    coutf("      /* component %s=%s() [%i] */", comp->name, comp->def->name, comp->index);
+    if (comp->split) {
+      char *exp=exp_tostring(comp->split);
+      coutf("      " ID_PRE MCCODE_PARTICLE "_particle=" 
+        ID_PRE "instrument->logic.Split_%s_particle;", comp->name); // restore particle for SPLIT loop
+      coutf("      p /= %s > 0 ? %s : 1;", exp, exp); 
+    }
 
     if (comp->split || comp->when || list_len(comp->jump) > 0) {
-      coutf("        #define " ID_PRE "instance_MYSELF " ID_PRE "instance_%s", comp->name);
+      coutf("      #define " ID_PRE "instance_MYSELF " ID_PRE "instance_%s", comp->name);
       warnings += cogen_comp_init_defpar(comp); // specific to each instance
       cogen_defundef(comp, comp->def->set_par, GLOBAL_INSTANCE_PAR_REF);
       cogen_defundef(comp, comp->def->out_par, GLOBAL_INSTANCE_PAR_REF);
-
-      // define instrument state parameters (not in conflict with comp)
-      //cogen_defundef(comp, instr->formals, INSTRUMENT_PAR_VALUE); /* print warning if conflicting parameter found ? */
     }
     // coordinate transformations (wrt to PREVIOUS)
-    coutf("        " ID_PRE "coordschange(" 
+    coutf("      " ID_PRE "coordschange(" 
       ID_PRE "instance_%s->position_relative, " 
       ID_PRE "instance_%s->rotation_relative, " ID_PRE MCCODE_PARTICLE ");",
       comp->name, comp->name);
 
-    if (comp->group) // GROUP
-      if (!strcmp(comp->name, comp->group->first_comp))
-        coutf("        " ID_PRE "instrument->logic.Group_%s=0; /* enter the group */", comp->group->name);
-
-    // SPLIT counters are initiated once
-    if (comp->split) {
-      char *exp=exp_tostring(comp->split);
-      coutf("        if (" ID_PRE "instrument->logic.Split_%s < 0) { /* store initial SPLIT particle */", comp->name);
-      coutf("          p /= %s > 0 ? %s : 1;", exp, exp);
-      coutf("          " ID_PRE "instrument->logic.Split_%s=%s > 0 ? %s : 1;", comp->name, exp, exp);
-      coutf("          " ID_PRE "instrument->logic.Split_%s_particle=" ID_PRE MCCODE_PARTICLE "_particle;", comp->name); // SPLIT
-      cout( "          flag_split++;");
-      cout( "        }");
-      str_free(exp);
-    }
-
-    if (comp->group) {
-      // in GROUP: test if a previous group member took the token (scattered)
-      coutf("        if (" ID_PRE "instrument->logic.Group_%s) /* GROUP logic: SCATTERED occured before: skip */", comp->group->name);
-      cout( "          break; // directly go to next comp when flag is set (and skip all other group members)");
-    }
-
     /* call the component when there are TRACE and/or EXTEND lines */
     if (list_len(comp->def->trace_code->lines) > 0 || list_len(comp->extend->lines) > 0) {
+      cout("      " ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_save = " ID_PRE MCCODE_PARTICLE "_particle;");
       if (comp->when) { // WHEN
         char *exp=exp_tostring(comp->when);
-        coutf("        if (%s) // conditional WHEN execution", exp);
+        coutf("      if (%s) // conditional WHEN execution", exp);
         str_free(exp);
       }
       /* call the component instance TRACE function */
-      coutf("        " ID_PRE "instance_%s_trace(" ID_PRE MCCODE_PARTICLE ");%s",
+      coutf("      " ID_PRE "instance_%s_trace(" ID_PRE MCCODE_PARTICLE ");%s",
         comp->name, list_len(comp->extend->lines) ? " /* contains EXTEND code */" : "");
+      cout( "      if (RESTORE) /* keep propagation and restore neutron (even when ABSORBED in the same loop) */");
+      cout( "        " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE MCCODE_PARTICLE "_save;");
     };
-    if (comp->group) {
-      // GROUP (with group1==0)
-      cout( "        if (SCATTERED) /* skip other members of the group when scattered */");
-      coutf("          " ID_PRE "instrument->logic.Group_%s=" ID_PRE MCCODE_PARTICLE "->index; ", 
-        comp->group->name);
-      cout( "        else RESTORE=1;");
-    }
 
+    if (comp->split || comp->when || list_len(comp->jump) > 0) {
+      cogen_defundef(comp, comp->def->def_par, PAR_UNDEF);
+      cogen_defundef(comp, comp->def->set_par, PAR_UNDEF);
+      cogen_defundef(comp, comp->def->out_par, PAR_UNDEF);
+      cout("      #undef " ID_PRE "instance_MYSELF");
+    }
+    /* if we have a JUMP, change the index */
     // JUMP
     if(list_len(comp->jump) > 0) {
       struct jump_struct *this_jump;
       List_handle liter2 = list_iterate(comp->jump);
       while(this_jump = list_next(liter2)) {
         char *exp = exp_tostring(this_jump->condition);
+        /* as there will be a neutron->index++, we subtract 1 to the target */
         if (this_jump->iterate) {
-          coutf("        if(" ID_PRE "instrument->logic.Jump_%s_%s++ < %s) /* test for iteration */", 
+          coutf("      if (++" ID_PRE "instrument->logic.Jump_%s_%s < %s) /* test for iteration */", 
             comp->name, this_jump->target, exp);
-          coutf("          {" ID_PRE MCCODE_PARTICLE "->index = %i; break; }", this_jump->target_index);
-          coutf("        else " ID_PRE "instrument->logic.Jump_%s_%s=0; /* reset Jump loop and go forward */",
+          coutf("        " ID_PRE MCCODE_PARTICLE "->index = %i;", this_jump->target_index-1);
+          coutf("      else " ID_PRE "instrument->logic.Jump_%s_%s=0; /* reset Jump loop and go forward */",
             comp->name, this_jump->target);
         } else {
-          coutf("        if (%s) /* conditional JUMP to %s */", exp, this_jump->target);
-          coutf("          { " ID_PRE MCCODE_PARTICLE "->index=%i; break; }", this_jump->target_index);
+          coutf("      if (%s) /* conditional JUMP to %s */", exp, this_jump->target);
+          coutf("        " ID_PRE MCCODE_PARTICLE "->index=%i;", this_jump->target_index-1);
         }
       }
       list_iterate_end(liter2);
     }
-    if (comp->split || comp->when || list_len(comp->jump) > 0) {
-      cogen_defundef(comp, comp->def->def_par, PAR_UNDEF);
-      cogen_defundef(comp, comp->def->set_par, PAR_UNDEF);
-      cogen_defundef(comp, comp->def->out_par, PAR_UNDEF);
-      //cogen_defundef(NULL, instr->formals, PAR_UNDEF);
-      cout("        #undef " ID_PRE "instance_MYSELF");
-    }
-    cout("      } else");
+    
+    coutf("      " ID_PRE MCCODE_PARTICLE "->index++;");
+    coutf("    } /* end component %s [%i] */", comp->name, comp->index);
     
   } /* end while comp list (case) */
   list_iterate_end(liter);
   
-  /* write default case */
-  cout("        ABSORBED=1; // normal end of neutron when no other logic/grammar");
-  cout("");
-  cout("      if (RESTORE) /* keep propagation and restore neutron (even when ABSORBED in the same loop) */");
-  cout("        { " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE MCCODE_PARTICLE "_save; }");
+  /* handle ABSORB when no more comp, go to next comp, and RESTORE */
+
   
-  cout("      " ID_PRE MCCODE_PARTICLE "->index++; /* we go to next comp normally */");
-  cout("    } /* while !ABSORBED */");
-  cout("");
-  // split counters are handled here, unrolled from last to 1st
+
+  /* now we close the SPLIT loops, unrolled from last to 1st */
   liter = list_iterate_back(instr->complist);
   while((comp = list_previous(liter)) != NULL) {
     if (comp && comp->split) {
-      coutf("    if (flag_split <= %d && " ID_PRE "instrument->logic.Split_%s > 0) {", 
-        split_counts--, comp->name);
-      coutf("      " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE "instrument->logic.Split_%s_particle;"
-        " /* put initial neutron back to split point */",
-        comp->name);
-      coutf("      " ID_PRE "instrument->logic.Split_%s--; /* compensate for next comp below */", comp->name);
-      coutf("      if (" ID_PRE "instrument->logic.Split_%s == 0) {", comp->name);
-      cout( "        if (--flag_split >= 1) /* an other external loop is running */");
-      coutf("          " ID_PRE "instrument->logic.Split_%s = -1; /* trigger new internal loop */", 
-        comp->name);
-      cout( "      }");
-      cout( "    }");
+      coutf( "    } /* end SPLIT at %s */", comp->name);
     }
   }
   list_iterate_end(liter);
-      
-  cout("  } while (flag_split); /* end while in a SPLIT */");
+  /*   propagate to next component */
+  coutf("    if (" ID_PRE MCCODE_PARTICLE "->index > %d)", list_len(instr->complist));
+  /* if we reach the last component, and nothing happened, ABSORB */
+  cout( "      ABSORBED++; /* absorbed when passed all components */");
+
+  cout("  } /* while !ABSORBED */");
   cout("");
   cout("  DEBUG_LEAVE()");
   /* Debugging (final state). */
