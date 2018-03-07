@@ -505,10 +505,10 @@ int cogen_comp_declare(struct comp_inst *comp)
                 comment_start = comment_end = NULL; /* reset locations for next comment */
               }
               if (comment_start && !comment_end) { /* the start of a multiline C-style comment (or continuation) */
-                for (p=comment_start; p<line+strlen(line); p++) *p=' ';
+                for (p=comment_start; p<line+strlen(line)-1; p++) *p=' ';
               }
               if (comment_toend) {
-                for (p=comment_toend; p<line+strlen(line); p++) *p=' ';
+                for (p=comment_toend; p<line+strlen(line)-1; p++) *p=' ';
               }
               
               while (p=strstr(subline, c_formal->id)) {
