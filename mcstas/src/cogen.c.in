@@ -1662,7 +1662,7 @@ int cogen_trace(struct instr_def *instr)
       coutf("    /* start SPLIT at %s */", comp->name);
       
       coutf("    " ID_PRE "instrument->logic.Split_%s_particle=" ID_PRE MCCODE_PARTICLE "_particle;", comp->name); // store incoming particle state at SPLIT
-      coutf("    if (" ID_PRE MCCODE_PARTICLE "->index == %i) ", comp->index);
+      coutf("    if (!ABSORBED && " ID_PRE MCCODE_PARTICLE "->index == %i) ", comp->index);
       coutf("    for (" ID_PRE "instrument->logic.Split_%s = 0; " 
                           ID_PRE "instrument->logic.Split_%s< %s; " 
                           ID_PRE "instrument->logic.Split_%s++) {", 
@@ -1671,7 +1671,7 @@ int cogen_trace(struct instr_def *instr)
       cout( "    {");
     } // for split
     else
-      coutf("    if (" ID_PRE MCCODE_PARTICLE "->index == %i) {", comp->index);
+      coutf("    if (!ABSORBED && " ID_PRE MCCODE_PARTICLE "->index == %i) {", comp->index);
       
     coutf("      /* component %s=%s() [%i] */", comp->name, comp->def->name, comp->index);
     if (comp->split) {
