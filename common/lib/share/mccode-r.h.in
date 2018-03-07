@@ -382,12 +382,12 @@ void mcdis_sphere(double x, double y, double z, double r, int N);
 
 /* selection of random number generator. default is MT */
 #ifndef MC_RAND_ALG
-#define MC_RAND_ALG 0
+#define MC_RAND_ALG 1
 #endif
 
 #if MC_RAND_ALG == 0
    /* Use system random() (not recommended). */
-#define random randjunk
+#define random random
 #  define MC_RAND_MAX RAND_MAX
 #elif MC_RAND_ALG == 1
    /* "Mersenne Twister", by Makoto Matsumoto and Takuji Nishimura. */
@@ -405,6 +405,10 @@ void mcdis_sphere(double x, double y, double z, double r, int N);
 #  define random  mt_random_opencl
 #  define srandom mt_srandom_opencl
 //#  define srandom mt_srandom
+#elif MC_RAND_ALG == 4
+  /* Pure testing purposes, returns the "random" number 0.5 */
+#define random randjunk
+#  define MC_RAND_MAX RAND_MAX
 #else
 #  error "Bad value for random number generator choice."
 #endif
