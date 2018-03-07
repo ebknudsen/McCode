@@ -481,11 +481,36 @@ int cogen_comp_declare(struct comp_inst *comp)
 
           if(list_len(comp->def->decl_code->lines) > 0) {
             List_handle liter = list_iterate(comp->def->decl_code->lines);
-            char *line;                       /* Single code line. */
+            char *line;                /* Single code line. */
+            char *comment_start= NULL; /* this is the C style comment start */
+            char *comment_end  = NULL; /* this is the C style comment end */
+            char *comment_toend= NULL; /* this is the C++ style comment start (to end of line) */
             while(line = list_next(liter))
             {
               char *subline = line;
-              char *p;
+              char *p       = NULL;
+
+              /* search for comments */
+              if (comment_start)       /* continuation from a previous line */
+                comment_start = line;
+              else if (!comment_start) /* start of a new comment ? */
+                comment_start = strstr(line, "/*");
+              comment_end   = strstr(line, "*/");
+              if (comment_end && comment_end+2 < line+strlen(line))
+                comment_end += 2;
+              comment_toend = strstr(line, "//");
+              
+              if (comment_start && comment_end) { /* a full C-style comment on a line (or continuation to end) */
+                for (p=comment_start; p<comment_end; p++) *p=' ';
+                comment_start = comment_end = NULL; /* reset locations for next comment */
+              }
+              if (comment_start && !comment_end) { /* the start of a multiline C-style comment (or continuation) */
+                for (p=comment_start; p<line+strlen(line); p++) *p=' ';
+              }
+              if (comment_toend) {
+                for (p=comment_toend; p<line+strlen(line); p++) *p=' ';
+              }
+              
               while (p=strstr(subline, c_formal->id)) {
                 /* the parameter name appears in DECLARE code */
                 int char_before=0;
@@ -507,14 +532,7 @@ int cogen_comp_declare(struct comp_inst *comp)
             list_iterate_end(liter);
           }
           if (flag_is_in_declare_code) {
-            /* already in DECLARE code, print a warning for possible duplication */
-            fprintf(stderr,"Warning: Component %s=%s() DECLARE shows duplicated word '%s'.\n"
-                           "         If this is within a comment, it is harmless.\n"
-                           "         Otherwise this may lead to ERROR in compilation.\n"
-                           ">>>      Avoid having same symbol '%s' in\n"
-                           "         SETTINGS or OUTPUT/PRIVATE, and DECLARE block.\n",
-        	    comp->name, comp->def->name, c_formal->id, c_formal->id);
-            
+            continue; /* already in DECLARE code, no need to add it to the structure */
           }
 
           /* scalar parameter */
@@ -566,6 +584,7 @@ int cogen_comp_declare(struct comp_inst *comp)
     cout( "  Coords   position_relative; /* wrt PREVIOUS */");
     cout( "  Rotation rotation_absolute;");
     cout( "  Rotation rotation_relative; /* wrt PREVIOUS */");
+    cout( "  int      rotation_is_identity;");
     coutf("  struct " ID_PRE "%s_parameters_struct parameters;", comp->def->name);
     cout("};");
   } /* define class type parameter structure when not done yet (only once) */
@@ -701,6 +720,8 @@ static void cogen_comp_init_position(struct comp_inst *comp, struct comp_inst *l
     coutf("    rot_mul(%sinstance_%s->rotation_absolute, %str1, %sinstance_%s->rotation_relative);",
           ID_PRE, comp->name, ID_PRE, ID_PRE, comp->name);
   }
+  coutf("    %sinstance_%s->rotation_is_identity =  rot_test_identity(%sinstance_%s->rotation_relative);",
+    ID_PRE, comp->name, ID_PRE, comp->name);
 
   /* Absolute position. */
   x = exp_tostring(comp->pos->place.x);
@@ -1696,7 +1717,12 @@ int cogen_trace(struct instr_def *instr)
       cogen_defundef(comp, comp->def->out_par, GLOBAL_INSTANCE_PAR_REF);
     }
     // coordinate transformations (wrt to PREVIOUS)
-    coutf("      " ID_PRE "coordschange(" 
+    coutf("      if (" ID_PRE "instance_%s->rotation_is_identity) {", comp->name);
+    coutf("        coords_get("
+      "coords_add(coords_set(x,y,z), " ID_PRE "instance_%s->position_relative),"
+      "&x, &y, &z);", comp->name);
+    cout( "      } else");
+    coutf("        " ID_PRE "coordschange(" 
       ID_PRE "instance_%s->position_relative, " 
       ID_PRE "instance_%s->rotation_relative, " ID_PRE MCCODE_PARTICLE ");",
       comp->name, comp->name);
