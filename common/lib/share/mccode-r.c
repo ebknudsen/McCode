@@ -4009,7 +4009,7 @@ mcseed=(long)ct;
 
 /* main particle event loop */
 #pragma acc parallel loop
-  for (mcrun_num=0 ; mcrun_num < mcncount  || mcrun_num < mcget_ncount(); mcrun_num++) {
+  for (unsigned long long Xmcrun_num=0 ; Xmcrun_num < mcncount ; Xmcrun_num++) {
   /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
 #if MCCODE_PARTICLE_CODE == 2112
     mcraytrace(mcneutron);
