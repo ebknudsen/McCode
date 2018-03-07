@@ -506,8 +506,16 @@ int cogen_comp_declare(struct comp_inst *comp)
             }
             list_iterate_end(liter);
           }
-          if (flag_is_in_declare_code)  
-            continue; /* already in DECLARE code, no need to add it to the structure */
+          if (flag_is_in_declare_code) {
+            /* already in DECLARE code, print a warning for possible duplication */
+            fprintf(stderr,"Warning: Component %s=%s() DECLARE shows duplicated word '%s'.\n"
+                           "         If this is within a comment, it is harmless.\n"
+                           "         Otherwise this may lead to ERROR in compilation.\n"
+                           ">>>      Avoid having same symbol '%s' in\n"
+                           "         SETTINGS or OUTPUT/PRIVATE, and DECLARE block.\n",
+        	    comp->name, comp->def->name, c_formal->id, c_formal->id);
+            
+          }
 
           /* scalar parameter */
           if (c_formal->type != instr_type_string)
