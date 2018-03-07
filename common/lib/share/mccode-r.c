@@ -4011,6 +4011,7 @@ mcseed=(long)ct;
 #pragma acc parallel loop
   for (unsigned long long Xmcrun_num=0 ; Xmcrun_num < mcncount ; Xmcrun_num++) {
   /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
+    mcneutron.uid = Xmcrun_num;
 #if MCCODE_PARTICLE_CODE == 2112
     mcraytrace(mcneutron);
 #elif MCCODE_PARTICLE_CODE == 22
