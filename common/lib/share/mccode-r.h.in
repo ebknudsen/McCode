@@ -412,14 +412,11 @@ void mcdis_sphere(double x, double y, double z, double r, int N);
 #elif MC_RAND_ALG == 5
   /* Use CUDA rand algo - we should check for availability 
      of CUDA libs - and otherwise fail*/
-#  define MC_RAND_MAX RAND_MAX // <--------------- What should we put here?
 #  include "openacc_curand.h"
-#  define random mt_random_cuda
-#  define srandom mt_srandom_cuda
-unsigned long mt_random_cuda(void);
-void mt_srandom_cuda(unsigned long x);
-void twister_init(int seed, int t_id, curandState_t* state);
-float twister_uniform(int seed, int t_id);
+#  define MC_RAND_MAX ((unsigned int) 0xffffffff) 
+#  define srandom mc_srandom
+#  define random mt_random /* random will be overwritten in main pragma loop */
+float twister_initdraw(int seed, int t_id, curandState_t* state);
 #else
 #  error "Bad value for random number generator choice."
 #endif

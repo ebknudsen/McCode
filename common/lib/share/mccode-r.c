@@ -55,6 +55,7 @@ int mcdefaultmain  = 0;
 #endif
 /* else defined directly in the McCode generated C code */
 
+#pragma acc declare ( mcseed ) 
 static   long mcseed                 = 0; /* seed for random generator */
 static   long mcstartdate            = 0; /* start simulation time */
 static   int  mcdisable_output_files = 0; /* --no-output-files */
@@ -3331,38 +3332,13 @@ unsigned long randjunk()
 
 /* CUDA-based mersenne twister */
 #ifdef MC_RAND_ALG == 5
-/* High-level functions */
-
-/* Wrapper function to pick a random number! */ 
-#pragma acc routine seq nohost
-unsigned long mt_random_cuda() {  
-}
-
-/* Wrapper function for initializer */
-#pragma acc routine seq nohost
-void mt_srandom_cuda(unsigned long s) {
-}
-
-
-/* Low level functions */
-#pragma acc routine seq nohost
-void
-twister_init(int seed, int t_id, curandState_t* state) {
-  long long seq = (long long) t_id;
-  curand_init(seed, seq, 0ULL, &state);
-}
-
 #pragma acc routine seq nohost
 float
-twister_uniform(int seed, int t_id)
-{
-  long long seq;
-  unsigned long long offset;
-  curandState_t state;
-  seed = seed;
-  seq = (long long) t_id;
-  offset = 0ULL;
-  curand_init(seed, seq, offset, &state);
+twister_initdraw(int seed, int t_id, curandState_t* state) {
+  long long seq = t_id;
+  long long s = seed;
+  if (state == NULL)
+    curand_init(seed, seq, 0ULL, state);
   return curand_uniform(&state);
 }
 #endif
@@ -4037,25 +4013,37 @@ mcseed=(long)ct;
 #endif
 
 #ifndef NEUTRONICS
-#if MCCODE_PARTICLE_CODE == 2112
-  mcparticle mcneutron = mcgenstate(); // initial particle
-#elif MCCODE_PARTICLE_CODE == 22
-  mcparticle mcxray = mcgenstate(); // initial particle
-#endif
-#endif
 
+#ifdef MC_ALG_RAND == 5 
+#pragma acc declare ( MCRANDstate )
+    curandState_t MCRANDstate;
+#endif
 
 
 /* main particle event loop */
 #pragma acc parallel loop
   {
-  unsigned long long Xmcrun_num;
+  unsigned long long Xmcrun_num = mcrun_num;
   for (Xmcrun_num=0 ; Xmcrun_num < mcncount ; Xmcrun_num++) {
+#ifdef MC_ALG_RAND == 5 
+    curandState_t MCRANDstate;
+    long long seq = Xmcrun_num;
+    curand_init(mcseed, seq, 0ULL, MCRANDstate);
+#endif
+#define random twister_initdraw(mcseed,mcneutron.uid,mcneutron.MCRANDstate);
   /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
-    mcneutron.uid = Xmcrun_num;
+
 #if MCCODE_PARTICLE_CODE == 2112
+    mcneutron.uid = Xmcrun_num;
+#ifdef MC_ALG_RAND == 5 
+    mcneutron.MCRANDstate = MCRANDstate;
+#endif
     mcraytrace(mcneutron);
 #elif MCCODE_PARTICLE_CODE == 22
+    mcxray.uid = Xmcrun_num;
+#ifdef MC_ALG_RAND == 5 
+    mcraytrace.MCRANDstate = MCRANDstate;
+#endif
     mcraytrace(mcxray);
 #endif
   }
