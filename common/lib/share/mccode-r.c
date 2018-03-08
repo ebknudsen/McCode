@@ -87,6 +87,7 @@ static int mpi_node_root = 0;
 /*******************************************************************************
 * mc_MPI_Reduce: Gathers arrays from MPI nodes using Reduce function.
 *******************************************************************************/
+#pragma acc routine seq
 int mc_MPI_Sum(double *sbuf, long count)
 {
   if (!sbuf || count <= 0) return(MPI_SUCCESS); /* nothing to reduce */
@@ -117,6 +118,7 @@ int mc_MPI_Sum(double *sbuf, long count)
 /*******************************************************************************
 * mc_MPI_Send: Send array to MPI node by blocks to avoid buffer limit
 *******************************************************************************/
+#pragma acc routine seq
 int mc_MPI_Send(void *sbuf,
                   long count, MPI_Datatype dtype,
                   int dest)
@@ -144,6 +146,7 @@ int mc_MPI_Send(void *sbuf,
 * mc_MPI_Recv: Receives arrays from MPI nodes by blocks to avoid buffer limit
 *             the buffer must have been allocated previously.
 *******************************************************************************/
+#pragma acc routine seq
 int mc_MPI_Recv(void *sbuf,
                   long count, MPI_Datatype dtype,
                   int source)
@@ -176,8 +179,8 @@ int mc_MPI_Recv(void *sbuf,
 /*******************************************************************************
 * mcparm_double: extract double value from 's' into 'vptr'
 *******************************************************************************/
-static int
-mcparm_double(char *s, void *vptr)
+#pragma acc routine seq
+static int mcparm_double(char *s, void *vptr)
 {
   char *p;
   double *v = (double *)vptr;
@@ -193,8 +196,8 @@ mcparm_double(char *s, void *vptr)
 /*******************************************************************************
 * mcparminfo_double: display parameter type double
 *******************************************************************************/
-static char *
-mcparminfo_double(char *parmname)
+#pragma acc routine seq
+static char *mcparminfo_double(char *parmname)
 {
   return "double";
 }
@@ -202,6 +205,7 @@ mcparminfo_double(char *parmname)
 /*******************************************************************************
 * mcparmerror_double: display error message when failed extract double
 *******************************************************************************/
+#pragma acc routine seq
 static void
 mcparmerror_double(char *parm, char *val)
 {
@@ -212,8 +216,8 @@ mcparmerror_double(char *parm, char *val)
 /*******************************************************************************
 * mcparmprinter_double: convert double to string
 *******************************************************************************/
-static void
-mcparmprinter_double(char *f, void *vptr)
+#pragma acc routine seq
+static void mcparmprinter_double(char *f, void *vptr)
 {
   double *v = (double *)vptr;
   sprintf(f, "%g", *v);
@@ -222,8 +226,8 @@ mcparmprinter_double(char *f, void *vptr)
 /*******************************************************************************
 * mcparm_int: extract int value from 's' into 'vptr'
 *******************************************************************************/
-static int
-mcparm_int(char *s, void *vptr)
+#pragma acc routine seq
+static int mcparm_int(char *s, void *vptr)
 {
   char *p;
   int *v = (int *)vptr;
@@ -244,8 +248,8 @@ mcparm_int(char *s, void *vptr)
 /*******************************************************************************
 * mcparminfo_int: display parameter type int
 *******************************************************************************/
-static char *
-mcparminfo_int(char *parmname)
+#pragma acc routine seq
+static char *mcparminfo_int(char *parmname)
 {
   return "int";
 }
@@ -253,8 +257,8 @@ mcparminfo_int(char *parmname)
 /*******************************************************************************
 * mcparmerror_int: display error message when failed extract int
 *******************************************************************************/
-static void
-mcparmerror_int(char *parm, char *val)
+#pragma acc routine seq
+static void mcparmerror_int(char *parm, char *val)
 {
   fprintf(stderr, "Error: Invalid value '%s' for integer parameter %s (mcparmerror_int)\n",
           val, parm);
@@ -263,8 +267,8 @@ mcparmerror_int(char *parm, char *val)
 /*******************************************************************************
 * mcparmprinter_int: convert int to string
 *******************************************************************************/
-static void
-mcparmprinter_int(char *f, void *vptr)
+#pragma acc routine seq
+static void mcparmprinter_int(char *f, void *vptr)
 {
   int *v = (int *)vptr;
   sprintf(f, "%d", *v);
@@ -273,8 +277,8 @@ mcparmprinter_int(char *f, void *vptr)
 /*******************************************************************************
 * mcparm_string: extract char* value from 's' into 'vptr' (copy)
 *******************************************************************************/
-static int
-mcparm_string(char *s, void *vptr)
+#pragma acc routine seq
+static int mcparm_string(char *s, void *vptr)
 {
   char **v = (char **)vptr;
   if (!s) { *v = NULL; return(1); }
@@ -290,8 +294,8 @@ mcparm_string(char *s, void *vptr)
 /*******************************************************************************
 * mcparminfo_string: display parameter type string
 *******************************************************************************/
-static char *
-mcparminfo_string(char *parmname)
+#pragma acc routine seq
+static char * mcparminfo_string(char *parmname)
 {
   return "string";
 }
@@ -299,8 +303,8 @@ mcparminfo_string(char *parmname)
 /*******************************************************************************
 * mcparmerror_string: display error message when failed extract string
 *******************************************************************************/
-static void
-mcparmerror_string(char *parm, char *val)
+#pragma acc routine seq
+static void mcparmerror_string(char *parm, char *val)
 {
   fprintf(stderr, "Error: Invalid value '%s' for string parameter %s (mcparmerror_string)\n",
           val, parm);
@@ -309,8 +313,8 @@ mcparmerror_string(char *parm, char *val)
 /*******************************************************************************
 * mcparmprinter_string: convert string to string (including esc chars)
 *******************************************************************************/
-static void
-mcparmprinter_string(char *f, void *vptr)
+#pragma acc routine seq
+static void mcparmprinter_string(char *f, void *vptr)
 {
   char **v = (char **)vptr;
   char *p;
@@ -369,6 +373,7 @@ static struct
 /*******************************************************************************
 * mcestimate_error: compute sigma from N,p,p2 in Gaussian large numbers approx
 *******************************************************************************/
+#pragma acc routine seq
 double mcestimate_error(double N, double p1, double p2)
 {
   double pmean, n1;
@@ -448,6 +453,7 @@ char *stracpy(char *destination, const char *source, size_t amount)
 /*******************************************************************************
 * mcfull_file: allocates a full file name=mcdirname+file. Catenate extension if missing.
 *******************************************************************************/
+#pragma acc routine seq
 char *mcfull_file(char *name, char *ext)
 {
   int   dirlen=0;
@@ -481,6 +487,7 @@ char *mcfull_file(char *name, char *ext)
 *             the extension 'ext' is added if the file name does not include one.
 *             the last argument is set to 0 if file did not exist, else to 1.
 *******************************************************************************/
+#pragma acc routine seq
 FILE *mcnew_file(char *name, char *ext, int *exists)
 {
   char *mem;
@@ -525,6 +532,7 @@ FILE *mcnew_file(char *name, char *ext, int *exists)
 * RETURN:            updated detector structure
 * Used by: mcdetector_import
 *******************************************************************************/
+#pragma acc routine seq
 MCDETECTOR mcdetector_statistics(
   MCDETECTOR detector)
 {
@@ -673,6 +681,7 @@ MCDETECTOR mcdetector_statistics(
 *                    Simulation data  sets m=0 and filename=mcsiminfo_name
 * This function is equivalent to the old 'mcdetector_out', returning a structure
 *******************************************************************************/
+#pragma acc routine seq
 MCDETECTOR mcdetector_import(
   char *format,
   char *component, char *title,
@@ -878,6 +887,7 @@ MCDETECTOR mcdetector_import(
 * mcinfo_out: output instrument tags/info (only in SIM)
 * Used in: mcsiminfo_init (ascii), mcinfo(stdout)
 *******************************************************************************/
+#pragma acc routine seq
 static void mcinfo_out(char *pre, FILE *f)
 {
   char Parameters[CHAR_BUF_LENGTH] = "";
@@ -923,6 +933,7 @@ static void mcinfo_out(char *pre, FILE *f)
 * mcruninfo_out: output simulation tags/info (both in SIM and data files)
 * Used in: mcsiminfo_init (ascii case), mcdetector_out_xD_ascii
 *******************************************************************************/
+#pragma acc routine seq
 static void mcruninfo_out(char *pre, FILE *f)
 {
   int i;
@@ -966,6 +977,7 @@ static void mcruninfo_out(char *pre, FILE *f)
 /*******************************************************************************
 * mcsiminfo_out:    wrapper to fprintf(mcsiminfo_file)
 *******************************************************************************/
+#pragma acc routine seq
 void mcsiminfo_out(char *format, ...)
 {
   va_list ap;
@@ -983,8 +995,8 @@ void mcsiminfo_out(char *format, ...)
 * mcdatainfo_out: output detector header
 *   mcdatainfo_out(prefix, file_handle, detector) writes info to data file
 *******************************************************************************/
-static void
-mcdatainfo_out(char *pre, FILE *f, MCDETECTOR detector)
+#pragma acc routine seq
+static void mcdatainfo_out(char *pre, FILE *f, MCDETECTOR detector)
 {
   if (!f || !detector.m || mcdisable_output_files) return;
   
@@ -1056,6 +1068,7 @@ static void mcdetector_out_array_ascii(long m, long n, double *p, FILE *f, char 
 /*******************************************************************************
 * mcdetector_out_0D_ascii: called by mcdetector_out_0D for ascii output
 *******************************************************************************/
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_0D_ascii(MCDETECTOR detector)
 {
   int exists=0;
@@ -1085,6 +1098,7 @@ MCDETECTOR mcdetector_out_0D_ascii(MCDETECTOR detector)
 /*******************************************************************************
 * mcdetector_out_1D_ascii: called by mcdetector_out_1D for ascii output
 *******************************************************************************/
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_1D_ascii(MCDETECTOR detector)
 {
   int exists=0;
@@ -1116,6 +1130,7 @@ MCDETECTOR mcdetector_out_1D_ascii(MCDETECTOR detector)
 /*******************************************************************************
 * mcdetector_out_2D_ascii: called by mcdetector_out_2D for ascii output
 *******************************************************************************/
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_2D_ascii(MCDETECTOR detector)
 {
   int exists=0;
@@ -1190,6 +1205,7 @@ MCDETECTOR mcdetector_out_2D_ascii(MCDETECTOR detector)
 *   copy 'original' into 'valid', replacing invalid characters by '_'
 *   char arrays must be pre-allocated
 *******************************************************************************/
+#pragma acc routine seq
 static char *strcpy_valid(char *valid, char *original)
 {
   long i;
@@ -1241,6 +1257,7 @@ static char *strcpy_valid(char *valid, char *original)
 *   type='d' -> data set
 *        'a' -> attribute for current data set
 *******************************************************************************/
+#pragma acc routine seq
 static int nxstr(char type, NXhandle *f, char *tag, char *format, ...)
 {
   va_list ap;
@@ -1286,6 +1303,7 @@ static int nxstr(char type, NXhandle *f, char *tag, char *format, ...)
 *   Think to free the buffer after use.
 * Used in: mcinfo_out_nexus (nexus)
 *******************************************************************************/
+#pragma acc routine seq
 char *mcinfo_readfile(char *filename)
 {
   FILE *f = fopen(filename, "rb");
@@ -1307,6 +1325,7 @@ char *mcinfo_readfile(char *filename)
 * mcinfo_out: output instrument/simulation groups in NeXus file
 * Used in: mcsiminfo_init (nexus)
 *******************************************************************************/
+#pragma acc routine seq
 static void mcinfo_out_nexus(NXhandle f)
 {
   FILE  *fid;     /* for intrument source code/C/IDF */
@@ -1468,8 +1487,8 @@ static void mcinfo_out_nexus(NXhandle f)
 *   open data:NXdetector then filename:NXdata and write headers/attributes
 *   requires: NXentry to be opened
 *******************************************************************************/
-static void
-mcdatainfo_out_nexus(NXhandle f, MCDETECTOR detector)
+#pragma acc routine seq
+static void mcdatainfo_out_nexus(NXhandle f, MCDETECTOR detector)
 {
   char data_name[32];
   if (!f || !detector.m || mcdisable_output_files) return;
@@ -1541,6 +1560,7 @@ mcdatainfo_out_nexus(NXhandle f, MCDETECTOR detector)
 * mcdetector_out_axis_nexus: write detector axis into current NXdata
 *   requires: NXdata to be opened
 *******************************************************************************/
+#pragma acc routine seq
 int mcdetector_out_axis_nexus(NXhandle f, char *label, char *var, int rank, long length, double min, double max)
 {
   if (!f || length <= 1 || mcdisable_output_files || max == min) return(NX_OK);
@@ -1579,6 +1599,7 @@ int mcdetector_out_axis_nexus(NXhandle f, char *label, char *var, int rank, long
 * mcdetector_out_array_nexus: write detector array into current NXdata (1D,2D)
 *   requires: NXdata to be opened
 *******************************************************************************/
+#pragma acc routine seq
 int mcdetector_out_array_nexus(NXhandle f, char *part, double *data, MCDETECTOR detector)
 {
   
@@ -1645,6 +1666,7 @@ int mcdetector_out_array_nexus(NXhandle f, char *part, double *data, MCDETECTOR 
 *   The data:NXdetector is opened, then filename:NXdata
 *   requires: NXentry to be opened
 *******************************************************************************/
+#pragma acc routine seq
 int mcdetector_out_data_nexus(NXhandle f, MCDETECTOR detector)
 {
   char data_name[32];
@@ -1699,6 +1721,7 @@ int mcdetector_out_data_nexus(NXhandle f, MCDETECTOR detector)
 *   when finishing (e.g. monitor_nd), it may not trigger save but others may. 
 *   Then the number of recv/send is not constant along nodes, and simulation stalls.  
 *******************************************************************************/
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_list_slaves(MCDETECTOR detector)
 {
   int     node_i=0;
@@ -1752,6 +1775,7 @@ MCDETECTOR mcdetector_out_list_slaves(MCDETECTOR detector)
 }
 #endif
 
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_0D_nexus(MCDETECTOR detector)
 {
   /* Write data set information to NeXus file. */
@@ -1762,6 +1786,7 @@ MCDETECTOR mcdetector_out_0D_nexus(MCDETECTOR detector)
   return(detector);
 } /* mcdetector_out_0D_ascii */
 
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_1D_nexus(MCDETECTOR detector)
 {
   MPI_MASTER(
@@ -1771,6 +1796,7 @@ MCDETECTOR mcdetector_out_1D_nexus(MCDETECTOR detector)
   return(detector);
 } /* mcdetector_out_1D_ascii */
 
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_2D_nexus(MCDETECTOR detector)
 {
   MPI_MASTER(
@@ -1807,6 +1833,7 @@ MCDETECTOR mcdetector_out_2D_nexus(MCDETECTOR detector)
 /*******************************************************************************
 * mcsiminfo_init:   open SIM and write header
 *******************************************************************************/
+#pragma acc routine seq
 FILE *mcsiminfo_init(FILE *f)
 {
   int exists=0;
@@ -1883,6 +1910,7 @@ FILE *mcsiminfo_init(FILE *f)
 /*******************************************************************************
 *   mcsiminfo_close:  close SIM
 *******************************************************************************/
+#pragma acc routine seq
 void mcsiminfo_close()
 {
 #ifdef USE_MPI  
@@ -1914,6 +1942,7 @@ void mcsiminfo_close()
 *   Output single detector/monitor data (p0, p1, p2).
 *   Title is t, component name is c.
 *******************************************************************************/
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_0D(char *t, double p0, double p1, double p2,
                          char *c, Coords posa)
 {
@@ -1944,6 +1973,7 @@ MCDETECTOR mcdetector_out_0D(char *t, double p0, double p1, double p2,
 *   bin, x2 is upper limit of last bin). Title is t, axis labels are xl
 *   and yl. File name is f, component name is c.
 *******************************************************************************/
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_1D(char *t, char *xl, char *yl,
         char *xvar, double x1, double x2,
         long n,
@@ -1973,6 +2003,7 @@ MCDETECTOR mcdetector_out_1D(char *t, char *xl, char *yl,
 * mcdetector_out_2D: wrapper for 2D.
 *   special case for list: master creates file first, then slaves append their blocks without header
 *******************************************************************************/
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_2D(char *t, char *xl, char *yl,
                   double x1, double x2, double y1, double y2,
                   long m, long n,
@@ -2032,6 +2063,7 @@ MCDETECTOR mcdetector_out_2D(char *t, char *xl, char *yl,
 * mcdetector_out_list: wrapper for list output (calls out_2D with mcformat+"list").
 *   m=number of events, n=size of each event
 *******************************************************************************/
+#pragma acc routine seq
 MCDETECTOR mcdetector_out_list(char *t, char *xl, char *yl,
                   long m, long n,
                   double *p1, char *f,
@@ -2060,8 +2092,8 @@ MCDETECTOR mcdetector_out_list(char *t, char *xl, char *yl,
  * mcuse_dir: set data/sim storage directory and create it,
  * or exit with error if exists
  ******************************************************************************/
-static void
-mcuse_dir(char *dir)
+#pragma acc routine seq
+static void mcuse_dir(char *dir)
 {
   if (!dir || !strlen(dir)) return;
 #ifdef MC_PORTABLE
@@ -2102,8 +2134,8 @@ mcuse_dir(char *dir)
 /*******************************************************************************
 * mcinfo: display instrument simulation info to stdout and exit
 *******************************************************************************/
-static void
-mcinfo(void)
+#pragma acc routine seq
+static void mcinfo(void)
 {
   fprintf(stdout, "begin instrument: %s\n", mcinstrument_name);
   mcinfo_out("  ", stdout);
@@ -2127,33 +2159,36 @@ mcinfo(void)
 /*******************************************************************************
 * mcset_ncount: set total number of rays to generate
 *******************************************************************************/
+#pragma acc routine seq
 void mcset_ncount(unsigned long long int count)
 {
   mcncount = count;
 }
 
 /* mcget_ncount: get total number of rays to generate */
+#pragma acc routine seq
 unsigned long long int mcget_ncount(void)
 {
   return mcncount;
 }
 
 /* mcget_run_num: get curent number of rays in TRACE */
+#pragma acc routine seq
 unsigned long long int mcget_run_num(void)
 {
   return mcrun_num;
 }
 
 /* mcsetn_arg: get ncount from a string argument */
-static void
-mcsetn_arg(char *arg)
+#pragma acc routine seq
+static void mcsetn_arg(char *arg)
 {
   mcset_ncount((long long int) strtod(arg, NULL));
 }
 
 /* mcsetseed: set the random generator seed from a string argument */
-static void
-mcsetseed(char *arg)
+#pragma acc routine seq
+static void mcsetseed(char *arg)
 {
   mcseed = atol(arg);
   if(mcseed) {
@@ -2173,17 +2208,19 @@ mcsetseed(char *arg)
 /*******************************************************************************
 * Just output MCDISPLAY keywords to be caught by an external plotter client.
 *******************************************************************************/
-
+#pragma acc routine seq
 void mcdis_magnify(char *what){
   // Do nothing here, better use interactive zoom from the tools
 }
 
+#pragma acc routine seq
 void mcdis_line(double x1, double y1, double z1,
                 double x2, double y2, double z2){
   printf("MCDISPLAY: multiline(2,%g,%g,%g,%g,%g,%g)\n",
          x1,y1,z1,x2,y2,z2);
 }
 
+#pragma acc routine seq
 void mcdis_dashed_line(double x1, double y1, double z1,
 		       double x2, double y2, double z2, int n){
   int i;
@@ -2196,6 +2233,7 @@ void mcdis_dashed_line(double x1, double y1, double z1,
 	       x1 + (2*i+1)*dx, y1 + (2*i+1)*dy, z1 + (2*i+1)*dz);
 }
 
+#pragma acc routine seq
 void mcdis_multiline(int count, ...){
   va_list ap;
   double x,y,z;
@@ -2213,6 +2251,7 @@ void mcdis_multiline(int count, ...){
   printf(")\n");
 }
 
+#pragma acc routine seq
 void mcdis_rectangle(char* plane, double x, double y, double z,
 		     double width, double height){
   /* draws a rectangle in the plane           */
@@ -2247,6 +2286,7 @@ void mcdis_rectangle(char* plane, double x, double y, double z,
 
 /*  draws a box with center at (x, y, z) and
     width (deltax), height (deltay), length (deltaz) */
+#pragma acc routine seq
 void mcdis_box(double x, double y, double z,
 	       double width, double height, double length){
 
@@ -2262,12 +2302,14 @@ void mcdis_box(double x, double y, double z,
 	     x+width/2, y+height/2, z+length/2);
 }
 
+#pragma acc routine seq
 void mcdis_circle(char *plane, double x, double y, double z, double r){
   printf("MCDISPLAY: circle('%s',%g,%g,%g,%g)\n", plane, x, y, z, r);
 }
 
 /* Draws a circle with center (x,y,z), radius (r), and in the plane
  * with normal (nx,ny,nz)*/
+#pragma acc routine seq
 void mcdis_Circle(double x, double y, double z, double r, double nx, double ny, double nz){
     int i;
     if(nx==0 && ny && nz==0){
@@ -2295,6 +2337,7 @@ void mcdis_Circle(double x, double y, double z, double r, double nx, double ny, 
 /* Draws a cylinder with center at (x,y,z) with extent (r,height).
  * The cylinder axis is along the vector nx,ny,nz.
  * N determines how many vertical lines are drawn.*/
+ #pragma acc routine seq
 void mcdis_cylinder( double x, double y, double z,
         double r, double height, int N, double nx, double ny, double nz){
     int i;
@@ -2325,6 +2368,7 @@ void mcdis_cylinder( double x, double y, double z,
 
 /* draws a sphere with center at (x,y,z) with extent (r)
  * The sphere is drawn using N longitudes and N latitudes.*/
+ #pragma acc routine seq
 void mcdis_sphere(double x, double y, double z, double r, int N){
     double nx,ny,nz;
     int i;
@@ -2367,8 +2411,8 @@ void mcdis_sphere(double x, double y, double z, double r, int N){
 *******************************************************************************/
 
 /* coords_set: Assign coordinates. */
-Coords
-coords_set(MCNUM x, MCNUM y, MCNUM z)
+#pragma acc routine seq
+Coords coords_set(MCNUM x, MCNUM y, MCNUM z)
 {
   Coords a;
 
@@ -2379,8 +2423,8 @@ coords_set(MCNUM x, MCNUM y, MCNUM z)
 }
 
 /* coords_get: get coordinates. Required when 'x','y','z' are #defined as ray pars */
-Coords
-coords_get(Coords a, MCNUM *x, MCNUM *y, MCNUM *z)
+#pragma acc routine seq
+Coords coords_get(Coords a, MCNUM *x, MCNUM *y, MCNUM *z)
 {
   *x = a.x;
   *y = a.y;
@@ -2389,8 +2433,8 @@ coords_get(Coords a, MCNUM *x, MCNUM *y, MCNUM *z)
 }
 
 /* coords_add: Add two coordinates. */
-Coords
-coords_add(Coords a, Coords b)
+#pragma acc routine seq
+Coords coords_add(Coords a, Coords b)
 {
   Coords c;
 
@@ -2402,8 +2446,8 @@ coords_add(Coords a, Coords b)
 }
 
 /* coords_sub: Subtract two coordinates. */
-Coords
-coords_sub(Coords a, Coords b)
+#pragma acc routine seq
+Coords coords_sub(Coords a, Coords b)
 {
   Coords c;
 
@@ -2415,8 +2459,8 @@ coords_sub(Coords a, Coords b)
 }
 
 /* coords_neg: Negate coordinates. */
-Coords
-coords_neg(Coords a)
+#pragma acc routine seq
+Coords coords_neg(Coords a)
 {
   Coords b;
 
@@ -2427,6 +2471,7 @@ coords_neg(Coords a)
 }
 
 /* coords_scale: Scale a vector. */
+#pragma acc routine seq
 Coords coords_scale(Coords b, double scale) {
   Coords a;
 
@@ -2437,6 +2482,7 @@ Coords coords_scale(Coords b, double scale) {
 }
 
 /* coords_sp: Scalar product: a . b */
+#pragma acc routine seq
 double coords_sp(Coords a, Coords b) {
   double value;
 
@@ -2445,6 +2491,7 @@ double coords_sp(Coords a, Coords b) {
 }
 
 /* coords_xp: Cross product: a = b x c. */
+#pragma acc routine seq
 Coords coords_xp(Coords b, Coords c) {
   Coords a;
 
@@ -2455,11 +2502,13 @@ Coords coords_xp(Coords b, Coords c) {
 }
 
 /* coords_len: Gives length of coords set. */
+#pragma acc routine seq
 double coords_len(Coords a) {
   return sqrt(a.x*a.x + a.y*a.y + a.z*a.z);
 }
 
 /* coords_mirror: Mirror a in plane (through the origin) defined by normal n*/
+#pragma acc routine seq
 Coords coords_mirror(Coords a, Coords n) {
   double t = scalar_prod(n.x, n.y, n.z, n.x, n.y, n.z);
   Coords b;
@@ -2477,12 +2526,14 @@ Coords coords_mirror(Coords a, Coords n) {
 }
 
 /* coords_print: Print out vector values. */
+#pragma acc routine seq
 void coords_print(Coords a) {
 
   fprintf(stdout, "(%f, %f, %f)\n", a.x, a.y, a.z);
   return;
 }
 
+#pragma acc routine seq
 mcstatic inline void coords_norm(Coords* c) {
 	double temp = coords_sp(*c,*c);
 
@@ -2523,8 +2574,8 @@ mcstatic inline void coords_norm(Coords* c) {
 * rot_set_rotation: Get transformation for rotation first phx around x axis,
 * then phy around y, then phz around z.
 *******************************************************************************/
-void
-rot_set_rotation(Rotation t, double phx, double phy, double phz)
+#pragma acc routine seq
+void rot_set_rotation(Rotation t, double phx, double phy, double phz)
 {
   if ((phx == 0) && (phy == 0) && (phz == 0)) {
     t[0][0] = 1.0;
@@ -2559,8 +2610,8 @@ rot_set_rotation(Rotation t, double phx, double phy, double phz)
 /*******************************************************************************
 * rot_test_identity: Test if rotation is identity
 *******************************************************************************/
-int
-rot_test_identity(Rotation t)
+#pragma acc routine seq
+int rot_test_identity(Rotation t)
 {
   return (t[0][0] + t[1][1] + t[2][2] == 3);
 }
@@ -2571,8 +2622,8 @@ rot_test_identity(Rotation t)
 * equal to doing first T2, then T1.
 * Note that T3 must not alias (use the same array as) T1 or T2.
 *******************************************************************************/
-void
-rot_mul(Rotation t1, Rotation t2, Rotation t3)
+#pragma acc routine seq
+void rot_mul(Rotation t1, Rotation t2, Rotation t3)
 {
   if (rot_test_identity(t1)) {
     rot_copy(t3, t2);
@@ -2589,8 +2640,8 @@ rot_mul(Rotation t1, Rotation t2, Rotation t3)
 /*******************************************************************************
 * rot_copy: Copy a rotation transformation (arrays cannot be assigned in C).
 *******************************************************************************/
-void
-rot_copy(Rotation dest, Rotation src)
+#pragma acc routine seq
+void rot_copy(Rotation dest, Rotation src)
 {
   int i,j;
   for(i = 0; i < 3; i++)
@@ -2601,8 +2652,8 @@ rot_copy(Rotation dest, Rotation src)
 /*******************************************************************************
 * rot_transpose: Matrix transposition, which is inversion for Rotation matrices
 *******************************************************************************/
-void
-rot_transpose(Rotation src, Rotation dst)
+#pragma acc routine seq
+void rot_transpose(Rotation src, Rotation dst)
 {
   dst[0][0] = src[0][0];
   dst[0][1] = src[1][0];
@@ -2618,8 +2669,8 @@ rot_transpose(Rotation src, Rotation dst)
 /*******************************************************************************
 * rot_apply: returns t*a
 *******************************************************************************/
-Coords
-rot_apply(Rotation t, Coords a)
+#pragma acc routine seq
+Coords rot_apply(Rotation t, Coords a)
 {
   Coords b;
   if (rot_test_identity(t)) {
@@ -2635,6 +2686,7 @@ rot_apply(Rotation t, Coords a)
 /**
  * Pretty-printing of rotation matrices.
  */
+#pragma acc routine seq
 void rot_print(Rotation rot) {
 	printf("[ %4.2f %4.2f %4.2f ]\n",
 			rot[0][0], rot[0][1], rot[0][2]);
@@ -2647,6 +2699,7 @@ void rot_print(Rotation rot) {
 /**
  * Vector product: used by vec_prod (mccode-r.h). Use coords_xp for Coords.
  */
+#pragma acc routine seq
 mcstatic inline void vec_prod_func(double *x, double *y, double *z,
 		double x1, double y1, double z1,
 		double x2, double y2, double z2) {
@@ -2658,6 +2711,7 @@ mcstatic inline void vec_prod_func(double *x, double *y, double *z,
 /**
  * Scalar product: use coords_sp for Coords.
  */
+#pragma acc routine seq
 mcstatic inline double scalar_prod(
 		double x1, double y1, double z1,
 		double x2, double y2, double z2) {
@@ -2667,8 +2721,8 @@ mcstatic inline double scalar_prod(
 /*******************************************************************************
 * mccoordschange: applies rotation to (x y z) and (vx vy vz) and Spin (sx,sy,sz)
 *******************************************************************************/
-void
-mccoordschange(Coords a, Rotation t, mcparticle *particle)
+#pragma acc routine seq
+void mccoordschange(Coords a, Rotation t, mcparticle *particle)
 {
   Coords b, c;
 
@@ -2699,8 +2753,8 @@ mccoordschange(Coords a, Rotation t, mcparticle *particle)
 /*******************************************************************************
 * mccoordschange_polarisation: applies rotation to vector (sx sy sz)
 *******************************************************************************/
-void
-mccoordschange_polarisation(Rotation t, double *sx, double *sy, double *sz)
+#pragma acc routine seq
+void mccoordschange_polarisation(Rotation t, double *sx, double *sy, double *sz)
 {
   Coords b, c;
 
@@ -2716,6 +2770,7 @@ mccoordschange_polarisation(Rotation t, double *sx, double *sy, double *sz)
 /* SECTION: vector math  ==================================================== */
 
 /* normal_vec_func: Compute normal vector to (x,y,z). */
+#pragma acc routine seq
 void normal_vec(double *nx, double *ny, double *nz,
                 double x, double y, double z)
 {
@@ -2775,6 +2830,7 @@ void normal_vec(double *nx, double *ny, double *nz,
  * so that A = 0.5 n.g; B = n.v; C = n.(r-W);
  * Without acceleration, t=-n.(r-W)/n.v
  ******************************************************************************/
+#pragma acc routine seq
 int solve_2nd_order(double *t1, double *t2,
                   double A,  double B,  double C)
 {
@@ -2822,8 +2878,8 @@ int solve_2nd_order(double *t1, double *t2,
  * with given radius.
  * If radius is zero, choose random direction in full 4PI, no target.
  ******************************************************************************/
-void
-randvec_target_circle(double *xo, double *yo, double *zo, double *solid_angle,
+#pragma acc routine seq
+void randvec_target_circle(double *xo, double *yo, double *zo, double *solid_angle,
                double xi, double yi, double zi, double radius)
 {
   double l2, phi, theta, nx, ny, nz, xt, yt, zt, xu, yu, zu;
@@ -2887,8 +2943,8 @@ randvec_target_circle(double *xo, double *yo, double *zo, double *solid_angle,
  * width=phi_y=[0,2*PI] (radians)
  * If height or width is zero, choose random direction in full 4PI, no target.
  *******************************************************************************/
-void
-randvec_target_rect_angular(double *xo, double *yo, double *zo, double *solid_angle,
+#pragma acc routine seq
+void randvec_target_rect_angular(double *xo, double *yo, double *zo, double *solid_angle,
                double xi, double yi, double zi, double width, double height, Rotation A)
 {
   double theta, phi, nx, ny, nz, xt, yt, zt, xu, yu, zu;
@@ -2963,9 +3019,8 @@ randvec_target_rect_angular(double *xo, double *yo, double *zo, double *solid_an
  * a define (see mcstas-r.h) pointing here. If you use the old rouine, you are NOT
  * taking the local emmission coordinate into account.
 *******************************************************************************/
-
-void
-randvec_target_rect_real(double *xo, double *yo, double *zo, double *solid_angle,
+#pragma acc routine seq
+void randvec_target_rect_real(double *xo, double *yo, double *zo, double *solid_angle,
                double xi, double yi, double zi,
                double width, double height, Rotation A,
                double lx, double ly, double lz, int order)
@@ -3113,8 +3168,8 @@ static mc_int32_t *state = &randtbl[1];
 #define rand_sep SEP_3
 static mc_int32_t *end_ptr = &randtbl[sizeof (randtbl) / sizeof (randtbl[0])];
 
-mc_int32_t
-mc_random (void)
+#pragma acc routine seq
+mc_int32_t mc_random (void)
 {
   mc_int32_t result;
 
@@ -3136,8 +3191,8 @@ mc_random (void)
   return result;
 }
 
-void
-mc_srandom (unsigned int x)
+#pragma acc routine seq
+void mc_srandom (unsigned int x)
 {
   /* We must make sure the seed is not 0.  Take arbitrarily 1 in this case.  */
   state[0] = x ? x : 1;
@@ -3220,6 +3275,7 @@ static unsigned long mt[N]; /* the array for the state vector  */
 static int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
 
 /* initializes mt[N] with a seed */
+#pragma acc routine seq
 void mt_srandom(unsigned long s)
 {
     mt[0]= s & 0xffffffffUL;
@@ -3238,6 +3294,7 @@ void mt_srandom(unsigned long s)
 /* initialize by an array with array-length */
 /* init_key is the array for initializing keys */
 /* key_length is its length */
+#pragma acc routine seq
 void init_by_array(unsigned long init_key[], unsigned long key_length)
 {
     int i, j, k;
@@ -3264,6 +3321,7 @@ void init_by_array(unsigned long init_key[], unsigned long key_length)
 }
 
 /* generates a random number on [0,0xffffffff]-interval */
+#pragma acc routine seq
 unsigned long mt_random(void)
 {
     unsigned long y;
@@ -3312,8 +3370,8 @@ unsigned long mt_random(void)
 /* End of McCode random number routine. */
 
 /* randnorm: generate a random number from normal law */
-double
-randnorm(void)
+#pragma acc routine seq
+double randnorm(void)
 {
   static double v1, v2, s;
   static int phase = 0;
@@ -3344,6 +3402,7 @@ randnorm(void)
 /**
  * Generate a random number from -1 to 1 with triangle distribution
  */
+#pragma acc routine seq
 double randtriangle(void) {
 	double randnum = rand01();
 	if (randnum>0.5) return(1-sqrt(2*(randnum-0.5)));
@@ -3353,6 +3412,7 @@ double randtriangle(void) {
 /**
  * Random number between 0.0 and 1.0 (including?)
  */
+#pragma acc routine seq
 double rand01() {
 	double randnum;
 	randnum = (double) random();
@@ -3363,6 +3423,7 @@ double rand01() {
 /**
  * Return a random number between 1 and -1
  */
+#pragma acc routine seq
 double randpm1() {
 	double randnum;
 	randnum = (double) random();
@@ -3374,6 +3435,7 @@ double randpm1() {
 /**
  * Return a random number between 0 and max.
  */
+#pragma acc routine seq
 double rand0max(double max) {
 	double randnum;
 	randnum = (double) random();
@@ -3384,6 +3446,7 @@ double rand0max(double max) {
 /**
  * Return a random number between min and max.
  */
+#pragma acc routine seq
 double randminmax(double min, double max) {
 	return rand0max(max - min) + max;
 }
@@ -3393,8 +3456,8 @@ double randminmax(double min, double max) {
 /*******************************************************************************
 * mchelp: displays instrument executable help with possible options
 *******************************************************************************/
-static void
-mchelp(char *pgmname)
+#pragma acc routine seq
+static void mchelp(char *pgmname)
 {
   int i;
 
@@ -3455,16 +3518,16 @@ mchelp(char *pgmname)
 
 
 /* mcshowhelp: show help and exit with 0 */
-static void
-mcshowhelp(char *pgmname)
+#pragma acc routine seq
+static void mcshowhelp(char *pgmname)
 {
   mchelp(pgmname);
   exit(0);
 }
 
 /* mcusage: display usage when error in input arguments and exit with 1 */
-static void
-mcusage(char *pgmname)
+#pragma acc routine seq
+static void mcusage(char *pgmname)
 {
   fprintf(stderr, "Error: incorrect command line arguments\n");
   mchelp(pgmname);
@@ -3472,8 +3535,8 @@ mcusage(char *pgmname)
 }
 
 /* mcenabletrace: enable trace/mcdisplay or error if requires recompile */
-static void
-mcenabletrace(void)
+#pragma acc routine seq
+static void mcenabletrace(void)
 {
  if(mctraceenabled)
   mcdotrace = 1;
@@ -3491,8 +3554,8 @@ mcenabletrace(void)
 /*******************************************************************************
 * mcreadparams: request parameters from the prompt (or use default)
 *******************************************************************************/
-void
-mcreadparams(void)
+#pragma acc routine seq
+void mcreadparams(void)
 {
   int i,j,status;
   static char buf[CHAR_BUF_LENGTH];
@@ -3574,8 +3637,8 @@ mcreadparams(void)
 /*******************************************************************************
 * mcparseoptions: parse command line arguments (options, parameters)
 *******************************************************************************/
-void
-mcparseoptions(int argc, char *argv[])
+#pragma acc routine seq
+void mcparseoptions(int argc, char *argv[])
 {
   int i, j;
   char *p;
@@ -3726,6 +3789,7 @@ mcparseoptions(int argc, char *argv[])
 /*******************************************************************************
 * sighandler: signal handler that makes simulation stop, and save results
 *******************************************************************************/
+#pragma acc routine seq
 void sighandler(int sig)
 {
   /* MOD: E. Farhi, Sep 20th 2001: give more info */
@@ -3855,6 +3919,7 @@ void sighandler(int sig)
 /*******************************************************************************
 * mccode_main: McCode main() function.
 *******************************************************************************/
+#pragma acc routine seq
 int mccode_main(int argc, char *argv[])
 {
 /*  double run_num = 0; */
@@ -3981,25 +4046,15 @@ mcseed=(long)ct;
 #endif
 #endif
 
-
-
 /* main particle event loop */
-/* Experimental support for OpenACC CPU parallelisation */
-#ifdef EXP_OPENACC_CPU
-#pragma acc parallel loop
-  for (unsigned long long mycnt=0 ; mycnt < mcncount ; mycnt++) {
-#else
-  while(mcrun_num < mcncount || mcrun_num < mcget_ncount()) {
-#endif
-  /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
+while(mcrun_num < mcncount || mcrun_num < mcget_ncount()) {
+    /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
 #if MCCODE_PARTICLE_CODE == 2112
     mcraytrace(mcneutron);
 #elif MCCODE_PARTICLE_CODE == 22
     mcraytrace(mcxray);
 #endif
-#ifndef EXP_OPENACC_CPU
-      mcrun_num++;
-#endif
+    mcrun_num++;
   }
 
 #ifdef USE_MPI
@@ -4024,6 +4079,7 @@ mcseed=(long)ct;
 #ifdef NEUTRONICS
 /*Main neutronics function steers the McStas calls, initializes parameters etc */
 /* Only called in case NEUTRONICS = TRUE */
+#pragma acc routine seq
 void neutronics_main_(float *inx, float *iny, float *inz, float *invx, float *invy, float *invz, float *intime, float *insx, float *insy, float *insz, float *inw, float *outx, float *outy, float *outz, float *outvx, float *outvy, float *outvz, float *outtime, float *outsx, float *outsy, float *outsz, float *outwgt)
 {
 

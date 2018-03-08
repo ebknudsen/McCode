@@ -1,7 +1,0 @@
-Test Abstract for selftest_jwTD
-[OK]     ILL_IN5_1 (accuracy, 6 %)
-[OK]     templateLaue_2 (accuracy, 2 %)
-[OK]     templateLaue_3 (accuracy, 0 %)
-[notest] template_simple (no test procedure)
-[OK]     PSI_DMC_4 (accuracy, 3 %)
-[OK]     BNL_H8_5 (accuracy, 9 %)

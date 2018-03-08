@@ -1,10 +1,8 @@
 /*******************************************************************************
 *
-* McCode system component cogen.c.in:
-* McStas/McXtrace, neutron/xray ray-tracing package
-*         Copyright (C) 1997-2018, All rights reserved
-*         DTU Physics, Kgs. Lyngby, Denmark
-*	  Risoe National Laboratory, Roskilde, Denmark
+* McStas, neutron ray-tracing package
+*         Copyright (C) 1997-2006, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
 *         Institut Laue Langevin, Grenoble, France
 *         Copenhagen University, Copenhagen, Denmark
 *
@@ -1542,11 +1540,7 @@ int cogen_trace(struct instr_def *instr)
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "SCATTERED", "scattered");
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "RESTORE"  , "restore");
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "absorbed");
-    #if MCCODE_PROJECT == 1     /* neutron */
     cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE "comp); } while(0)");
-    #elif MCCODE_PROJECT == 2   /* xray */
-    cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); ABSORBED++; return(" ID_PRE "comp); } while(0)");
-    #endif
     cout( "#define " ID_PRE "instance_MYSELF " ID_PRE "comp");
     
     liter = list_iterate(instr->complist);
@@ -1575,11 +1569,7 @@ int cogen_trace(struct instr_def *instr)
   coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "SCATTERED", "scattered");
   coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "RESTORE"  , "restore");
   coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "absorbed");
-  #if MCCODE_PROJECT == 1     /* neutron */
   cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE MCCODE_PARTICLE ");} while(0)");
-  #elif MCCODE_PROJECT == 2   /* xray */
-  cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); ABSORBED++; return(" ID_PRE MCCODE_PARTICLE ");} while(0)");
-  #endif
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL)
     warnings += cogen_comp_trace(comp, instr);
@@ -1595,10 +1585,6 @@ int cogen_trace(struct instr_def *instr)
   cout("***************************************************************************** */");
   cout("");
 
-  /* Experimental support for OpenACC CPU parallelisation */
-  cout("#ifdef EXP_OPENACC_CPU");
-  cout("#pragma acc routine seq");
-  cout("#endif");
   /* then write the main code, which calls component ones */
   coutf("int %s%s(" ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_particle) { /* called by %scode_main for %s:%s */", 
     ID_PRE, "raytrace", 
