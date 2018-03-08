@@ -1,0 +1,2 @@
+Compile with 
+pgcc -ta=tesla,managed,nollvm -Minfo=accel template_simple3.c -DNOSIGNALS -DMC_RAND_ALG=4
