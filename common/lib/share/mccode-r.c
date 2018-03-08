@@ -55,8 +55,8 @@ int mcdefaultmain  = 0;
 #endif
 /* else defined directly in the McCode generated C code */
 
-#pragma acc declare create ( mcseed ) 
 static   long mcseed                 = 0; /* seed for random generator */
+#pragma acc declare create ( mcseed ) 
 static   long mcstartdate            = 0; /* start simulation time */
 static   int  mcdisable_output_files = 0; /* --no-output-files */
 mcstatic int  mcgravitation          = 0; /* use gravitation flag, for PROP macros */
@@ -4024,9 +4024,9 @@ mcseed=(long)ct;
       curandState_t MCRANDstate;
       long long seq = Xmcrun_num;
       curand_init(mcseed, seq, 0ULL, MCRANDstate);
-#endif
-
+#undef random
 #define random twister_initdraw(mcseed,particleN.uid,particleN.MCRANDstate);
+#endif
 /* End RNG in CUDA case */
 
       mcparticle particleN = mcgenstate(); // initial particle
