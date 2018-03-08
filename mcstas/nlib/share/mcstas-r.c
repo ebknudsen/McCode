@@ -67,7 +67,7 @@ mcsetstate(double x, double y, double z, double vx, double vy, double vz,
   mcneutron.sy = sy;
   mcneutron.sz = sz;
   mcneutron.p  = p;
-  mcneutron.uid       = mcget_run_num();
+  mcneutron.uid       = 0;
   mcneutron.index     = 1;
   mcneutron.absorbed  = 0;
   mcneutron.restore   = 0;
