@@ -3329,6 +3329,45 @@ unsigned long randjunk()
   return 12345;
 }
 
+/* CUDA-based mersenne twister */
+#ifdef MC_RAND_ALG == 5
+/* High-level functions */
+
+/* Wrapper function to pick a random number! */ 
+#pragma acc routine seq nohost
+unsigned long mt_random_cuda() {  
+}
+
+/* Wrapper function for initializer */
+#pragma acc routine seq nohost
+void mt_srandom_cuda(unsigned long s) {
+}
+
+
+/* Low level functions */
+#pragma acc routine seq nohost
+void
+twister_init(int seed, int t_id, curandState_t* state) {
+  long long seq = (long long) t_id;
+  curand_init(seed, seq, 0ULL, &state);
+}
+
+#pragma acc routine seq nohost
+float
+twister_uniform(int seed, int t_id)
+{
+  long long seq;
+  unsigned long long offset;
+  curandState_t state;
+  seed = seed;
+  seq = (long long) t_id;
+  offset = 0ULL;
+  curand_init(seed, seq, offset, &state);
+  return curand_uniform(&state);
+}
+#endif
+/* end CUDA algo */
+
 
 /* randnorm: generate a random number from normal law */
 #pragma acc routine seq
