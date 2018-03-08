@@ -55,7 +55,7 @@ int mcdefaultmain  = 0;
 #endif
 /* else defined directly in the McCode generated C code */
 
-#pragma acc declare ( mcseed ) 
+#pragma acc declare create ( mcseed ) 
 static   long mcseed                 = 0; /* seed for random generator */
 static   long mcstartdate            = 0; /* start simulation time */
 static   int  mcdisable_output_files = 0; /* --no-output-files */
@@ -3331,7 +3331,7 @@ unsigned long randjunk()
 }
 
 /* CUDA-based mersenne twister */
-#ifdef MC_RAND_ALG == 5
+#if MC_RAND_ALG == 5
 #pragma acc routine seq nohost
 float
 twister_initdraw(int seed, int t_id, curandState_t* state) {
@@ -3339,7 +3339,7 @@ twister_initdraw(int seed, int t_id, curandState_t* state) {
   long long s = seed;
   if (state == NULL)
     curand_init(seed, seq, 0ULL, state);
-  return curand_uniform(&state);
+  return curand_uniform(state);
 }
 #endif
 /* end CUDA algo */
@@ -4020,7 +4020,7 @@ mcseed=(long)ct;
     for (Xmcrun_num=0 ; Xmcrun_num < mcncount ; Xmcrun_num++) {
 
 /* Initialise RNG in CUDA case */
-#ifdef MC_ALG_RAND == 5 
+#if MC_ALG_RAND == 5 
       curandState_t MCRANDstate;
       long long seq = Xmcrun_num;
       curand_init(mcseed, seq, 0ULL, MCRANDstate);
@@ -4032,7 +4032,7 @@ mcseed=(long)ct;
       mcparticle particleN = mcgenstate(); // initial particle
       particleN.uid = Xmcrun_num;
 /* CUDA */
-#ifdef MC_ALG_RAND == 5 
+#if MC_ALG_RAND == 5 
       particleN.MCRANDstate = MCRANDstate;
 #endif
       mcraytrace(particleN);
