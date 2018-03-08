@@ -4016,33 +4016,29 @@ mcseed=(long)ct;
 #pragma acc parallel loop
   {
   /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
-    unsigned long long Xmcrun_num = mcrun_num;
+    unsigned long long Xmcrun_num;
     for (Xmcrun_num=0 ; Xmcrun_num < mcncount ; Xmcrun_num++) {
+
+/* Initialise RNG in CUDA case */
 #ifdef MC_ALG_RAND == 5 
       curandState_t MCRANDstate;
       long long seq = Xmcrun_num;
       curand_init(mcseed, seq, 0ULL, MCRANDstate);
 #endif
-#define random twister_initdraw(mcseed,mcneutron.uid,mcneutron.MCRANDstate);
 
-#ifndef       
-#if MCCODE_PARTICLE_CODE == 2112
-      mcparticle mcneutron = mcgenstate(); // initial particle
-      mcneutron.uid = Xmcrun_num;
+#define random twister_initdraw(mcseed,particleN.uid,particleN.MCRANDstate);
+/* End RNG in CUDA case */
+
+      mcparticle particleN = mcgenstate(); // initial particle
+      particleN.uid = Xmcrun_num;
+/* CUDA */
 #ifdef MC_ALG_RAND == 5 
-      mcneutron.MCRANDstate = MCRANDstate;
+      particleN.MCRANDstate = MCRANDstate;
 #endif
-      mcraytrace(mcneutron);
-#elif MCCODE_PARTICLE_CODE == 22
-      mcparticle mcxray = mcgenstate(); // initial particle
-      mcxray.uid = Xmcrun_num;
-#ifdef MC_ALG_RAND == 5 
-      mcraytrace.MCRANDstate = MCRANDstate;
-#endif
-      mcraytrace(mcxray);      
-#endif
+      mcraytrace(particleN);
     }
   }
+  /* Likely we need an undef random here... */
 
 #ifdef USE_MPI
  /* merge run_num from MPI nodes */
