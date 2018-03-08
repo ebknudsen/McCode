@@ -54,10 +54,10 @@ add_executable(
 target_compile_options(mcpl2ssw PUBLIC "-std=c99")
 target_link_libraries(mcpl2ssw m)
 
-add_executable(
-  cif2hkl
-  ${CMAKE_SOURCE_DIR}/libs/cif2hkl/cif2hkl.F90
-)
+#add_executable(
+#  cif2hkl
+#  ${CMAKE_SOURCE_DIR}/libs/cif2hkl/cif2hkl.F90
+#)
 
 if (NOT WINDOWS)
   add_library(nxs "STATIC" libs/libnxs/nxs.c libs/libnxs/sgclib.c libs/libnxs/sgfind.c libs/libnxs/sghkl.c libs/libnxs/sgio.c libs/libnxs/sgsi.c)
@@ -77,10 +77,10 @@ if (NOT WINDOWS)
     PROGRAMS "${PROJECT_BINARY_DIR}/mcpl2ssw${DOT_EXE_SUFFIX}"
     DESTINATION ${FLAVOR}/${MCCODE_VERSION}/bin
   )
-  install (
-    PROGRAMS "${PROJECT_BINARY_DIR}/cif2hkl${DOT_EXE_SUFFIX}"
-    DESTINATION ${FLAVOR}/${MCCODE_VERSION}/bin
-  )
+#  install (
+#    PROGRAMS "${PROJECT_BINARY_DIR}/cif2hkl${DOT_EXE_SUFFIX}"
+#    DESTINATION ${FLAVOR}/${MCCODE_VERSION}/bin
+#  )
 endif()
 
 # Include mcstas-comp files
@@ -111,10 +111,10 @@ if(WINDOWS)
     PROGRAMS "${PROJECT_BINARY_DIR}/mcpl2ssw${DOT_EXE_SUFFIX}"
     DESTINATION ${bin}
     )
-  install (
-    PROGRAMS "${PROJECT_BINARY_DIR}/cif2hkl${DOT_EXE_SUFFIX}"
-    DESTINATION ${bin}
-    )
+#  install (
+#    PROGRAMS "${PROJECT_BINARY_DIR}/cif2hkl${DOT_EXE_SUFFIX}"
+#    DESTINATION ${bin}
+#    )
   add_library(nxs "STATIC" libs/libnxs/nxs.c libs/libnxs/sgclib.c libs/libnxs/sgfind.c libs/libnxs/sghkl.c libs/libnxs/sgio.c libs/libnxs/sgsi.c)
   add_library(mcpl "STATIC" libs/mcpl/mcpl.c)
   add_library(neutronics "STATIC" libs/neutronics/neutronics-subs.f)
