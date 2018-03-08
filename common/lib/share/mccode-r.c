@@ -68,7 +68,11 @@ int      mcallowbackprop             = 0;         /* flag to enable negative/bac
 mcstatic unsigned long long int mcncount             = 1;
 mcstatic unsigned long long int mcrun_num            = 0;
 #else
+#ifdef MCDEFAULT_NCOUNT
+mcstatic unsigned long long int mcncount             = MCDEFAULT_NCOUNT;
+#else
 mcstatic unsigned long long int mcncount             = 1000000;
+#endif
 mcstatic unsigned long long int mcrun_num            = 0;
 #endif /* NEUTRONICS */
 
@@ -4009,7 +4013,9 @@ mcseed=(long)ct;
 
 /* main particle event loop */
 #pragma acc parallel loop
-  for (unsigned long long Xmcrun_num=0 ; Xmcrun_num < mcncount ; Xmcrun_num++) {
+  {
+  unsigned long long Xmcrun_num;
+  for (Xmcrun_num=0 ; Xmcrun_num < mcncount ; Xmcrun_num++) {
   /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
     mcneutron.uid = Xmcrun_num;
 #if MCCODE_PARTICLE_CODE == 2112
@@ -4017,6 +4023,7 @@ mcseed=(long)ct;
 #elif MCCODE_PARTICLE_CODE == 22
     mcraytrace(mcxray);
 #endif
+  }
   }
 
 #ifdef USE_MPI
