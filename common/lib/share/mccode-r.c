@@ -3230,10 +3230,8 @@ mc_srandom (unsigned int x)
 
 unsigned long mt[N]; /* the array for the state vector  */
 int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
-#pragma acc create( mt, mti )
 
 /* initializes mt[N] with a seed */
-#pragma acc routine seq
 void mt_srandom(unsigned long s)
 {
     mt[0]= s & 0xffffffffUL;
@@ -3278,12 +3276,10 @@ void init_by_array(unsigned long init_key[], unsigned long key_length)
 }
 
 /* generates a random number on [0,0xffffffff]-interval */
-#pragma acc routine seq
 unsigned long mt_random(void)
 {
     unsigned long y;
     unsigned long mag01[2]={0x0UL, MATRIX_A};
-#pragma acc create ( mag01 )
     /* mag01[x] = x * MATRIX_A  for x=0,1 */
 
     if (mti >= N) { /* generate N words at one time */
@@ -3328,9 +3324,9 @@ unsigned long mt_random(void)
 /* End of McCode random number routine. */
 
 #pragma acc routine seq
-double randjunk()
+unsigned long randjunk()
 {
-  return 0.5;
+  return 12345;
 }
 
 

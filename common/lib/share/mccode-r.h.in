@@ -425,7 +425,7 @@ void mt_srandom (unsigned long x);
 #endif
 
 
-double randjunk();
+unsigned long randjunk();
 double rand01();
 double randpm1();
 double rand0max(double max);
