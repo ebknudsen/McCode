@@ -1640,7 +1640,6 @@ int cogen_trace(struct instr_def *instr)
     ID_PRE, "raytrace", 
     ID_PRE, instr->name, "TRACE");
   cout("  " ID_PRE "particle *" ID_PRE MCCODE_PARTICLE " = &" ID_PRE MCCODE_PARTICLE "_particle;");
-  cout("#pragma acc attach ( " ID_PRE "instrument )");
   cout("");
   cout("  /* init variables and counters for TRACE */");
   
@@ -1652,7 +1651,6 @@ int cogen_trace(struct instr_def *instr)
   
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL) {
-    coutf("#pragma acc attach ( " ID_PRE "instance_%s )",comp->name);
     if (list_len(comp->jump) > 0) { // JUMP ITERATE counters
       struct jump_struct *this_jump;
       List_handle liter2;
