@@ -867,6 +867,7 @@ int cogen_comp_section(struct comp_inst *comp,
   
   /* the [section] instance function **************************************** */
   if (!strcmp(section, "TRACE")) {
+    cout("#pragma acc routine seq");
     coutf(ID_PRE "particle *" ID_PRE "instance_%s_%s(" ID_PRE "particle *" ID_PRE MCCODE_PARTICLE ")", 
       comp->name, section_lower);
   } else
@@ -930,6 +931,7 @@ int cogen_comp_section(struct comp_inst *comp,
     } else {
       /* else we call the common init function for each comp type */
       if (!strcmp(section, "TRACE"))
+	cout("#pragma acc routine seq");
         coutf("  " ID_PRE "class_%s_%s(" ID_PRE "instance_%s, " ID_PRE MCCODE_PARTICLE");",
           comp->def->name, section_lower, comp->name);
       else
