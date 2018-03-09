@@ -1882,6 +1882,9 @@ cogen_header(struct instr_def *instr, char *output_name)
     cout("#define MC_PORTABLE");
     
   /* particle definition */
+  cout("#if MC_RAND_ALG==5");
+  cout("#include <openacc_curand.h>");
+  cout("#endif");
   cout("struct " ID_PRE "particle_struct {");
   cout("  double x,y,z; /* position [m] */");
 #if MCCODE_PROJECT == 1   /* neutron */
