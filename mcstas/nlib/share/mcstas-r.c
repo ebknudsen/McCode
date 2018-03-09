@@ -50,8 +50,8 @@ int (*mcMagneticField) (double, double, double, double,
 /*******************************************************************************
 * mcsetstate: transfer parameters into global McStas variables 
 *******************************************************************************/
-mcparticle
-mcsetstate(double x, double y, double z, double vx, double vy, double vz,
+#pragma acc routine seq
+mcparticle mcsetstate(double x, double y, double z, double vx, double vy, double vz,
            double t, double sx, double sy, double sz, double p)
 {
   mcparticle mcneutron;
@@ -79,8 +79,8 @@ mcsetstate(double x, double y, double z, double vx, double vy, double vz,
 /*******************************************************************************
 * mcgenstate: set default neutron parameters 
 *******************************************************************************/
-mcparticle
-mcgenstate(void)
+#pragma acc routine seq
+mcparticle mcgenstate(void)
 {
   return(mcsetstate(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
   /* old initialisation: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */

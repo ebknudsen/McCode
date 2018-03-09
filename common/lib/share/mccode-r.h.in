@@ -550,6 +550,7 @@ void mcreadparams(void);
 /* void mcsetstate(double x, double y, double z, double vx, double vy, double vz,
                 double t, double sx, double sy, double sz, double p);
 */
+#pragma acc routine seq
 mcparticle mcgenstate(void);
 
 /* trajectory/shape intersection routines */

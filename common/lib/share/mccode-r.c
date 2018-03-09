@@ -74,6 +74,7 @@ mcstatic unsigned long long int mcncount             = MCDEFAULT_NCOUNT;
 #else
 mcstatic unsigned long long int mcncount             = 1000000;
 #endif
+#pragma acc declare create ( mcncount )
 mcstatic unsigned long long int mcrun_num            = 0;
 #endif /* NEUTRONICS */
 
@@ -2138,15 +2139,18 @@ void mcset_ncount(unsigned long long int count)
 }
 
 /* mcget_ncount: get total number of rays to generate */
+#pragma acc routine seq
 unsigned long long int mcget_ncount(void)
 {
   return mcncount;
 }
 
 /* mcget_run_num: get curent number of rays in TRACE */
+#pragma acc routine seq
 unsigned long long int mcget_run_num(void)
 {
-  return mcrun_num;
+  //FIXME!! 
+  return 100000;//mcrun_num;
 }
 
 /* mcsetn_arg: get ncount from a string argument */
@@ -4013,11 +4017,14 @@ mcseed=(long)ct;
 #endif
 
 /* main particle event loop */
+/* main particle event loop */
+#include <openacc.h>
+  acc_attach( (void**)&mcinstance_origin );
+  acc_attach( (void**)&mcinstrument );
+
 #pragma acc parallel loop
-  {
   /* old init: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
-    unsigned long long Xmcrun_num;
-    for (Xmcrun_num=0 ; Xmcrun_num < mcncount ; Xmcrun_num++) {
+  for (unsigned long long Xmcrun_num=0 ; Xmcrun_num < mcncount ; Xmcrun_num++) {
 
 /* Initialise RNG in CUDA case */
 #if MC_ALG_RAND == 5 
@@ -4037,7 +4044,6 @@ mcseed=(long)ct;
 #endif
       mcraytrace(particleN);
     }
-  }
   /* Likely we need an undef random here... */
 
 #ifdef USE_MPI
