@@ -1884,6 +1884,7 @@ cogen_header(struct instr_def *instr, char *output_name)
   /* particle definition */
   cout("#if MC_RAND_ALG==5");
   cout("#include <openacc_curand.h>");
+  cout("#include <accelmath.h>");
   cout("#endif");
   cout("struct " ID_PRE "particle_struct {");
   cout("  double x,y,z; /* position [m] */");
@@ -2026,7 +2027,8 @@ cogen(char *output_name, struct instr_def *instr)
   warnings += cogen_save(instr);
   warnings += cogen_finally(instr);
   warnings += cogen_display(instr);
-  
+  embed_file("mccode_main.c");
+
   if (verbose && warnings)
     fprintf(stderr,"Warning: The build of the instrument '%s' has %i warnings/errors.\n",
         	instr->name, warnings);
