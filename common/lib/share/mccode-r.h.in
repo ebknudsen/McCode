@@ -415,7 +415,9 @@ void mcdis_sphere(double x, double y, double z, double r, int N);
 #  include "openacc_curand.h"
 #  define MC_RAND_MAX ((unsigned int) 0xffffffff) 
 #  define srandom mc_srandom
-#  define random mt_random /* random will be overwritten in main pragma loop */
+#  define random randjunk /* random will be overwritten in main pragma loop */
+#  define printf_sys printf
+#  define fprintf_sys fprintf
 float twister_initdraw(int seed, int t_id, curandState_t* state);
 #else
 #  error "Bad value for random number generator choice."
@@ -432,6 +434,8 @@ void mt_srandom (unsigned long x);
 #include "opencl-lib.c"
 #endif
 
+int printf_GPU(const char *format, ...);
+int fprintf_GPU(FILE *stream, const char *format, ...);
 
 unsigned long randjunk();
 double rand01();
@@ -660,6 +664,7 @@ char    *mcformat                    = NULL;      /* NULL (default) or a specifi
 #ifndef MC_EMBEDDED_RUNTIME /* the mcstatic variables (from mccode-r.c) */
 extern FILE * mcsiminfo_file;     /* handle to the output siminfo file */
 extern int    mcgravitation;      /* flag to enable gravitation */
+#pragma acc declare create ( mcgravitation )
 extern int    mcdotrace;          /* flag to print MCDISPLAY messages */
 #else
 mcstatic FILE *mcsiminfo_file        = NULL;
