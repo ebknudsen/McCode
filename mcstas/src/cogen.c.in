@@ -1025,6 +1025,11 @@ int cogen_comp_setpos(struct comp_inst *comp, struct comp_inst *last, struct ins
   return(warnings);
 } /* cogen_comp_setpos */
 
+int cogen_comp_acc_attach(struct comp_inst *comp, struct instr_def *instr)
+{
+  coutf("#pragma acc attach ( %s )", comp->name);
+}
+
 /* calls to cogen_comp_section_class per section type (common/shared) */
 int cogen_comp_init_class(struct comp_inst *comp, struct instr_def *instr)
 {
@@ -1519,6 +1524,14 @@ int cogen_finally(struct instr_def *instr)
 int cogen_display(struct instr_def *instr)
 {
   return(cogen_section(instr, "DISPLAY", "display", NULL));
+} /* cogen_display */
+
+/* *****************************************************************************
+* cogen_acc_attach: write acc_attach pragmas for any compnent
+***************************************************************************** */
+int cogen_acc_attach(struct instr_def *instr)
+{
+  return(cogen_section(instr, "ACC", "acc", NULL));
 } /* cogen_display */
 
 /*******************************************************************************
@@ -2027,6 +2040,7 @@ cogen(char *output_name, struct instr_def *instr)
   warnings += cogen_save(instr);
   warnings += cogen_finally(instr);
   warnings += cogen_display(instr);
+  warnings += cogen_acc_attach(instr);
   embed_file("mccode_main.c");
 
   if (verbose && warnings)
