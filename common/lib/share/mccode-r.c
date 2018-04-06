@@ -3438,12 +3438,12 @@ double randminmax(double min, double max) {
  * Wrapper functions for fprintf / printf on GPU
  */
 
-#pragma acc routine seq
+/* These would ideally be #pragma acc routine seq */
 int printf_GPU(const char *format,...) {
   return 0;
 }
 
-#pragma acc routine seq
+/* These would ideally be #pragma acc routine seq */
 int fprintf_GPU(FILE *stream, const char *format, ...) {
   return 0;
 }
