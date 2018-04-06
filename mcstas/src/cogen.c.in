@@ -1027,7 +1027,7 @@ int cogen_comp_setpos(struct comp_inst *comp, struct comp_inst *last, struct ins
 
 int cogen_comp_acc_attach(struct comp_inst *comp, struct instr_def *instr)
 {
-  coutf("#pragma acc attach ( %s )", comp->name);
+  coutf("acc_attach( (void**)&mcinstance_%s );", comp->name);
 }
 
 /* calls to cogen_comp_section_class per section type (common/shared) */
@@ -1335,7 +1335,9 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
     cout("  #define box         mcdis_box");
     cout("  #define circle      mcdis_circle");
   }
-    
+  
+  printf("Made it past defines..\n");
+
   /* first the common definition code if any (when no definition parameter exist) */
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL)
@@ -1353,6 +1355,8 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
   cout( "#undef " ID_PRE "instance_MYSELF");
   cout("");
   
+  printf("Made it past undefs..\n");
+
   /* then the instance code */
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL)
@@ -1367,7 +1371,7 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
     else if (!strcmp(section, "FINALLY"))
       warnings += cogen_comp_finally(comp, instr);
     else if (!strcmp(section, "DISPLAY"))
-      warnings += cogen_comp_display(comp, instr);
+      warnings += cogen_comp_display(comp, instr); 
   }
   list_iterate_end(liter);
   if (!strcmp(section, "DISPLAY")) {
@@ -1382,6 +1386,7 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
   }
   cout("");
   
+  printf("Before main code\n");
   /* then write the instrument main code, which calls component ones */
   cout( "#define " ID_PRE "instance_MYSELF " ID_PRE "instrument");
   coutf("int %s%s(%s) { /* called by %scode_main for %s:%s */", 
@@ -1432,11 +1437,14 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
     cout("");
   }
   
+  printf("Call all comps iter\n");
+
   /* component calls: one call for each component instance */
   coutf("  /* call iteratively all components %s */", section);
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL)
   {
+    if (strcmp(section, "ACC")) { 
     /* get the component code: no call to it when no code exists (except INIT) */
     struct code_block *comp_code=NULL;
     
@@ -1453,10 +1461,19 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
       /* a return code can be set, but does not prevent other components to execute */
       coutf("  " ID_PRE "instance_%s_%s(); /* type %s */", 
         comp->name, section_lower, comp->def->name);
+    } else {
+      cout("#if MC_RAND_ALG == 5");
+      cout("#include <openacc.h>");
+      printf("ACC on comp %s\n",comp);
+      warnings += cogen_comp_acc_attach(comp, instr);
+      cout("#endif");
+    }
     }
   }
   list_iterate_end(liter);
-  
+
+  printf("Before final initilize\n");
+
   if (!strcmp(section, "INITIALISE")) {
     /* Output graphics representation of components. */
     coutf("  if (%sdotrace) %sdisplay();", ID_PRE, ID_PRE);
@@ -1474,6 +1491,8 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
   cout( "#undef " ID_PRE "instance_MYSELF");
   cout("");
   
+  printf("Before exiting\n");
+
   return(warnings);
 } /* cogen_section */
 
