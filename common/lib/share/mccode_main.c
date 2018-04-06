@@ -134,7 +134,6 @@ mcseed=(long)ct;
 #if MC_RAND_ALG == 5
       curandState_t MCRANDstate;
       long long seq = Xmcrun_num;
-      curand_init(mcseed, seq, 0ULL, MCRANDstate);
 #undef random
 #define random twister_initdraw(mcseed,particleN.uid,particleN.MCRANDstate);
 #define prinf(...) printf_GPU(__VA_ARGS__)
