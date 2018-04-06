@@ -1336,8 +1336,6 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
     cout("  #define circle      mcdis_circle");
   }
   
-  printf("Made it past defines..\n");
-
   /* first the common definition code if any (when no definition parameter exist) */
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL)
@@ -1355,8 +1353,6 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
   cout( "#undef " ID_PRE "instance_MYSELF");
   cout("");
   
-  printf("Made it past undefs..\n");
-
   /* then the instance code */
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL)
@@ -1386,7 +1382,6 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
   }
   cout("");
   
-  printf("Before main code\n");
   /* then write the instrument main code, which calls component ones */
   cout( "#define " ID_PRE "instance_MYSELF " ID_PRE "instrument");
   coutf("int %s%s(%s) { /* called by %scode_main for %s:%s */", 
@@ -1437,8 +1432,6 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
     cout("");
   }
   
-  printf("Call all comps iter\n");
-
   /* component calls: one call for each component instance */
   coutf("  /* call iteratively all components %s */", section);
   liter = list_iterate(instr->complist);
@@ -1464,8 +1457,6 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
   }
   list_iterate_end(liter);
 
-  printf("Before final initilize\n");
-
   if (!strcmp(section, "INITIALISE")) {
     /* Output graphics representation of components. */
     coutf("  if (%sdotrace) %sdisplay();", ID_PRE, ID_PRE);
@@ -1483,8 +1474,6 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
   cout( "#undef " ID_PRE "instance_MYSELF");
   cout("");
   
-  printf("Before exiting\n");
-
   return(warnings);
 } /* cogen_section */
 
