@@ -122,8 +122,7 @@ mcseed=(long)ct;
 /* main particle event loop */
 #if MC_RAND_ALG == 5
 #include <openacc.h>
-  acc_attach( (void**)&mcinstance_origin );
-  acc_attach( (void**)&mcinstrument );
+#include "mccode_attaches.c"
 #endif
 
 #pragma acc parallel loop

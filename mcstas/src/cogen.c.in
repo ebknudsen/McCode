@@ -1444,7 +1444,6 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL)
   {
-    if (strcmp(section, "ACC")) { 
     /* get the component code: no call to it when no code exists (except INIT) */
     struct code_block *comp_code=NULL;
     
@@ -1461,13 +1460,6 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
       /* a return code can be set, but does not prevent other components to execute */
       coutf("  " ID_PRE "instance_%s_%s(); /* type %s */", 
         comp->name, section_lower, comp->def->name);
-    } else {
-      cout("#if MC_RAND_ALG == 5");
-      cout("#include <openacc.h>");
-      printf("ACC on comp %s\n",comp);
-      warnings += cogen_comp_acc_attach(comp, instr);
-      cout("#endif");
-    }
     }
   }
   list_iterate_end(liter);
@@ -1550,8 +1542,19 @@ int cogen_display(struct instr_def *instr)
 ***************************************************************************** */
 int cogen_acc_attach(struct instr_def *instr)
 {
-  return(cogen_section(instr, "ACC", "acc", NULL));
-} /* cogen_display */
+  int         warnings =0;
+  List_handle
+  liter = list_iterate(instr->complist);
+  struct comp_inst *comp;       /* Component instance. */
+  cout("#include <openacc.h>");
+  while((comp = list_next(liter)) != NULL)
+    {
+      warnings += cogen_comp_acc_attach(comp, instr);
+    }
+  cout("acc_attach( (void**)&mcinstrument );");
+  return(warnings);
+} /* cogen_acc_attach */
+
 
 /*******************************************************************************
 * cogen_trace: Generate the TRACE section.
@@ -2059,11 +2062,17 @@ cogen(char *output_name, struct instr_def *instr)
   warnings += cogen_save(instr);
   warnings += cogen_finally(instr);
   warnings += cogen_display(instr);
-  warnings += cogen_acc_attach(instr);
   embed_file("mccode_main.c");
 
   if (verbose && warnings)
     fprintf(stderr,"Warning: The build of the instrument '%s' has %i warnings/errors.\n",
         	instr->name, warnings);
   coutf("/* end of generated C code %s */", output_name);
+
+  fclose(output_handle);
+  /* This writes a snippet c-code with calls to acc_attach for OpenACC use */
+  output_handle = fopen("mccode_attaches.c", "w");
+  warnings += cogen_acc_attach(instr);
+
+
 } /* cogen */
