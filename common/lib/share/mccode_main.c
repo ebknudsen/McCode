@@ -135,8 +135,8 @@ mcseed=(long)ct;
       long long seq = Xmcrun_num;
 #undef random
 #define random twister_initdraw(mcseed,particleN.uid,particleN.MCRANDstate);
-#define prinf(...) printf_GPU(__VA_ARGS__)
-#define fprinf(...) fprintf_GPU(__VA_ARGS__)
+      /*#define prinf(...) printf_GPU(__VA_ARGS__)
+	#define fprinf(...) fprintf_GPU(__VA_ARGS__)*/
 #endif
 /* End RNG in CUDA case */
 

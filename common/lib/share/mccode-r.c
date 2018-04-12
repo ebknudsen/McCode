@@ -3439,14 +3439,14 @@ double randminmax(double min, double max) {
  */
 
 /* These would ideally be #pragma acc routine seq */
-int printf_GPU(const char *format,...) {
+/*int printf_GPU(const char *format,...) {
   return 0;
-}
+  }*/
 
 /* These would ideally be #pragma acc routine seq */
-int fprintf_GPU(FILE *stream, const char *format, ...) {
+/*int fprintf_GPU(FILE *stream, const char *format, ...) {
   return 0;
-}
+  }*/
 
 
 /* SECTION: main and signal handlers ======================================== */

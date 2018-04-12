@@ -434,8 +434,8 @@ void mt_srandom (unsigned long x);
 #include "opencl-lib.c"
 #endif
 
-int printf_GPU(const char *format, ...);
-int fprintf_GPU(FILE *stream, const char *format, ...);
+/*int printf_GPU(const char *format, ...);
+  int fprintf_GPU(FILE *stream, const char *format, ...);*/
 
 unsigned long randjunk();
 double rand01();
