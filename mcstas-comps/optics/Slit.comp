@@ -54,7 +54,7 @@ if (xwidth > 0)  { xmax=xwidth/2;  xmin=-xmax; }
 
 TRACE
 %{
-    PROP_Z0;
+    mcPROP_Z0;
     if (((radius == 0) && (x<xmin || x>xmax || y<ymin || y>ymax))
     || ((radius != 0) && (x*x + y*y > radius*radius)))
       ABSORB;

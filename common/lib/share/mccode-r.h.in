@@ -36,7 +36,6 @@
 #ifndef MCCODE_R_H
 #define MCCODE_R_H "$Revision$"
 
-#include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

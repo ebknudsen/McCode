@@ -79,7 +79,7 @@ TRACE
     if(t0 < 0)
       t0 = t1;
     /* t0 is now time of intersection with the sphere. */
-    PROP_DT(t0);
+    mcPROP_DT(t0);
     phi = atan2(x,z);
     i = floor(nx*(phi/(2*PI)+0.5));
     if(i >= nx)

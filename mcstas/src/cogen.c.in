@@ -1909,6 +1909,10 @@ cogen_header(struct instr_def *instr, char *output_name)
   cout("#if MC_RAND_ALG==5");
   cout("#include <openacc_curand.h>");
   cout("#include <accelmath.h>");
+  cout("#define PI 3.14159265358979323846");
+  cout("#define M_PI PI");
+  cout("#else");
+  cout("#include <math.h>");
   cout("#endif");
   cout("struct " ID_PRE "particle_struct {");
   cout("  double x,y,z; /* position [m] */");
