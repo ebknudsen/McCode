@@ -987,6 +987,7 @@ component: removable split "COMPONENT" instname '=' instref
         comp->name  = $4;
         comp->split = $2;
         comp->removable = $1;
+        comp->index = ++comp_current_index;     /* index of comp instance */
       }
       when place orientation groupref extend jumps
       {
@@ -1004,8 +1005,12 @@ component: removable split "COMPONENT" instname '=' instref
         if ($11) {
           comp->group = $11;    /* component is part of an exclusive group */
           /* store first and last comp of group. Check if a SPLIT is inside */
-          if (!comp->group->first_comp) comp->group->first_comp =comp->name;
-          comp->group->last_comp=comp->name;
+          if (!comp->group->first_comp) {
+             comp->group->first_comp       = comp->name;
+             comp->group->first_comp_index = comp->index;
+          }
+          comp->group->last_comp      =comp->name;
+          comp->group->last_comp_index=comp->index;
           if (comp->split)
             print_error("ERROR: Component %s=%s() at line %s:%d is in GROUP %s and has a SPLIT.\n"
               "\tMove the SPLIT keyword before (outside) the component instance %s (first in GROUP)\n",
@@ -1014,7 +1019,6 @@ component: removable split "COMPONENT" instname '=' instref
         }
         if ($12->linenum)   comp->extend= $12;  /* EXTEND block*/
         if (list_len($13))  comp->jump  = $13;
-        comp->index = ++comp_current_index;     /* index of comp instance */
 
         debugn((DEBUG_HIGH, "Component[%i]: %s = %s().\n", comp_current_index, $4, $6->def->name));
         /* this comp will be 'previous' for the next, except if removed at include */
@@ -1138,6 +1142,8 @@ groupdef:   TOK_ID
           group->index      = 0;
           group->first_comp = NULL;
           group->last_comp  = NULL;
+          group->first_comp_index = 0;
+          group->last_comp_index  = 0;
           symtab_add(group_instances, $1, group);
           list_add(group_instances_list, group);
         }

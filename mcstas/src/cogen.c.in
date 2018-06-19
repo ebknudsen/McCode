@@ -1676,6 +1676,7 @@ int cogen_trace(struct instr_def *instr)
   cout("  DEBUG_ENTER();");
   cout("  DEBUG_STATE();");
   
+  /* intialize split counters */
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL) {
     if (list_len(comp->jump) > 0) { // JUMP ITERATE counters
@@ -1797,6 +1798,23 @@ int cogen_trace(struct instr_def *instr)
         }
       }
       list_iterate_end(liter2);
+    }
+    /* if we are in a group:
+       if (SCATTERED) index = last comp in group
+       if (!SCATTERED && index == last_comp in group) ABSORB; */
+    // GROUP
+    if (comp->group) {
+      coutf("      // GROUP %s: from %s [%i] to %s [%i]", comp->group->name, 
+        comp->group->first_comp, comp->group->first_comp_index,  
+        comp->group->last_comp,  comp->group->last_comp_index);
+      // skip_following_when_scattered (to end of group)
+      coutf("      if (SCATTERED) " ID_PRE MCCODE_PARTICLE "->index = %i; // when SCATTERED in GROUP: reach exit of GROUP after %s",
+        comp->group->last_comp_index, comp->group->last_comp);
+      // final_absorb_when_all_not_scattered
+      if (comp->index == comp->group->last_comp_index)
+        coutf("      else ABSORB;     // not SCATTERED at end of GROUP: removes left events", comp->group->last_comp);
+      else // comp_absorb_sends_to_next
+        coutf("      else ABSORBED=0; // not SCATTERED within GROUP: always tries next");
     }
     
     coutf("      " ID_PRE MCCODE_PARTICLE "->index++;");
