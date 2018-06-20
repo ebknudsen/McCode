@@ -1709,11 +1709,14 @@ int cogen_trace(struct instr_def *instr)
   cout("  while (!ABSORBED) { /* iterate neutron event until absorbed */");
 
   cout("    /* send neutron event to component instance, one after the other */");
+  cout("    char flag_nocoordschange=0;");
   
   /* now we produce the list of statements for each component index, with the attached logic */
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL) {
-  
+    List_handle liter2;
+    struct comp_inst *comp2=NULL;
+    
     /* the SPLIT loop must be set before we enter further component blocks */
     if (comp->split) {
       char *exp=exp_tostring(comp->split);
@@ -1747,15 +1750,19 @@ int cogen_trace(struct instr_def *instr)
       cogen_defundef(comp, comp->def->out_par, GLOBAL_INSTANCE_PAR_REF);
     }
     // coordinate transformations (wrt to PREVIOUS)
-    coutf("      if (" ID_PRE "instance_%s->rotation_is_identity) {", comp->name);
-    coutf("        coords_get("
+    
+    cout( "      if (!flag_nocoordschange) { // flag activated by JUMP to pass coords change"); 
+    
+    coutf("        if (" ID_PRE "instance_%s->rotation_is_identity) {", comp->name);
+    coutf("          coords_get("
       "coords_add(coords_set(x,y,z), " ID_PRE "instance_%s->position_relative),"
       "&x, &y, &z);", comp->name);
-    cout( "      } else");
-    coutf("        " ID_PRE "coordschange(" 
+    cout( "        } else");
+    coutf("          " ID_PRE "coordschange(" 
       ID_PRE "instance_%s->position_relative, " 
       ID_PRE "instance_%s->rotation_relative, " ID_PRE MCCODE_PARTICLE ");",
       comp->name, comp->name);
+    cout( "      } else flag_nocoordschange=0;");
 
     /* call the component when there are TRACE and/or EXTEND lines */
     if (list_len(comp->def->trace_code->lines) > 0 || list_len(comp->extend->lines) > 0) {
@@ -1782,22 +1789,25 @@ int cogen_trace(struct instr_def *instr)
     // JUMP
     if(list_len(comp->jump) > 0) {
       struct jump_struct *this_jump;
-      List_handle liter2 = list_iterate(comp->jump);
-      while(this_jump = list_next(liter2)) {
+      List_handle literJ = list_iterate(comp->jump);
+      while(this_jump = list_next(literJ)) {
         char *exp = exp_tostring(this_jump->condition);
         /* as there will be a neutron->index++, we subtract 1 to the target */
         if (this_jump->iterate) {
-          coutf("      if (++" ID_PRE "instrument->logic.Jump_%s_%s < %s) /* test for iteration */", 
+          coutf("      if (++" ID_PRE "instrument->logic.Jump_%s_%s < %s) { /* test for iteration */", 
             comp->name, this_jump->target, exp);
           coutf("        " ID_PRE MCCODE_PARTICLE "->index = %i;", this_jump->target_index-1);
-          coutf("      else " ID_PRE "instrument->logic.Jump_%s_%s=0; /* reset Jump loop and go forward */",
+          cout( "        flag_nocoordschange=1; // pass corrdinate transformations when jumping");
+          coutf("      } else " ID_PRE "instrument->logic.Jump_%s_%s=0; /* reset Jump loop and go forward */",
             comp->name, this_jump->target);
         } else {
-          coutf("      if (%s) /* conditional JUMP to %s */", exp, this_jump->target);
+          coutf("      if (%s) {/* conditional JUMP to %s */", exp, this_jump->target);
           coutf("        " ID_PRE MCCODE_PARTICLE "->index=%i;", this_jump->target_index-1);
+          cout( "        flag_nocoordschange=1; // pass corrdinate transformations when jumping");
+          cout( "      }");
         }
       }
-      list_iterate_end(liter2);
+      list_iterate_end(literJ);
     }
     /* if we are in a group:
        if (SCATTERED) index = last comp in group
