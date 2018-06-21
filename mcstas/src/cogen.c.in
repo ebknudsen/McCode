@@ -1195,6 +1195,7 @@ int cogen_decls(struct instr_def *instr)
   coutf("  double counter_AbsorbProp[%i]; /* absorbed events in PROP routines */", list_len(instr->complist)+2);
   coutf("  double counter_N[%i], counter_P[%i], counter_P2[%i]; /* event counters after each component instance */", 
     list_len(instr->complist)+2, list_len(instr->complist)+2, list_len(instr->complist)+2);
+  coutf("  " ID_PRE "particle trajectory[%i]; /* current trajectory for STORE/RESTORE */", list_len(instr->complist)+2);
   cout( "/* Components position table (absolute and relative coords) */");
   coutf("  Coords position_relative[%i]; /* positions of all components */",
     list_len(instr->complist)+2);
@@ -1598,7 +1599,7 @@ int cogen_trace(struct instr_def *instr)
   }
   list_iterate_end(liter);
   
-  /* define all common function for components (SHARE) if needed */
+  /* define all common function for component "classes" (SHARE TRACE) if needed */
   if (i > 0) {
     /* define state parameters for all TRACE definition/common/shared functions */
     for(i = 0; i < NUM_STATE_PARS; i++)
@@ -1606,6 +1607,14 @@ int cogen_trace(struct instr_def *instr)
     /* define SCATTERED, ABSORB and RESTORE macros */
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "SCATTERED", "scattered");
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "RESTORE"  , "restore");
+    coutf("#define RESTORE_NEUTRON(index, ...) if (index>=0 && index<=%i) " 
+      "memcpy(" ID_PRE MCCODE_PARTICLE ", &" 
+      ID_PRE "instrument->trajectory[index], sizeof(mcparticle));", 
+      list_len(instr->complist));
+    coutf("#define STORE_NEUTRON(index, ...) if (index>=0 && index<=%i) " 
+      "memcpy(&" ID_PRE "instrument->trajectory[index], " 
+      ID_PRE MCCODE_PARTICLE ", sizeof(mcparticle));", 
+      list_len(instr->complist));
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "absorbed");
     #if MCCODE_PROJECT == 1     /* neutron */
     cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE "comp); } while(0)");
@@ -1625,11 +1634,13 @@ int cogen_trace(struct instr_def *instr)
     /* undefine SCATTERED, ABSORBED and RESTORE macros */
     cout("#undef SCATTERED");
     cout("#undef RESTORE"  );
+    cout("#undef RESTORE_NEUTRON"  );
+    cout("#undef STORE_NEUTRON"  );
     cout("#undef ABSORBED" );
     cout("#undef ABSORB");
     cout("#undef " ID_PRE "instance_MYSELF");
     cout("");
-  }
+  } /* end trace for classes */
   
   /* call components to write their code section */
   /* define state parameters */
@@ -1639,6 +1650,14 @@ int cogen_trace(struct instr_def *instr)
   /* define SCATTERED, ABSORBED and RESTORE macros */
   coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "SCATTERED", "scattered");
   coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "RESTORE"  , "restore");
+  coutf("#define RESTORE_NEUTRON(index, ...) if (index>=0 && index<=%i) " 
+      "memcpy(" ID_PRE MCCODE_PARTICLE ", &" 
+      ID_PRE "instrument->trajectory[index], sizeof(mcparticle));", 
+      list_len(instr->complist));
+    coutf("#define STORE_NEUTRON(index, ...) if (index>=0 && index<=%i) " 
+      "memcpy(&" ID_PRE "instrument->trajectory[index], " 
+      ID_PRE MCCODE_PARTICLE ", sizeof(mcparticle));", 
+      list_len(instr->complist));
   coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "absorbed");
   #if MCCODE_PROJECT == 1     /* neutron */
   cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE MCCODE_PARTICLE ");} while(0)");
@@ -1765,8 +1784,8 @@ int cogen_trace(struct instr_def *instr)
     cout( "      } else flag_nocoordschange=0;");
 
     /* call the component when there are TRACE and/or EXTEND lines */
+    coutf("      STORE_NEUTRON(%i);", comp->index);
     if (list_len(comp->def->trace_code->lines) > 0 || list_len(comp->extend->lines) > 0) {
-      cout("      " ID_PRE "particle " ID_PRE MCCODE_PARTICLE "_save = " ID_PRE MCCODE_PARTICLE "_particle;");
       if (comp->when) { // WHEN
         char *exp=exp_tostring(comp->when);
         coutf("      if (%s) // conditional WHEN execution", exp);
@@ -1775,8 +1794,8 @@ int cogen_trace(struct instr_def *instr)
       /* call the component instance TRACE function */
       coutf("      " ID_PRE "instance_%s_trace(" ID_PRE MCCODE_PARTICLE ");%s",
         comp->name, list_len(comp->extend->lines) ? " /* contains EXTEND code */" : "");
-      cout( "      if (RESTORE) /* keep propagation and restore neutron (even when ABSORBED in the same loop) */");
-      cout( "        " ID_PRE MCCODE_PARTICLE "_particle=" ID_PRE MCCODE_PARTICLE "_save;");
+      cout( "      if (RESTORE) ");
+      coutf( "        RESTORE_NEUTRON(%i);", comp->index);
     };
 
     if (comp->split || comp->when || list_len(comp->jump) > 0) {
@@ -1862,6 +1881,8 @@ int cogen_trace(struct instr_def *instr)
   /* undefine SCATTERED, ABSORBED and RESTORE macros */
   cout("  #undef SCATTERED");
   cout("  #undef RESTORE");
+  cout("  #undef RESTORE_NEUTRON"  );
+  cout("  #undef STORE_NEUTRON"  );
   cout("  #undef ABSORBED");
   cout("  #undef ABSORB");
   
