@@ -447,6 +447,7 @@ int strcasecmp( const char *s1, const char *s2 )
 #define STRACPY
 char *stracpy(char *destination, const char *source, size_t amount)
 {
+        if (!destination || !source || !amount) return(NULL);
         while(amount--)
           if((*destination++ = *source++) == '\0') break;
         *destination = '\0';
