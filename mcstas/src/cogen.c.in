@@ -576,15 +576,15 @@ int cogen_comp_declare(struct comp_inst *comp)
      comp->def->name);
     coutf("struct " ID_PRE "class_%s_struct {", comp->def->name); 
       /* make struct: set, pos, rot, declare block */
-    coutf("  char     name[256]; /* e.g. %s */", comp->name);
-    coutf("  char     type[256]; /* %s */", comp->def->name);
-    coutf("  long     index; /* e.g. %i index in TRACE list */",
+    coutf("  char     _name[256]; /* e.g. %s */", comp->name);
+    coutf("  char     _type[256]; /* %s */", comp->def->name);
+    coutf("  long     _index; /* e.g. %i index in TRACE list */",
       index);
-    cout( "  Coords   position_absolute;");
-    cout( "  Coords   position_relative; /* wrt PREVIOUS */");
-    cout( "  Rotation rotation_absolute;");
-    cout( "  Rotation rotation_relative; /* wrt PREVIOUS */");
-    cout( "  int      rotation_is_identity;");
+    cout( "  Coords   _position_absolute;");
+    cout( "  Coords   _position_relative; /* wrt PREVIOUS */");
+    cout( "  Rotation _rotation_absolute;");
+    cout( "  Rotation _rotation_relative; /* wrt PREVIOUS */");
+    cout( "  int      _rotation_is_identity;");
     coutf("  struct " ID_PRE "%s_parameters_struct parameters;", comp->def->name);
     cout("};");
   } /* define class type parameter structure when not done yet (only once) */
@@ -689,7 +689,7 @@ static void cogen_comp_init_position(struct comp_inst *comp, struct comp_inst *l
   
   if(relcomp == NULL)
   {                                /* Absolute orientation. */
-    coutf("    rot_set_rotation(%sinstance_%s->rotation_absolute,", ID_PRE, comp->name);
+    coutf("    rot_set_rotation(%sinstance_%s->_rotation_absolute,", ID_PRE, comp->name);
     code_set_source(instr->quoted_source,
                     exp_getlineno(comp->pos->orientation.x));
     coutf("      (%s)*%s, (%s)*%s, (%s)*%s);", x, d2r, y, d2r, z, d2r);
@@ -702,7 +702,7 @@ static void cogen_comp_init_position(struct comp_inst *comp, struct comp_inst *l
                     exp_getlineno(comp->pos->orientation.x));
     coutf("      (%s)*%s, (%s)*%s, (%s)*%s);", x, d2r, y, d2r, z, d2r);
     code_reset_source();
-    coutf("    rot_mul(%str1, %sinstance_%s->rotation_absolute, %sinstance_%s->rotation_absolute);",
+    coutf("    rot_mul(%str1, %sinstance_%s->_rotation_absolute, %sinstance_%s->_rotation_absolute);",
           ID_PRE, ID_PRE, relcomp->name, ID_PRE, comp->name);
   }
   str_free(z);
@@ -712,16 +712,16 @@ static void cogen_comp_init_position(struct comp_inst *comp, struct comp_inst *l
   /* Relative rotation. */
   if(last == NULL)
   {                                /* First component. */
-    coutf("    rot_copy(%sinstance_%s->rotation_relative, %sinstance_%s->rotation_absolute);",
+    coutf("    rot_copy(%sinstance_%s->_rotation_relative, %sinstance_%s->_rotation_absolute);",
           ID_PRE, comp->name, ID_PRE, comp->name);
   }
   else
   {
-    coutf("    rot_transpose(%sinstance_%s->rotation_absolute, %str1);", ID_PRE, last->name, ID_PRE);
-    coutf("    rot_mul(%sinstance_%s->rotation_absolute, %str1, %sinstance_%s->rotation_relative);",
+    coutf("    rot_transpose(%sinstance_%s->_rotation_absolute, %str1);", ID_PRE, last->name, ID_PRE);
+    coutf("    rot_mul(%sinstance_%s->_rotation_absolute, %str1, %sinstance_%s->_rotation_relative);",
           ID_PRE, comp->name, ID_PRE, ID_PRE, comp->name);
   }
-  coutf("    %sinstance_%s->rotation_is_identity =  rot_test_identity(%sinstance_%s->rotation_relative);",
+  coutf("    %sinstance_%s->_rotation_is_identity =  rot_test_identity(%sinstance_%s->_rotation_relative);",
     ID_PRE, comp->name, ID_PRE, comp->name);
 
   /* Absolute position. */
@@ -731,7 +731,7 @@ static void cogen_comp_init_position(struct comp_inst *comp, struct comp_inst *l
   relcomp = comp->pos->place_rel;
   if(relcomp == NULL)
   {
-    coutf("    %sinstance_%s->position_absolute = coords_set(", ID_PRE, comp->name);
+    coutf("    %sinstance_%s->_position_absolute = coords_set(", ID_PRE, comp->name);
     code_set_source(instr->quoted_source, exp_getlineno(comp->pos->place.x));
     coutf("      %s, %s, %s);", x,y ,z);
     code_reset_source();
@@ -742,11 +742,11 @@ static void cogen_comp_init_position(struct comp_inst *comp, struct comp_inst *l
     code_set_source(instr->quoted_source, exp_getlineno(comp->pos->place.x));
     coutf("      %s, %s, %s);", x,y ,z);
     code_reset_source();
-    coutf("    rot_transpose(%sinstance_%s->rotation_absolute, %str1);",
+    coutf("    rot_transpose(%sinstance_%s->_rotation_absolute, %str1);",
           ID_PRE, relcomp->name, ID_PRE);
     coutf("    %stc2 = rot_apply(%str1, %stc1);",
           ID_PRE, ID_PRE, ID_PRE);
-    coutf("    %sinstance_%s->position_absolute = coords_add(%sinstance_%s->position_absolute, %stc2);",
+    coutf("    %sinstance_%s->_position_absolute = coords_add(%sinstance_%s->_position_absolute, %stc2);",
           ID_PRE, comp->name, ID_PRE, relcomp->name, ID_PRE);
   }
 
@@ -756,19 +756,19 @@ static void cogen_comp_init_position(struct comp_inst *comp, struct comp_inst *l
 
   /* Relative position. */
   if(last == NULL)
-    coutf("    %stc1 = coords_neg(%sinstance_%s->position_absolute);", ID_PRE, ID_PRE, comp->name);
+    coutf("    %stc1 = coords_neg(%sinstance_%s->_position_absolute);", ID_PRE, ID_PRE, comp->name);
   else
-    coutf("    %stc1 = coords_sub(%sinstance_%s->position_absolute, %sinstance_%s->position_absolute);",
+    coutf("    %stc1 = coords_sub(%sinstance_%s->_position_absolute, %sinstance_%s->_position_absolute);",
           ID_PRE, ID_PRE, last->name, ID_PRE, comp->name);
-  coutf("    %sinstance_%s->position_relative = rot_apply(%sinstance_%s->rotation_absolute, %stc1);",
+  coutf("    %sinstance_%s->_position_relative = rot_apply(%sinstance_%s->_rotation_absolute, %stc1);",
         ID_PRE, comp->name, ID_PRE, comp->name, ID_PRE);
   coutf("  } /* %s=%s() AT ROTATED */", comp->name, comp->def->name);
 
-  coutf("  DEBUG_COMPONENT(\"%s\", %sinstance_%s->position_absolute, %sinstance_%s->rotation_absolute);",
+  coutf("  DEBUG_COMPONENT(\"%s\", %sinstance_%s->_position_absolute, %sinstance_%s->_rotation_absolute);",
         comp->name, ID_PRE, comp->name, ID_PRE, comp->name);
-  coutf("  " ID_PRE "instrument->position_absolute[%i] = " ID_PRE "instance_%s->position_absolute;",
+  coutf("  " ID_PRE "instrument->_position_absolute[%i] = " ID_PRE "instance_%s->_position_absolute;",
     comp->index, comp->name);
-  coutf("  " ID_PRE "instrument->position_relative[%i] = " ID_PRE "instance_%s->position_relative;",
+  coutf("  " ID_PRE "instrument->_position_relative[%i] = " ID_PRE "instance_%s->_position_relative;",
     comp->index, comp->name);
   
 } /* cogen_comp_init_position */
@@ -991,9 +991,9 @@ int cogen_comp_setpos(struct comp_inst *comp, struct comp_inst *last, struct ins
         comp->def->init_code && comp->def->init_code->quoted_filename ? comp->def->init_code->quoted_filename : comp->def->name, 
         comp->def->init_code && comp->def->init_code->linenum > 0 ? comp->def->init_code->linenum : 0);
   
-  coutf("  stracpy(" ID_PRE "instance_%s->name, \"%s\", 16384);", comp->name, comp->name);
-  coutf("  stracpy(" ID_PRE "instance_%s->type, \"%s\", 16384);", comp->name, comp->def->name);
-  coutf("  " ID_PRE "instance_%s->index=%i;", comp->name, comp->index);
+  coutf("  stracpy(" ID_PRE "instance_%s->_name, \"%s\", 16384);", comp->name, comp->name);
+  coutf("  stracpy(" ID_PRE "instance_%s->_type, \"%s\", 16384);", comp->name, comp->def->name);
+  coutf("  " ID_PRE "instance_%s->_index=%i;", comp->name, comp->index);
   
   /* definition parameters */
   warnings += cogen_comp_init_defpar(comp); // specific to each instance
@@ -1190,16 +1190,16 @@ int cogen_decls(struct instr_def *instr)
   
   /* 2b. instrument structure */
   cout("struct " ID_PRE "instrument_struct {");
-  coutf("  char   name[256]; /* the name of this instrument e.g. '%s' */", instr->name);
+  coutf("  char   _name[256]; /* the name of this instrument e.g. '%s' */", instr->name);
   cout( "/* Counters per component instance */");
   coutf("  double counter_AbsorbProp[%i]; /* absorbed events in PROP routines */", list_len(instr->complist)+2);
   coutf("  double counter_N[%i], counter_P[%i], counter_P2[%i]; /* event counters after each component instance */", 
     list_len(instr->complist)+2, list_len(instr->complist)+2, list_len(instr->complist)+2);
-  coutf("  " ID_PRE "particle trajectory[%i]; /* current trajectory for STORE/RESTORE */", list_len(instr->complist)+2);
+  coutf("  " ID_PRE "particle _trajectory[%i]; /* current trajectory for STORE/RESTORE */", list_len(instr->complist)+2);
   cout( "/* Components position table (absolute and relative coords) */");
-  coutf("  Coords position_relative[%i]; /* positions of all components */",
+  coutf("  Coords _position_relative[%i]; /* positions of all components */",
     list_len(instr->complist)+2);
-  coutf("  Coords position_absolute[%i];",
+  coutf("  Coords _position_absolute[%i];",
     list_len(instr->complist)+2);
   cout( "  struct " ID_PRE "instrument_parameters_struct parameters; /* instrument parameters */");
   if (index)
@@ -1382,6 +1382,8 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
     cout("  #undef rectangle");
     cout("  #undef box");
     cout("  #undef circle");
+    cout("  #undef cylinder");
+    cout("  #undef sphere");
   }
   cout("");
   
@@ -1399,7 +1401,7 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
     /* default values for instrument parameters are set in mcreadparams */
     cout("  /* " ID_PRE "code_main/" ID_PRE "parseoptions/" ID_PRE "readparams "
       "sets instrument parameters value */");
-    coutf("  stracpy(" ID_PRE "instrument->name, \"%s\", 256);", instr->name);
+    coutf("  stracpy(" ID_PRE "instrument->_name, \"%s\", 256);", instr->name);
   } 
   else if (!strcmp(section, "SAVE"))
     coutf("  if (!handle) %ssiminfo_init(NULL);", ID_PRE);
@@ -1607,17 +1609,17 @@ int cogen_trace(struct instr_def *instr)
     for(i = 0; i < NUM_STATE_PARS; i++)
       coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", statepars_all[i], statepars_all[i]);
     /* define SCATTERED, ABSORB and RESTORE macros */
-    coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "SCATTERED", "scattered");
-    coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "RESTORE"  , "restore");
-    coutf("#define RESTORE_NEUTRON(index, ...) if (index>=0 && index<=%i) " 
+    coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "SCATTERED", "_scattered");
+    coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "RESTORE"  , "_restore");
+    coutf("#define RESTORE_NEUTRON(_index, ...) if (_index>=0 && _index<=%i) " 
       "memcpy(" ID_PRE MCCODE_PARTICLE ", &" 
-      ID_PRE "instrument->trajectory[index], sizeof(mcparticle));", 
+      ID_PRE "instrument->_trajectory[_index], sizeof(mcparticle));", 
       list_len(instr->complist));
-    coutf("#define STORE_NEUTRON(index, ...) if (index>=0 && index<=%i) " 
-      "memcpy(&" ID_PRE "instrument->trajectory[index], " 
+    coutf("#define STORE_NEUTRON(_index, ...) if (_index>=0 && _index<=%i) " 
+      "memcpy(&" ID_PRE "instrument->_trajectory[_index], " 
       ID_PRE MCCODE_PARTICLE ", sizeof(mcparticle));", 
       list_len(instr->complist));
-    coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "absorbed");
+    coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "_absorbed");
     #if MCCODE_PROJECT == 1     /* neutron */
     cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE "comp); } while(0)");
     #elif MCCODE_PROJECT == 2   /* xray */
@@ -1650,17 +1652,17 @@ int cogen_trace(struct instr_def *instr)
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", statepars_all[i], statepars_all[i]);
     
   /* define SCATTERED, ABSORBED and RESTORE macros */
-  coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "SCATTERED", "scattered");
-  coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "RESTORE"  , "restore");
-  coutf("#define RESTORE_NEUTRON(index, ...) if (index>=0 && index<=%i) " 
+  coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "SCATTERED", "_scattered");
+  coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "RESTORE"  , "_restore");
+  coutf("#define RESTORE_NEUTRON(_index, ...) if (_index>=0 && _index<=%i) " 
       "memcpy(" ID_PRE MCCODE_PARTICLE ", &" 
-      ID_PRE "instrument->trajectory[index], sizeof(mcparticle));", 
+      ID_PRE "instrument->_trajectory[_index], sizeof(mcparticle));", 
       list_len(instr->complist));
-    coutf("#define STORE_NEUTRON(index, ...) if (index>=0 && index<=%i) " 
-      "memcpy(&" ID_PRE "instrument->trajectory[index], " 
+    coutf("#define STORE_NEUTRON(_index, ...) if (_index>=0 && _index<=%i) " 
+      "memcpy(&" ID_PRE "instrument->_trajectory[_index], " 
       ID_PRE MCCODE_PARTICLE ", sizeof(mcparticle));", 
       list_len(instr->complist));
-  coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "absorbed");
+  coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "_absorbed");
   #if MCCODE_PROJECT == 1     /* neutron */
   cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE MCCODE_PARTICLE ");} while(0)");
   #elif MCCODE_PROJECT == 2   /* xray */
@@ -1745,7 +1747,7 @@ int cogen_trace(struct instr_def *instr)
       coutf("    /* start SPLIT at %s */", comp->name);
       
       coutf("    " ID_PRE "instrument->logic.Split_%s_particle=" ID_PRE MCCODE_PARTICLE "_particle;", comp->name); // store incoming particle state at SPLIT
-      coutf("    if (!ABSORBED && " ID_PRE MCCODE_PARTICLE "->index == %i) ", comp->index);
+      coutf("    if (!ABSORBED && " ID_PRE MCCODE_PARTICLE "->_index == %i) ", comp->index);
       coutf("    for (" ID_PRE "instrument->logic.Split_%s = 0; " 
                           ID_PRE "instrument->logic.Split_%s< %s; " 
                           ID_PRE "instrument->logic.Split_%s++) {", 
@@ -1754,7 +1756,7 @@ int cogen_trace(struct instr_def *instr)
       cout( "    {");
     } // for split
     else
-      coutf("    if (!ABSORBED && " ID_PRE MCCODE_PARTICLE "->index == %i) {", comp->index);
+      coutf("    if (!ABSORBED && " ID_PRE MCCODE_PARTICLE "->_index == %i) {", comp->index);
       
     coutf("      /* component %s=%s() [%i] */", comp->name, comp->def->name, comp->index);
     if (comp->split) {
@@ -1774,14 +1776,14 @@ int cogen_trace(struct instr_def *instr)
     
     cout( "      if (!flag_nocoordschange) { // flag activated by JUMP to pass coords change"); 
     
-    coutf("        if (" ID_PRE "instance_%s->rotation_is_identity) {", comp->name);
+    coutf("        if (" ID_PRE "instance_%s->_rotation_is_identity) {", comp->name);
     coutf("          coords_get("
-      "coords_add(coords_set(x,y,z), " ID_PRE "instance_%s->position_relative),"
+      "coords_add(coords_set(x,y,z), " ID_PRE "instance_%s->_position_relative),"
       "&x, &y, &z);", comp->name);
     cout( "        } else");
     coutf("          " ID_PRE "coordschange(" 
-      ID_PRE "instance_%s->position_relative, " 
-      ID_PRE "instance_%s->rotation_relative, " ID_PRE MCCODE_PARTICLE ");",
+      ID_PRE "instance_%s->_position_relative, " 
+      ID_PRE "instance_%s->_rotation_relative, " ID_PRE MCCODE_PARTICLE ");",
       comp->name, comp->name);
     cout( "      } else flag_nocoordschange=0;");
 
@@ -1817,13 +1819,13 @@ int cogen_trace(struct instr_def *instr)
         if (this_jump->iterate) {
           coutf("      if (++" ID_PRE "instrument->logic.Jump_%s_%s < %s) { /* test for iteration */", 
             comp->name, this_jump->target, exp);
-          coutf("        " ID_PRE MCCODE_PARTICLE "->index = %i;", this_jump->target_index-1);
+          coutf("        " ID_PRE MCCODE_PARTICLE "->_index = %i;", this_jump->target_index-1);
           cout( "        flag_nocoordschange=1; // pass corrdinate transformations when jumping");
           coutf("      } else " ID_PRE "instrument->logic.Jump_%s_%s=0; /* reset Jump loop and go forward */",
             comp->name, this_jump->target);
         } else {
           coutf("      if (%s) {/* conditional JUMP to %s */", exp, this_jump->target);
-          coutf("        " ID_PRE MCCODE_PARTICLE "->index=%i;", this_jump->target_index-1);
+          coutf("        " ID_PRE MCCODE_PARTICLE "->_index=%i;", this_jump->target_index-1);
           cout( "        flag_nocoordschange=1; // pass corrdinate transformations when jumping");
           cout( "      }");
         }
@@ -1839,7 +1841,7 @@ int cogen_trace(struct instr_def *instr)
         comp->group->first_comp, comp->group->first_comp_index,  
         comp->group->last_comp,  comp->group->last_comp_index);
       // skip_following_when_scattered (to end of group)
-      coutf("      if (SCATTERED) " ID_PRE MCCODE_PARTICLE "->index = %i; // when SCATTERED in GROUP: reach exit of GROUP after %s",
+      coutf("      if (SCATTERED) " ID_PRE MCCODE_PARTICLE "->_index = %i; // when SCATTERED in GROUP: reach exit of GROUP after %s",
         comp->group->last_comp_index, comp->group->last_comp);
       // final_absorb_when_all_not_scattered
       if (comp->index == comp->group->last_comp_index)
@@ -1848,7 +1850,7 @@ int cogen_trace(struct instr_def *instr)
         coutf("      else ABSORBED=0; // not SCATTERED within GROUP: always tries next");
     }
     
-    coutf("      " ID_PRE MCCODE_PARTICLE "->index++;");
+    coutf("      " ID_PRE MCCODE_PARTICLE "->_index++;");
     coutf("    } /* end component %s [%i] */", comp->name, comp->index);
     
   } /* end while comp list (case) */
@@ -1867,7 +1869,7 @@ int cogen_trace(struct instr_def *instr)
   }
   list_iterate_end(liter);
   /*   propagate to next component */
-  coutf("    if (" ID_PRE MCCODE_PARTICLE "->index > %d)", list_len(instr->complist));
+  coutf("    if (" ID_PRE MCCODE_PARTICLE "->_index > %d)", list_len(instr->complist));
   /* if we reach the last component, and nothing happened, ABSORB */
   cout( "      ABSORBED++; /* absorbed when passed all components */");
 
@@ -1889,7 +1891,7 @@ int cogen_trace(struct instr_def *instr)
   cout("  #undef ABSORB");
   
   cout("");
-  cout("  return(" ID_PRE MCCODE_PARTICLE "->index);");
+  cout("  return(" ID_PRE MCCODE_PARTICLE "->_index);");
   coutf("} /* " ID_PRE "%s */", "raytrace");
   
   return(warnings);
@@ -1978,12 +1980,12 @@ cogen_header(struct instr_def *instr, char *output_name)
   cout("  curandState_t MCRANDstate; /* CUDA RNG state */");
   cout("#endif");
   cout("  double t, p;    /* time, event weight */");
-  cout("  long long uid;  /* event ID */");
-  cout("  long index;     /* component index where to send this event */");
+  cout("  long long _uid;  /* event ID */");
+  cout("  long _index;     /* component index where to send this event */");
   /* these are needed for SCATTERED, ABSORB and RESTORE macros */
-  cout("  long absorbed;  /* flag set to TRUE when this event is to be removed/ignored */");
-  cout("  long scattered; /* flag set to TRUE when this event has interacted with the last component instance */");
-  cout("  long restore;   /* set to true if neutron event must be restored */");
+  cout("  long _absorbed;  /* flag set to TRUE when this event is to be removed/ignored */");
+  cout("  long _scattered; /* flag set to TRUE when this event has interacted with the last component instance */");
+  cout("  long _restore;   /* set to true if neutron event must be restored */");
   cout("};");
   cout("typedef struct " ID_PRE "particle_struct " ID_PRE "particle;");
   cout("");

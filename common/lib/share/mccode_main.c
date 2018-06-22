@@ -134,14 +134,14 @@ mcseed=(long)ct;
       curandState_t MCRANDstate;
       long long seq = Xmcrun_num;
 #undef random
-#define random twister_initdraw(mcseed,particleN.uid,particleN.MCRANDstate);
+#define random twister_initdraw(mcseed,particleN._uid,particleN.MCRANDstate);
       /*#define prinf(...) printf_GPU(__VA_ARGS__)
 	#define fprinf(...) fprintf_GPU(__VA_ARGS__)*/
 #endif
 /* End RNG in CUDA case */
 
       mcparticle particleN = mcgenstate(); // initial particle
-      particleN.uid = Xmcrun_num;
+      particleN._uid = Xmcrun_num;
 /* CUDA */
 #if MC_ALG_RAND == 5 
       particleN.MCRANDstate = MCRANDstate;

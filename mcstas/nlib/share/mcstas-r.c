@@ -67,11 +67,11 @@ mcparticle mcsetstate(double x, double y, double z, double vx, double vy, double
   mcneutron.sy = sy;
   mcneutron.sz = sz;
   mcneutron.p  = p;
-  mcneutron.uid       = 0;
-  mcneutron.index     = 1;
-  mcneutron.absorbed  = 0;
-  mcneutron.restore   = 0;
-  mcneutron.scattered = 0;
+  mcneutron._uid       = 0;
+  mcneutron._index     = 1;
+  mcneutron._absorbed  = 0;
+  mcneutron._restore   = 0;
+  mcneutron._scattered = 0;
   
   return(mcneutron);
 } /* mcsetstate */
