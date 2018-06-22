@@ -1335,6 +1335,8 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
     cout("  #define rectangle   mcdis_rectangle");
     cout("  #define box         mcdis_box");
     cout("  #define circle      mcdis_circle");
+    cout("  #define cylinder    mcdis_cylinder");
+    cout("  #define sphere      mcdis_sphere");
   }
   
   /* first the common definition code if any (when no definition parameter exist) */
