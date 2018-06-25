@@ -74,7 +74,11 @@
 
 DEFINE COMPONENT ViewModISIS
 SETTING PARAMETERS (string Face="TS1_S04_Merlin.mcstas",E0, E1,modPosition=0,xw=0.12,yh=0.12,focus_xw=0.094,focus_yh=0.094,dist=1.7,int verbose=0, beamcurrent=1)
-DECLARE
+
+OUTPUT PARAMETERS(p_in,Tnpts,scaleSize,angleArea,Nsim,
+  Ncount,TS,fullAngle,rtE0,rtE1)
+
+SHARE
 %{
 
 #include <ctype.h>
@@ -96,7 +100,7 @@ typedef struct
   double* EInt;        ///< Integrated Energy point
   double Total;        ///< Integrated Total
 
-} Source;
+} Source_ViewMod;
 
   /* New functions */
 
@@ -107,8 +111,8 @@ typedef struct
   int findTimeOffset(char*,double*);
   FILE* openFile(char*);
   FILE* openFileTest(char*);
-  void processHeader(FILE*);
-  void readHtable(FILE*,const double,const double);
+  void processHeader(FILE*, Source_ViewMod);
+  void readHtable(FILE*,const double,const double, Source_ViewMod);
   int timeStart(char*);
   int timeEnd(char*);
   int energyBin(char*,double,double,double*,double*);
@@ -117,27 +121,9 @@ typedef struct
   void cutToNumber(char*);
   double convertEnergy(double);
   double EtoLambda(double);
-  double calcRDum(double*);
+  double calcRDum(double*, Source_ViewMod);
 
-  double strArea();
-
-  /* global variables */
-
-  double p_in;            /* Polorization term (from McSTAS) */
-  int Tnpts;              /* Number of points in parameteriation */
-
-  double scaleSize;        /* correction for the actual area of the moderator viewed */
-
-  double angleArea;       /* Area seen by the window  */
-
-  double Nsim;		/* Total number of neutrons to be simulated */
-
-  int Ncount;          /* Number of neutron simulate so far*/
-  Source TS;
-
-  /* runtime variables*/
-  double fullAngle;
-  double rtE0,rtE1;       /* runtime Energy minima and maxima so we can use angstroms as negative input */
+  double strArea(Source_ViewMod);
 
 
 double**
@@ -509,14 +495,13 @@ calcFraction(double EI,double EE,double Ea,double Eb)
 }
 
 double
-calcRDum(double* RPts)
+calcRDum(double* RPts, Source_ViewMod TS)
   /*!
     Caluclate the mean distance from the window centre point
    */
 {
   double sum,zMid;
   int i;
-  extern Source TS;
 
   sum=0.0;
   for(i=0;i<4;i++)
@@ -530,7 +515,7 @@ calcRDum(double* RPts)
 }
 
 void
-processHeader(FILE* TFile)
+processHeader(FILE* TFile, Source_ViewMod TS)
   /*!
     Determine the window and the time offset
     \param TFile :: file [rewound on exit]
@@ -543,9 +528,6 @@ processHeader(FILE* TFile)
   int timeOffsetFlag;
   int i,j;
   double D;
-  
-
-  extern Source TS;
   
   rdumCnt=0;
   timeOffsetFlag=0;
@@ -583,7 +565,7 @@ processHeader(FILE* TFile)
                   }
 	  fprintf(stderr,"Time off sec == %g \n",TS.timeOffset);
 	  fprintf(stderr,"mod size z == %g \n",TS.ZAxis);
-	  // TS.rdumMid=calcRDum(RPts);
+	  // TS.rdumMid=calcRDum(RPts, TS);
 	  TS.rdumMid=TS.timeOffset; // Goran
 	  return;
 	}
@@ -594,7 +576,7 @@ processHeader(FILE* TFile)
 
 
 void
-readHtable(FILE* TFile,const double Einit,const double Eend)
+readHtable(FILE* TFile,const double Einit,const double Eend, Source_ViewMod TS)
 /*!
   Process a general h.o file to create an integrated
   table of results from Einit -> Eend
@@ -611,8 +593,6 @@ readHtable(FILE* TFile,const double Einit,const double Eend)
   int tIndex;             // time Index
   double Tsum;           // Running integration
   double Efraction;      // Amount to use for an energy/time bin
-
-  extern Source TS;
 
   int i;
   /*!
@@ -631,7 +611,7 @@ readHtable(FILE* TFile,const double Einit,const double Eend)
   TS.nTime=0;
   TS.nEnergy=0;
   
-  processHeader(TFile);
+  processHeader(TFile, TS);
 
   // Read file and get time bins:
   while(fgets(ss,255,TFile) && Eend>Ea)
@@ -753,7 +733,7 @@ readHtable(FILE* TFile,const double Einit,const double Eend)
 }
 
 void
-getPoint(double* TV,double* EV,double* lim1, double* lim2)
+getPoint(double* TV,double* EV,double* lim1, double* lim2, Source_ViewMod TS)
  /*!
    Calculate the Time and Energy
    by sampling the file.
@@ -766,7 +746,6 @@ getPoint(double* TV,double* EV,double* lim1, double* lim2)
 {
   int i;
 
-  extern Source TS;
   double R0,R1,R,Rend;
   int Epnt;       ///< Points to the next higher index of the neutron integral
   int Tpnt;
@@ -979,7 +958,7 @@ openFile(char* FileName)
   exit(1);
 }
 
-double strArea()
+double strArea(Source_ViewMod TS)
 {
   /*
     Returns the mean Str view of the viewport
@@ -1039,6 +1018,26 @@ double strArea()
 
 %}
 
+DECLARE %{
+  /* global variables */
+
+  double p_in;            /* Polorization term (from McSTAS) */
+  int Tnpts;              /* Number of points in parameteriation */
+
+  double scaleSize;        /* correction for the actual area of the moderator viewed */
+
+  double angleArea;       /* Area seen by the window  */
+
+  double Nsim;		/* Total number of neutrons to be simulated */
+
+  int Ncount;          /* Number of neutron simulate so far*/
+  Source_ViewMod TS;
+
+  /* runtime variables*/
+  double fullAngle;
+  double rtE0,rtE1;       /* runtime Energy minima and maxima so we can use angstroms as negative input */
+%}
+
 INITIALIZE
 %{
   /* READ IN THE ENERGY FILE */
@@ -1052,7 +1051,7 @@ INITIALIZE
   rtE1=convertEnergy(E1);
   orderEnergy(&rtE0,&rtE1);
 
-  readHtable(Tfile,rtE0,rtE1);
+  readHtable(Tfile,rtE0,rtE1, TS);
   fclose(Tfile);
 
   /**********************************************************************/
@@ -1069,7 +1068,7 @@ INITIALIZE
 	      dist);
     }
   /* Do solid angle correction */
-  angleArea= strArea();
+  angleArea= strArea(TS);
 
   fprintf(stderr,"Totals:: %g %d %d \n",TS.Total,TS.nEnergy,TS.nTime);
 
@@ -1091,7 +1090,7 @@ TRACE
   xf = focus_xw*(0.5-rand01());          /* Choose focusing position uniformly */
   yf = focus_yh*(0.5-rand01());          /* Choose focusing position uniformly */
 
-  getPoint(&Tval,&Eval,&rtE0,&rtE1);
+  getPoint(&Tval,&Eval,&rtE0,&rtE1, TS);
   
 //  Ival=TS.Total*6.2415093e+12; // * 1.1879451;  /* ( of proton in 1uAmp) * (1-cos(30))*2*Pi  */
 //  Ival=TS.Total*5.9294338e+12; // Number of proton in 1uAmp * 0.95 (0.95 because of muon target loss)

@@ -48,10 +48,12 @@
 *******************************************************************************/
 
 DEFINE COMPONENT Multilayer_Sample
-DEFINITION PARAMETERS (xwidth = 0.2, zlength = 0.2,
-nlayer=1,sldPar={0.0,2.0e-6,0.0e-6},dPar={20.0},
-sigmaPar={5.0,5.0}, frac_inc=0, ythick=0, mu_inc=5.62, int target_index=0, focus_xw=0, focus_yh=0)
-OUTPUT PARAMETERS (sldParPtr, dParPtr, sigmaParPtr, tx, ty, tz)
+SETTING PARAMETERS (xwidth = 0.2, zlength = 0.2, nlayer=1,
+  vector sldPar={0.0,2.0e-6,0.0e-6}, 
+  vector dPar={20.0},
+  vector sigmaPar={5.0,5.0}, 
+  frac_inc=0, ythick=0, mu_inc=5.62, int target_index=0, focus_xw=0, focus_yh=0)
+OUTPUT PARAMETERS (tx, ty, tz, xmin, xmax, zmin, zmax)
 DEPENDENCY "-lgsl -lgslcblas"
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */
 
@@ -67,9 +69,6 @@ SHARE
 
 DECLARE
 %{
-double sldParPtr[]   = sldPar;
-double dParPtr[] = dPar;
-double sigmaParPtr[] = sigmaPar;
 double xmin, xmax, zmin, zmax;
 double tx, ty, tz;
 %}
@@ -205,7 +204,7 @@ TRACE
 
       for(i=0; i< nlayer+2; i++)
       {
-        tcvar1=gsl_complex_rect(1.0 - (lsq * sldParPtr[i] / tpi),dbl0);
+        tcvar1=gsl_complex_rect(1.0 - (lsq * sldPar[i] / tpi),dbl0);
 	gsl_matrix_complex_set(ris,i,0,tcvar1);
       }
 
@@ -226,7 +225,7 @@ TRACE
       if(nlayer > 0){
             for(i=0;i<nlayer;i++){
 		tcvar1=gsl_matrix_complex_get(pfn,i+1,0);
-		gsl_matrix_complex_set(betan,i+1,0,gsl_complex_mul_real(tcvar1,tpi*dParPtr[i]/lambda));
+		gsl_matrix_complex_set(betan,i+1,0,gsl_complex_mul_real(tcvar1,tpi*dPar[i]/lambda));
 	    }
       }
 
@@ -239,7 +238,7 @@ TRACE
 	a12t=c0;
       }
       tcvar3=gsl_complex_mul(tcvar1,tcvar2);
-      tcvar4=gsl_complex_mul_real(tcvar3,-1.0*tlc*sigmaParPtr[0]*sigmaParPtr[0]);
+      tcvar4=gsl_complex_mul_real(tcvar3,-1.0*tlc*sigmaPar[0]*sigmaPar[0]);
       gsl_matrix_complex_set(a1,0,1,gsl_complex_mul(a12t,gsl_complex_exp(tcvar4)));
       gsl_matrix_complex_set(a1,1,0,gsl_matrix_complex_get(a1,0,1));
       gsl_matrix_complex_set(a1,1,1,cr);
@@ -259,7 +258,7 @@ TRACE
 		  a22t=c0;
 		}
 		tcvar3=gsl_complex_mul(tcvar1,tcvar2);
-      		tcvar4=gsl_complex_mul_real(tcvar3,-1.0*tlc*sigmaParPtr[i]*sigmaParPtr[i]);
+      		tcvar4=gsl_complex_mul_real(tcvar3,-1.0*tlc*sigmaPar[i]*sigmaPar[i]);
 		a22t=gsl_complex_mul(a22t,gsl_complex_exp(tcvar4));
       		gsl_matrix_complex_set(a2,0,1,gsl_complex_mul(a22t,cbtm));
       		gsl_matrix_complex_set(a2,1,0,gsl_complex_mul(a22t,cbtm1));

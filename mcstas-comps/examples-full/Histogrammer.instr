@@ -49,14 +49,16 @@
 *
 * %End
 *******************************************************************************/
-DEFINE INSTRUMENT Histogrammer(string filename=0, int MODE=0 , string options="sphere theta phi outgoing previous", string type="text", int bufsize=10000, xwidth=0.1, yheight=0.1)
+DEFINE INSTRUMENT Histogrammer(string filename=0, int MODE=0 , 
+  string options="sphere theta phi outgoing previous", string type="text", 
+  int bufsize=10000, xwidth=0.1, yheight=0.1)
 
 /* The DECLARE section allows us to declare variables or  small      */
 /* functions in C syntax. These may be used in the whole instrument. */
 DECLARE
 %{
    int file_mode;
-   char *emptyfile = "";
+   char *emptyfile;
    char *VirtualI_filename;
    char *Vitess_filename;
    char *Tripoli_filename;
@@ -68,6 +70,7 @@ DECLARE
 /* (C code). You may use them as component parameter values.         */
 INITIALIZE
 %{
+   emptyfile = NULL; 
    file_mode = MODE;
    /* Set all filenames empty */
    VirtualI_filename = emptyfile;

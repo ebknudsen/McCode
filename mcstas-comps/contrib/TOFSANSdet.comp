@@ -76,7 +76,20 @@ Nx=128.0, Ny=128.0, Nt=500.0,                       /* be cautious with large nu
 qmin=0.0005, qmax=0.11, // Nq=500.0, <<<<<<<<<<<<<<<<< defined above
 rstneu = 0.0,
 centol = 0.1, inttol = 0.0001, qcal=1.0)
-OUTPUT PARAMETERS (simplN,simplI,simplIe)
+OUTPUT PARAMETERS (simplN,simplI,simplIe
+  Nxc,Nyc,Ntc,Nqc,
+  TSdNf,TSdpf,TSdp2f,
+  ds1c,ds2c,ds3c,
+  xw1c,xw2c,xw3c,
+  yh1c,yh2c,yh3c,
+  hl1c,hl2c,hl3c,
+  vx3c,
+  Pic,
+  simplN,
+  simplI,
+  simplIe,
+  storez,storen,
+  Ncount,Pcount)
 
 SHARE
 %{
@@ -111,7 +124,7 @@ int iimax(int A, int B) {
 if (A>B) return A; else return B;
 };
 
-double storez,storen;
+
 
 %}
 
@@ -121,7 +134,6 @@ DECLARE
     double *TSdNf;
     double *TSdpf;
     double *TSdp2f;
-    int i,j,s,k;
     double ds1c,ds2c,ds3c;
     double xw1c,xw2c,xw3c;
     double yh1c,yh2c,yh3c;
@@ -135,11 +147,14 @@ DECLARE
     double simplIe[Nq];
 
     double Ncount,Pcount;
+    double storez,storen;
 %}
 
 
 INITIALIZE
 %{
+   int i,j,s,k;
+   
    storez = 0.0;
    storen = 0.0;
 

@@ -265,11 +265,11 @@ ROTATED (TT_guide,0,0) RELATIVE Origin
 
 
 COMPONENT guide1 = Elliptic_guide_gravity(
-    L=guide_length*0.5-1e-6,
-    Linh = focus_inh,
-    Louth= focus_outh+guide_length*0.5,
-    Linv = focus_inv,
-    Loutv= focus_outv+guide_length*0.5,
+    l=guide_length*0.5-1e-6,
+    linh = focus_inh,
+    louth= focus_outh+guide_length*0.5,
+    linv = focus_inv,
+    loutv= focus_outv+guide_length*0.5,
     widthOfEllipsev=small_axis_h*0.5,
     widthOfEllipseh=small_axis_w*0.5,
     R0=R0_par,

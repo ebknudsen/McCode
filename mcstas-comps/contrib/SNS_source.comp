@@ -44,26 +44,12 @@
 DEFINE COMPONENT SNS_source
 DEFINITION PARAMETERS (filename)
 SETTING PARAMETERS (xwidth=0.1, yheight=0.12, dist, focus_xw, focus_yh, Emin, Emax)
-OUTPUT PARAMETERS (hdiv,vdiv,p_in)
+OUTPUT PARAMETERS (hdiv,vdiv,p_in
+  inxvec,inyvec,Pvec,xylength,tcol, Ecol,
+  txval, tyval, tPvec, Ptmat, EPmax, EPmin,INorm,INorm2
+  ntvals,idxstart,idxstop,tidxstart,tidxstop,nEvals)
 
-DECLARE
-%{
-double xonly(double);
-  double Pfunc(double,double);
-  double txonly(double);
-  double tPfunc(double,double);
-  double hdiv,vdiv;
-  double p_in;
-  double *inxvec,*inyvec,*Pvec;
-  int xylength;
-  double *tcol, *Ecol;
-  double *txval, *tyval;
-  double *tPvec;
-  double **Ptmat;
-  double EPmax, EPmin,INorm,INorm2;
-  int ntvals,idxstart,idxstop,tidxstart,tidxstop,nEvals;
-  #define Maxlength 200
-  #define MAXCOLS 500
+SHARE %{
 
   /* ----------------------------------------------------------------
       routine to load E, I and t I data from SNS source files
@@ -403,6 +389,27 @@ double tPfunc(double t,double y)
 {
   return quadfuncint(t,ntvals,txval,tyval)-y;
 }
+
+#define Maxlength 200
+#define MAXCOLS 500
+
+%}
+
+DECLARE
+%{
+  double hdiv,vdiv;
+  double p_in;
+  double *inxvec,*inyvec,*Pvec;
+  int xylength;
+  double *tcol, *Ecol;
+  double *txval, *tyval;
+  double *tPvec;
+  double **Ptmat;
+  double EPmax, EPmin,INorm,INorm2;
+  int ntvals,idxstart,idxstop,tidxstart,tidxstop,nEvals;
+  
+
+  
 %}
 
 INITIALIZE

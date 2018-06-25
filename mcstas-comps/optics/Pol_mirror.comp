@@ -73,11 +73,12 @@
 *******************************************************************************/
 
 DEFINE COMPONENT Pol_mirror
-DEFINITION PARAMETERS (rUpFunc=StdReflecFunc, rDownFunc=rUpFunc,
-rUpPar={0.99,0.0219,6.07,2.0,0.003}, rDownPar=rUpPar,
-useTables=0, zwidth, yheight)
-SETTING PARAMETERS (p_reflect=-1)
-OUTPUT PARAMETERS (rUpParPtr, rDownParPtr)
+DEFINITION PARAMETERS (useTables=0, rUpFunc=StdReflecFunc, rDownFunc=rUpFunc,
+  rUpPar={0.99,0.0219,6.07,2.0,0.003}, rDownPar=rUpPar)
+SETTING PARAMETERS (p_reflect=-1, zwidth, yheight)
+OUTPUT PARAMETERS (
+  vector rUpParPtrV=rUpPar, vector rDownParPtrV=rDownPar,
+  rUpParPtr, rDownParPtr)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */
 
 SHARE
@@ -89,11 +90,11 @@ SHARE
 DECLARE
 %{
 #if (useTables)
-  t_Table *rUpParPtr   = 0;
-  t_Table *rDownParPtr = 0;
+  t_Table *rUpParPtr;
+  t_Table *rDownParPtr;
 #else
-  double rUpParPtr[]   = (double[])rUpPar;
-  double rDownParPtr[] = (double[])rDownPar;
+  double *rUpParPtr;
+  double *rDownParPtr;
 #endif
 %}
 
@@ -102,6 +103,7 @@ INITIALIZE
 #if (useTables)
   rUpParPtr   = (t_Table*) malloc(sizeof(t_Table));
   rDownParPtr = (t_Table*) malloc(sizeof(t_Table));
+
   if (Table_Read(rUpParPtr, rUpPar, 1) <= 0) {
     fprintf(stderr,"Pol_mirror: %s: can not read file %s\n",
             NAME_CURRENT_COMP, rUpPar);
@@ -112,6 +114,9 @@ INITIALIZE
             NAME_CURRENT_COMP, rDownPar);
     exit(1);
   }
+#else
+  rUpParPtr   = rUpParPtrV;
+  rDownParPtr = rDownParPtrV;
 #endif
 
   if ((zwidth<=0) || (yheight <= 0)) {
