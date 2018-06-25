@@ -346,11 +346,11 @@ static void cogen_defundef(struct comp_inst *comp, List l, char define_it)
       int flag_noconflict=1;
       switch (define_it) {
       case GLOBAL_INSTANCE_PAR_REF:
-        coutf("  #define %s (" ID_PRE "instance_%s->parameters.%s)", 
+        coutf("  #define %s (" ID_PRE "instance_%s->_parameters.%s)", 
           c_formal->id, comp->name, c_formal->id);
         break;
       case LOCAL_INSTANCE_PAR_REF:
-        coutf("  #define %s (" ID_PRE "comp->parameters.%s)", 
+        coutf("  #define %s (" ID_PRE "comp->_parameters.%s)", 
           c_formal->id, c_formal->id);
         break;
       case INSTRUMENT_PAR_VALUE:
@@ -376,7 +376,7 @@ static void cogen_defundef(struct comp_inst *comp, List l, char define_it)
           } /* for List */
         }
         if (flag_noconflict)
-          coutf("  #define %s (" ID_PRE "instrument->parameters._%s)", 
+          coutf("  #define %s (" ID_PRE "instrument->_parameters._%s)", 
             c_formal->id, c_formal->id);
         break;
       case PAR_UNDEF:
@@ -410,7 +410,7 @@ int cogen_comp_init_defpar(struct comp_inst *comp)
     while(c_formal = list_next(liter))
     {
       struct Symtab_entry *entry = symtab_lookup(comp->defpar, c_formal->id);
-      char                *val   = exp_tostring(entry->val);
+      char                *val   = exp_tostring(entry->val);  /* replaced by instrument parameter when exsists */
       coutf("  #define %s (%s)", c_formal->id, val);
       if (c_formal->type == instr_type_string || c_formal->type == instr_type_vector)
       {
@@ -585,7 +585,7 @@ int cogen_comp_declare(struct comp_inst *comp)
     cout( "  Rotation _rotation_absolute;");
     cout( "  Rotation _rotation_relative; /* wrt PREVIOUS */");
     cout( "  int      _rotation_is_identity;");
-    coutf("  struct " ID_PRE "%s_parameters_struct parameters;", comp->def->name);
+    coutf("  struct " ID_PRE "%s_parameters_struct _parameters;", comp->def->name);
     cout("};");
   } /* define class type parameter structure when not done yet (only once) */
   
@@ -627,7 +627,7 @@ static void cogen_comp_init_par(struct comp_inst *comp, struct instr_def *instr,
       if (!strcmp(section, "SETTING")) {
         struct Symtab_entry *entry;
         entry = symtab_lookup(comp->setpar, par->id);
-        val   = exp_tostring(entry->val);
+        val   = exp_tostring(entry->val); /* replaced by instrument parameter when exsists */
         code_set_source(instr->quoted_source, exp_getlineno(entry->val));
       } else {
         val =  par->isoptional ? exp_tostring(par->default_value) : NULL;
@@ -637,20 +637,20 @@ static void cogen_comp_init_par(struct comp_inst *comp, struct instr_def *instr,
         if (par->type == instr_type_string) {
           if (strcmp(val, "0") && strcmp(val, "NULL")) { /* when value is not NULL (avoid warning at compile) */
             coutf("  if(%s && strlen(%s))", val, val);
-            coutf("    stracpy(" ID_PRE "instance_%s->parameters.%s, %s ? %s : \"\", 16384);", 
+            coutf("    stracpy(" ID_PRE "instance_%s->_parameters.%s, %s ? %s : \"\", 16384);", 
               comp->name, par->id, val, val);
             coutf("  else ");
           }
-          coutf(ID_PRE "instance_%s->parameters.%s[0]='\\0';", 
+          coutf(ID_PRE "instance_%s->_parameters.%s[0]='\\0';", 
             comp->name, par->id);
         } else if (par->type == instr_type_vector) {
-          coutf("  " ID_PRE "instance_%s->parameters.%s = (double [])%s; // static pointer allocation", comp->name, par->id, val);
+          coutf("  " ID_PRE "instance_%s->_parameters.%s = (double [])%s; // static pointer allocation", comp->name, par->id, val);
         } else
-          coutf("  " ID_PRE "instance_%s->parameters.%s = %s;", comp->name, par->id, val);
+          coutf("  " ID_PRE "instance_%s->_parameters.%s = %s;", comp->name, par->id, val);
         str_free(val);
       }
       /* define the symbol right after assignment so that we can use it in further parameters */
-      // coutf("  #define %s (" ID_PRE "instance_%s->parameters.%s)", par->id, comp->name, par->id);
+      coutf("  #define %s (" ID_PRE "instance_%s->_parameters.%s)", par->id, comp->name, par->id);
     }
     list_iterate_end(list_par);
     if(list_len(l) > 0 && !strcmp(section, "SETTING"))
@@ -1201,7 +1201,7 @@ int cogen_decls(struct instr_def *instr)
     list_len(instr->complist)+2);
   coutf("  Coords _position_absolute[%i];",
     list_len(instr->complist)+2);
-  cout( "  struct " ID_PRE "instrument_parameters_struct parameters; /* instrument parameters */");
+  cout( "  struct " ID_PRE "instrument_parameters_struct _parameters; /* instrument parameters */");
   if (index)
     cout( "  struct " ID_PRE "instrument_logic_struct logic; /* instrument logic */");
   cout( "} " ID_PRE "instrument_static;");
@@ -1226,11 +1226,11 @@ int cogen_decls(struct instr_def *instr)
     if (strlen(i_formal->id)) {
       if (i_formal->isoptional  // needed to avoid double quotes in strings
           && !strcmp(instr_formal_type_names[i_formal->type],"instr_type_string"))
-        coutf("  \"%s\", &(%sinstrument_static.parameters._%s), %s, %s, ", i_formal->id, ID_PRE,
+        coutf("  \"%s\", &(%sinstrument_static._parameters._%s), %s, %s, ", i_formal->id, ID_PRE,
             i_formal->id, instr_formal_type_names[i_formal->type],
             exp_tostring(i_formal->default_value));
       else
-        coutf("  \"%s\", &(%sinstrument_static.parameters._%s), %s, \"%s\", ", i_formal->id, ID_PRE, 
+        coutf("  \"%s\", &(%sinstrument_static._parameters._%s), %s, \"%s\", ", i_formal->id, ID_PRE, 
             i_formal->id, instr_formal_type_names[i_formal->type],
             i_formal->isoptional ? exp_tostring(i_formal->default_value) : "");
     }
