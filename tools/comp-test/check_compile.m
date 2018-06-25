@@ -1,6 +1,8 @@
 function [failed, compiled] = check_compile(pw)
 % check_compile: check that McCode instruments compile
 %
+% Example: check_compile McCode/mcstas-comps/examples
+%
 % input:
 %  pw: path to 'examples' with '.instr' files. When missing, the current path
 %      is used.
@@ -10,13 +12,19 @@ function [failed, compiled] = check_compile(pw)
 
 if nargin < 1, pw = pwd; end
 
+% required to avoid Matlab to use its own libraries
+if ismac,      precmd = 'DYLD_LIBRARY_PATH= ; DISPLAY= ; ';
+elseif isunix, precmd = 'LD_LIBRARY_PATH= ; DISPLAY= ; '; 
+else           precmd = ''; 
+end
+
 instr    = dir(fullfile(pw, '*.instr'));
 compiled = {};
 failed   = {};
 for index=1:numel(instr)
 
   this = instr(index);
-  cmd = [ 'mcrun -c -n0 ' this.name ];
+  cmd = [ precmd 'mcrun.pl -c -n0 ' fullfile(pw, this.name) ];
   disp(cmd);
   [status, result] = system(cmd);
   
@@ -27,3 +35,7 @@ for index=1:numel(instr)
   end
   
 end
+
+disp([ 'Directory: ' pw ])
+disp([ 'Failed:   ' num2str(numel(failed)) ]);
+disp([ 'Compiled: ' num2str(numel(compiled)) ]);
