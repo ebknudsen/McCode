@@ -133,6 +133,8 @@ DECLARE
 
   double flag_mono_transmitted=0;
   double flag_sample=0;
+  
+  Rotation R; /* rotation */
 %}
 
 /* The INITIALIZE section is executed when the simulation starts     */
@@ -367,7 +369,6 @@ COMPONENT RotateNeutron = Arm()
  * The max divergence is given by the deflector size seen from the sample, adding
  * the sample size. Deflector: width=0.05, height=9*1.5e-2
  */
-    Rotation R;
     double   n;
     double   RX, RY;
     

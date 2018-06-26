@@ -38,10 +38,9 @@
 * %E
 ************************************************************************/
 DEFINE INSTRUMENT ILL_IN5(lambda=4.5,dlambda=0.05,speed=8500, ratio=0.5, string housing="Fe.laz", string coh="Y3Fe5O12_YIG.laz", string inc="NULL", thickness=0, height=0.025, radius=0.005, order=0)
+
 DECLARE
 %{
-
-#define ntubes 384
 
 //---Guide (1st part of guide) --------------------------------------
   double L_Guide1, L_Guide21;
@@ -464,7 +463,7 @@ ROTATED (0,0,0) RELATIVE center_det
 
 COMPONENT Det_PSD = PSD_Detector(
     yheight = 3.0, radius = 4.0, zdepth = 0.02600, awidth=(ang_fin-ang_ini)*PI/180*4.0,
-    nx = ntubes, ny = 128, //type = "events",
+    nx = 384, ny = 128, //type = "events",
     PressureConv = 4.75, PressureStop = 1.25, threshold=100,
     borderx=-1, bordery=-1, LensOn = 1, filename = "in5det.dat",
     FN_Conv="Gas_tables/He3inHe.table", FN_Stop="Gas_tables/He3inCF4.table")

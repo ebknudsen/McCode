@@ -53,8 +53,7 @@ AT (0, 0, 0) ABSOLUTE
 COMPONENT vin = MCPL_input(filename=MCPLfile,verbose=1)
   AT(0,0,0) RELATIVE PREVIOUS
 EXTEND %{
-  if(p>mcipthres) {ABSORB;}
-  else {SCATTER;}
+  SCATTER;
   p*=1.56e16;
   p/=1e5;
 %}

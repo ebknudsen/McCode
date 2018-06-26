@@ -207,8 +207,8 @@ COMPONENT ArmDummy = Arm()
 EXTEND %{
   PROP_Z0;
   double tmin,tmax;
-  tmin=mciptfocus_time-mciptfocus_width/2.0;
-  tmax=mciptfocus_time+mciptfocus_width/2.0;
+  tmin=tfocus_time-tfocus_width/2.0;
+  tmax=tfocus_time+tfocus_width/2.0;
   if (t<tmin) ABSORB;
   if (t>tmax) ABSORB;
 %}
