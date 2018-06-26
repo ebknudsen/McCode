@@ -46,8 +46,8 @@
 *******************************************************************************/
 
 DEFINE COMPONENT Mirror_Curved_Bispectral
-DEFINITION PARAMETERS (string reflect=0)
-SETTING PARAMETERS (focus_s,focus_e, mirror_start, guide_start, yheight, smallaxis, length ,m, transmit=0, substrate_thickness=0.0005, coating_thickness=10e-6, theta_1=1.25, theta_2=1.25, theta_3=1.25)
+DEFINITION PARAMETERS ()
+SETTING PARAMETERS (string reflect=0,focus_s,focus_e, mirror_start, guide_start, yheight, smallaxis, length ,m, transmit=0, substrate_thickness=0.0005, coating_thickness=10e-6, theta_1=1.25, theta_2=1.25, theta_3=1.25)
 OUTPUT PARAMETERS (pTable)
 
 SHARE
@@ -59,6 +59,18 @@ DECLARE
 %{
 t_Table pTable;
 
+%}
+
+INITIALIZE
+%{
+  if (reflect && strlen(reflect) && strcmp(reflect,"NULL") && strcmp(reflect,"0")) {
+    if (Table_Read(&pTable, reflect, 1) <= 0) /* read 1st block data from file into pTable */
+      exit(fprintf(stderr,"Mirror: %s: can not read file %s\n", NAME_CURRENT_COMP, reflect));
+  }
+%}
+
+TRACE
+%{
 double f; //half of distance between focal points
 double asquared;
 double a; //half of ellipse length
@@ -122,19 +134,6 @@ int intersect_2;
 int intersect_3;
 
 
-
-%}
-
-INITIALIZE
-%{
-  if (reflect && strlen(reflect) && strcmp(reflect,"NULL") && strcmp(reflect,"0")) {
-    if (Table_Read(&pTable, reflect, 1) <= 0) /* read 1st block data from file into pTable */
-      exit(fprintf(stderr,"Mirror: %s: can not read file %s\n", NAME_CURRENT_COMP, reflect));
-  }
-%}
-
-TRACE
-%{
 intersect=0;
 x_hit=0;
 x_hit_2=0;

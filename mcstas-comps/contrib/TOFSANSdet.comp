@@ -76,7 +76,7 @@ Nx=128.0, Ny=128.0, Nt=500.0,                       /* be cautious with large nu
 qmin=0.0005, qmax=0.11, // Nq=500.0, <<<<<<<<<<<<<<<<< defined above
 rstneu = 0.0,
 centol = 0.1, inttol = 0.0001, qcal=1.0)
-OUTPUT PARAMETERS (simplN,simplI,simplIe
+OUTPUT PARAMETERS (simplN,simplI,simplIe,
   Nxc,Nyc,Ntc,Nqc,
   TSdNf,TSdpf,TSdp2f,
   ds1c,ds2c,ds3c,

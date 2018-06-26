@@ -69,33 +69,19 @@ SHARE
 
 DECLARE
 %{
-char type[10];
-MonitornD_Defines_type DEFS;
-MonitornD_Variables_type Vars;
+  MonitornD_Defines_type DEFS;
+  MonitornD_Variables_type Vars;
 %}
 
 INITIALIZE
 %{
-sprintf(type,"text");
+
   long element_size=85; /* mean size per neutron for ascii storing */
 
   strcpy(Vars.compcurname, NAME_CURRENT_COMP);
 
   if (bufsize > 0) sprintf(Vars.option, "list=%g borders", bufsize);
   else strcpy(Vars.option, "list all borders");
-
-  if (type && strlen(type) && strcmp(type, "NULL") && strcmp(type,"0"))
-  {
-    if (strstr(type, "Vitess"))
-    { fprintf(stderr, "Virtual_output: %s: Vitess files may be generated using the Vitess_output component\n", NAME_CURRENT_COMP); exit(-1); }
-    if (strstr(type, "binary") || strstr(type, "float")) {
-      strcat(Vars.option, ", binary float");
-      element_size = sizeof(float);
-    } else if (strstr(type, "double")) {
-      strcat(Vars.option, ", binary double");
-      element_size = sizeof(double);
-    }
-  }
 
   strcat(Vars.option,", x y z vx vy vz t sx sy sz");
   Monitor_nD_Init(&DEFS, &Vars, 0.1, 0.1, 0, 0,0,0,0,0,0,0); /* dims for mcdisplay */
