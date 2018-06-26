@@ -1012,7 +1012,7 @@ component: removable split "COMPONENT" instname '=' instref
           comp->group->last_comp      =comp->name;
           comp->group->last_comp_index=comp->index;
           if (comp->split)
-            print_error("WARNING: Component %s=%s() at line %s:%d is in GROUP %s and has a SPLIT.\n"
+            print_warn("WARNING: Component %s=%s() at line %s:%d is in GROUP %s and has a SPLIT.\n"
               "\tMove the SPLIT keyword before (outside) the component instance %s (first in GROUP)\n",
               comp->name, comp->def->name, instr_current_filename, instr_current_line, $11->name,
               comp->group->first_comp);
