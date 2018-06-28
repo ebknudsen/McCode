@@ -85,8 +85,8 @@ void mc_pol_set_timestep(double dt){
     Rotation rotLM; \
     Coords   posLM = POS_A_CURRENT_COMP; \
     rot_transpose(ROT_A_CURRENT_COMP, rotLM); \
-    mcMagnetPrecession(mcnlx, mcnly, mcnlz, mcnlt, mcnlvx, mcnlvy, mcnlvz, \
-	   	       &mcnlsx, &mcnlsy, &mcnlsz, dt, posLM, rotLM); \
+    mcMagnetPrecession(x, y, z, t, vx, vy, vz, \
+	   	       &sx, &sy, &sz, dt, posLM, rotLM); \
   } while(0)
 #endif
 
@@ -411,7 +411,7 @@ void SimpleNumMagnetPrecession(double mc_pol_x, double mc_pol_y,
 
   //printf("pos_at_caller(xyz)( %g %g %g )\n", mc_pol_x,mc_pol_y,mc_pol_z);
   // change coordinates from current local system to lab system
-  mccoordschange(mc_pol_posLM, mc_pol_rotLM,
+  mccoordschanges(mc_pol_posLM, mc_pol_rotLM,
 		 &mc_pol_x, &mc_pol_y, &mc_pol_z,
 		 &mc_pol_vx, &mc_pol_vy, &mc_pol_vz, mc_pol_sx, mc_pol_sy, mc_pol_sz);
   //printf("pos_at_labaftertranformation(xyz)( %g %g %g )\n", mc_pol_x,mc_pol_y,mc_pol_z);
