@@ -143,7 +143,7 @@ INITIALIZE
 
   printf("\nParameters:\nLambda: %f AA", LAMBDA);
   printf("\nLambdamin, max: %f AA, %f AA", LAMBDAMIN, LAMBDAMAX);
-  printf("\nDistance from moderator to target", DMODTARGET);
+  printf("\nDistance from moderator to target: %f", DMODTARGET);
   printf("\nChopper1 - omega: %f rad/s, window: %f deg",
 	 CHOPPER1OMEGA, CHOPPER1WINDOW);
   printf("\nChopper2 - omega: %f rad/s, window: %f deg\n\n",
