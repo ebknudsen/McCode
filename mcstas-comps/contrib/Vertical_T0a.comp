@@ -35,7 +35,7 @@
 DEFINE COMPONENT Vertical_T0a
 DEFINITION PARAMETERS (len, w1,w2, nu, delta, tc, ymin, ymax)
 SETTING PARAMETERS ()
-OUTPUT PARAMETERS (omega, r_blade, x_width, nn, tdr)
+OUTPUT PARAMETERS (omega,off,splen,rad,sw)
 //STATE PARAMETERS (x, y, z, vx, vy, vz, t, s1, s2, p)
 SHARE
 %{
@@ -65,16 +65,35 @@ double acos0_2pi(double x,double y)
        c[0]=1.0/denom*(A*a+B*b);
        c[1]=1.0/denom*(C*a+D*b);  
     }
-#endif
-%}
-
-DECLARE
-%{
-
-   double omega,off,splen,rad,sw;
+    
+/* function that describes the shape of the blades */
+    double blades(double zin,double rin,double off){
+        if (rin!=0.0)
+         return rin*(1-cos(asin(zin/fabs(rin))))+off;
+        else
+           return 0;
+    }
+    /* function to calculate which channel the neturon is in and to check if it is in a blade 
+     *  or outside the slit package 
+     * return 0 if neutron does not transmit return 1 with channel number if neutron will pass*/
+    int checkabsorb(double phi,int *chan_num, double inrad,double inw, double insw, double inbw, 
+      double c[], double blader,double off){
+     double xtmp,neuzr,neuxr;
+     neutxypos(&neuzr,&neuxr,phi,inrad,c);
+  // printf("xr:%g zr:%g phi: %g r: %g c[0]: %g c[1]: %g\n",neuxr,neuzr,phi,inrad,c[0],c[1]);
+     if (fabs(neuxr)>inw/2.0) // check if neutron x position is outside of slit package
+         return 0;
+     xtmp=neuxr+inw/2.0;  // move origin to side of slit package 
+     *chan_num=ceil((xtmp-blades(neuzr,blader,off))/(inbw+insw)); //calculate channel number
+      //check if neutron is in blade 
+     if (xtmp >*chan_num*(inbw+insw)+blades(neuzr,blader,off))
+         return 0;
+     return 1;
+    }
+    
     /* function to calculate if the neutron is in the channel or not 
      * return 0 if neutron does not transmit return 1  if neutron will pass*/
-    int t0checkabsorb(double phi, double inrad,double inw1, double inw2, double c[]){
+    int t0checkabsorb(double phi, double inrad,double inw1, double inw2, double c[]) {
      double xtmp,neuzr,neuxr;
      neutxypos(&neuzr,&neuxr,phi,inrad,c);
   // printf("xr:%g zr:%g phi: %g r: %g c[0]: %g c[1]: %g\n",neuxr,neuzr,phi,inrad,c[0],c[1]);
@@ -82,6 +101,13 @@ DECLARE
          return 0;    
      return 1;
     }
+#endif
+%}
+
+DECLARE
+%{
+
+   double omega,off,splen,rad,sw;
   
 %}
 INITIALIZE

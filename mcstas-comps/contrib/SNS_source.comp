@@ -46,15 +46,19 @@ DEFINITION PARAMETERS (filename)
 SETTING PARAMETERS (xwidth=0.1, yheight=0.12, dist, focus_xw, focus_yh, Emin, Emax)
 OUTPUT PARAMETERS (hdiv,vdiv,p_in,
   inxvec,inyvec,Pvec,xylength,tcol, Ecol,
-  txval, tyval, tPvec, Ptmat, EPmax, EPmin,INorm,INorm2
+  txval, tyval, tPvec, Ptmat, EPmax, EPmin,INorm,INorm2,
   ntvals,idxstart,idxstop,tidxstart,tidxstop,nEvals)
 
 SHARE %{
 
+  #define Maxlength 200
+  #define MAXCOLS 500
+
   /* ----------------------------------------------------------------
       routine to load E, I and t I data from SNS source files
   -----------------------------------------------------------------*/
-  void sns_source_load(char fname[], double *xvec, double *yvec, int xcol, int ycol, int *veclenptr, double *tcol, double *Ecol, double **Imat,int *ntvals, int *nEvals)
+  void sns_source_load(char fname[], double *xvec, double *yvec, int xcol, int ycol, 
+    int *veclenptr, double *tcol, double *Ecol, double **Imat,int *ntvals, int *nEvals)
   {
     FILE *fp;
     int idx1,idx2,idx3; /* counter for number of x, y values */
@@ -64,7 +68,7 @@ SHARE %{
     float indat[6];
     double *Icoltmp, *tcoltmp, *Ecoltmp;
     char *line;
-    char *lntoken, *cp;
+    char *ret;
     Icoltmp=malloc(100000*sizeof(double));
     tcoltmp=malloc(100000*sizeof(double));
     Ecoltmp=malloc(100000*sizeof(double));
@@ -85,7 +89,7 @@ SHARE %{
         yvec[idx1]=indat[ycol];
         //printf("idx1 %i xvec %g yvec %g\n",idx1,xvec[idx1],yvec[idx1]);
         idx1++;
-        fgets(line,Maxlength,fp);
+        ret=fgets(line,Maxlength,fp);
     }
     idx1--;   // correct index since it counts one line past useful data
    // printf("idx1 %i\n",idx1);
@@ -100,9 +104,9 @@ SHARE %{
       *veclenptr=idx1-2;
     }
   /* find t data header */
-    fgets(line,Maxlength,fp);
+    ret=fgets(line,Maxlength,fp);
     while(strrchr(line,'#')==NULL){
-      fgets(line,Maxlength,fp);
+      ret=fgets(line,Maxlength,fp);
     }
   /*find end of t data header */
     while((fgets(line,Maxlength,fp)!=NULL)&&(strchr(line,'#')!=NULL)){
@@ -150,7 +154,7 @@ SHARE %{
    *ntvals=idx3max+1;*nEvals=idx2;
    printf("ntvals: %i idx: %i\n",*ntvals, idx3);
    free(Icoltmp);free(tcoltmp);free(Ecoltmp);free(line);
-  }
+  } /* sns_source_load */
 /*-------------------------------------------------------------
         End load file routines
 --------------------------------------------------------------*/
@@ -164,7 +168,7 @@ double linint(double xdes,double x1, double x2, double y1, double y2)
   double m;
   m=(y2-y1)/(x2-x1);
   return (m*(xdes-x1)+y1);
-}
+} /*linint */
 
 double linfuncint(double xdes, double xylen, double *vecx, double *vecy)
   {
@@ -174,7 +178,7 @@ double linfuncint(double xdes, double xylen, double *vecx, double *vecy)
      idx++;
     }
   if (idx>xylen){
-      printf("error exceeded vector length");
+      printf("SNS_source: linfuncint: error exceeded vector length");
     }
   if (vecx[idx]==xdes){
       return vecy[idx];
@@ -184,7 +188,7 @@ double linfuncint(double xdes, double xylen, double *vecx, double *vecy)
      return linint(xdes,vecx[idx-1],vecx[idx],vecy[idx-1],vecy[idx]);
      }
 
-  }
+  } /* linfuncint */
 /*------------------------------------------------------------------------
             routine to perform a 1 d quadratic interpolation
 --------------------------------------------------------------------------*/
@@ -198,7 +202,7 @@ y2, double y3)
   t2=((xdes-x1)*(xdes-x3)*y2)/((x2-x1)*(x2-x3));
   t3=((xdes-x1)*(xdes-x2)*y3)/((x3-x1)*(x3-x2));
   return t1+t2+t3;
-}
+} /* quadint */
 
 double quadfuncint(double xdes, double xylen, double *vecx, double *vecy)
   {
@@ -208,7 +212,7 @@ double quadfuncint(double xdes, double xylen, double *vecx, double *vecy)
      idx++;
     }
   if (idx>xylen){
-      printf("error exceeded vector length");
+      printf("SNS_source: quadfuncint: error exceeded vector length");
     }
 
    if (vecx[idx]==xdes){
@@ -219,16 +223,17 @@ double quadfuncint(double xdes, double xylen, double *vecx, double *vecy)
      return quadint(xdes,vecx[idx-2],vecx[idx-1],vecx[idx],vecy[idx-2],vecy[idx-1],vecy[idx]);
      }
 
-  }
+  } /* quadfuncint */
 /*-------------------------------------------------------------------
   integration routines
 ---------------------------------------------------------------------*/
-double integtrap(double (*func)(double),double prev,double low,double high, int step)
+double integtrap(double (*func)(double,double,double*,double*),double prev,double low,double high, int step,
+  double len, double *xvec, double *yvec)
 {
  double s,npts,stpsze,sum,x;
  int pw2, idx;
  if (step==1){
-   return(s=0.5*(high-low)*((*func)(high)+(*func)(low)));
+   return(s=0.5*(high-low)*((*func)(high, len, xvec,yvec)+(*func)(low, len, xvec,yvec)));
  }
  else{
    s=prev;
@@ -239,25 +244,27 @@ double integtrap(double (*func)(double),double prev,double low,double high, int 
    stpsze=(high-low)/npts;
    x=low+0.5*stpsze;
    for(sum=0.0,idx=1;idx<=pw2;idx++,x+=stpsze){
-     sum+=(*func)(x);
+     sum+=(*func)(x, len, xvec,yvec);
    }
    s=0.5*(s+(high-low)*sum/npts);
    return s;
  }
-}
-double integ1(double (*func)(double),double low, double high, double err)
+} /* integtrap */
+
+double integ1(double (*func)(double,double,double*,double*),double low, double high, double err, 
+  double len, double *xvec, double *yvec)
 {
   double out,outprev;
   int idx;
-  out=integtrap(*func,0.0,low,high,1);
+  out=integtrap(*func,0.0,low,high,1, len, xvec, yvec);
   outprev=out;
-  out=integtrap(*func,out,low,high,2);
+  out=integtrap(*func,out,low,high,2, len, xvec, yvec);
   /*printf("out %g outprev %g \n",out,outprev);*/
   idx=2;
   while(fabs(out-outprev)>err*fabs(out)){
     idx++;
     outprev=out;
-    out=integtrap(*func,out,low,high,idx);
+    out=integtrap(*func,out,low,high,idx, len, xvec, yvec);
    /* printf("out %g outprev %g \n",out,outprev);*/
   }
   return out;
@@ -267,23 +274,24 @@ double integ1(double (*func)(double),double low, double high, double err)
   Modified version of rtbis from "Numerical Recipes in C: pg 354
  -----------------------------------------------------------------------------*/
 
-double zero_find(double (*func)(double, double),double yval,double xmin,double xmax, double tol)
+double zero_find(double (*func)(double, double, double, double*, double*),
+  double yval,double xmin,double xmax, double tol, double arg1, double *arg2, double *arg3)
 {
   double xl,xh,f,fmid,xmid,dx,rtb;
   xl=xmin;
   xh=pow(10,(log10(xmin)+yval*(log10(xmax)-log10(xmin))));
-  f=(*func)(xl,yval);
-  fmid=(*func)(xh,yval);
+  f=(*func)(xl,yval, arg1, arg2, arg3);
+  fmid=(*func)(xh,yval, arg1, arg2, arg3);
   while (fmid*f>=0.0){
     xh=xh+(xh-xl)*2.0;
-    fmid=(*func)(xh,yval);
+    fmid=(*func)(xh,yval, arg1, arg2, arg3);
   }
   dx=xh-xl;
   rtb=xl;
-  while(fabs((*func)(rtb,yval))>tol){
+  while(fabs((*func)(rtb,yval, arg1, arg2, arg3))>tol){
     dx=dx*0.5;
     xmid=rtb+dx;
-    fmid=(*func)(xmid,yval);
+    fmid=(*func)(xmid,yval, arg1, arg2, arg3);
     if (fmid<0){
       rtb=xmid;
     }
@@ -293,7 +301,12 @@ double zero_find(double (*func)(double, double),double yval,double xmin,double x
 /*----------------------------------------------------------------------------
 Routine for calculating Probability distribution
 ----------------------------------------------------------------------------*/
-void Pcalc(double (*func)(double),double llim, double hlim, double *xvec, double *Prob, int veclen, int *idxstart, int *idxstop)
+
+// Pcalc(xonly,llim,hlim,inxvec,Pvec,xylength,&idxstart,&idxstop, inyvec);
+// xonly(double x,double xylength,double *inxvec,double *inyvec)
+void Pcalc(double (*func)(double,double,double*,double*),
+  double llim, double hlim, double *xvec, double *Prob, int veclen, 
+  int *idxstart, int *idxstop, double *inyvec)
 {
   int idx1,idx2;
   double junk,Norm;
@@ -308,10 +321,10 @@ void Pcalc(double (*func)(double),double llim, double hlim, double *xvec, double
    exit(0);
   }
   *idxstart=idx1;
-   Prob[idx1]=integ1((*func),llim,xvec[idx1],0.001);
+   Prob[idx1]=integ1((*func),llim,xvec[idx1],0.001, veclen, xvec, inyvec);
    idx1++;
   while(xvec[idx1]<=hlim){
-     junk=integ1((*func),xvec[idx1-1],xvec[idx1],0.001);
+     junk=integ1((*func),xvec[idx1-1],xvec[idx1],0.001, veclen, xvec, inyvec);
      Prob[idx1]=(Prob[idx1-1]+junk);
      idx1++;
    }
@@ -328,11 +341,15 @@ void Pcalc(double (*func)(double),double llim, double hlim, double *xvec, double
       Prob[idx2]=Prob[idx2]/Norm;
     }
   }
-}
+} /* Pcalc */
 /*----------------------------------------------------------------------------
 Routine for calculating t Probability distribution
 ----------------------------------------------------------------------------*/
-void tPcalc(double (*func)(double),double llim, double hlim, double *xvec, double *Prob, int veclen, int *idxstart, int *idxstop)
+// tPcalc(txonly,ltlim,htlim,tcol,tPvec,ntvals,&tidxstart,&tidxstop, txval,tyval);
+// txonly(double t,double ntvals,double *txval,double *tyval)
+void tPcalc(double (*func)(double,double,double*,double*),double llim, double hlim, 
+  double *xvec, double *Prob, int veclen, int *idxstart, int *idxstop,
+  double *txval,double *tyval)
 {
   int idx1,idx2;
   double junk,Norm;
@@ -343,9 +360,9 @@ void tPcalc(double (*func)(double),double llim, double hlim, double *xvec, doubl
 
   }
   *idxstart=idx1;
-   Prob[idx1]=integ1((*func),llim,xvec[idx1],0.001);
+   Prob[idx1]=integ1((*func),llim,xvec[idx1],0.001, veclen, txval, tyval);
   while(xvec[idx1]<=hlim){
-     junk=integ1((*func),xvec[idx1-1],xvec[idx1],0.001);
+     junk=integ1((*func),xvec[idx1-1],xvec[idx1],0.001, veclen, txval, tyval);
      Prob[idx1]=(Prob[idx1-1]+junk);
      idx1++;
    }
@@ -364,16 +381,16 @@ void tPcalc(double (*func)(double),double llim, double hlim, double *xvec, doubl
       /*printf("%d %g \n",idx2,Prob[idx2])*/;
     }
   }
-}
+} /* tPcalc */
 
 /*-----------------------------------------------------------------
 Functions for random energy generation
 ------------------------------------------------------------------*/
-double xonly(double x)
+double xonly(double x,double xylength,double *inxvec,double *inyvec)
 {
   return linfuncint(x,xylength,inxvec,inyvec);
 }
-double Pfunc(double x, double y)
+double Pfunc(double x, double y,double xylength,double *inxvec,double *Pvec)
 {
   return quadfuncint(x,xylength,inxvec,Pvec)-y;
 }
@@ -381,17 +398,14 @@ double Pfunc(double x, double y)
 /*----------------------------------------------------------------
 Functions for random time generation
 ------------------------------------------------------------------*/
-double txonly(double t)
+double txonly(double t,double ntvals,double *txval,double *tyval)
 {
   return linfuncint(t,ntvals,txval,tyval);
 }
-double tPfunc(double t,double y)
+double tPfunc(double t,double y,double ntvals,double *txval,double *tyval)
 {
   return quadfuncint(t,ntvals,txval,tyval)-y;
 }
-
-#define Maxlength 200
-#define MAXCOLS 500
 
 %}
 
@@ -445,8 +459,9 @@ INITIALIZE
  llim=inxvec[1];hlim=inxvec[xylength];
  printf("Start calculating probability distribution\n");
  /* calculate total number of neutrons in specified energy window */
- INorm2=integ1(xonly,Emin/1000.0,Emax/1000.0,0.001);
-  Pcalc(xonly,llim,hlim,inxvec,Pvec,xylength,&idxstart,&idxstop);
+ INorm2=integ1(xonly,Emin/1000.0,Emax/1000.0,0.001, xylength,inxvec,inyvec);
+  Pcalc(xonly,llim,hlim,inxvec,Pvec,xylength,&idxstart,&idxstop,
+    inyvec);
   /*calculate probability distribution as a function of t for each energy value */
   tyval[0]=Imat[0][0];
   //printf("outntvals %i\n",ntvals);
@@ -457,7 +472,8 @@ INITIALIZE
         tyval[idx2]=Imat[idx2][idx1];
         txval[idx2]=tcol[idx2];
       }
-      tPcalc(txonly,ltlim,htlim,tcol,tPvec,ntvals,&tidxstart,&tidxstop);
+      tPcalc(txonly,ltlim,htlim,tcol,tPvec,ntvals,&tidxstart,&tidxstop,
+        txval,tyval);
       for(idx2=0;idx2<ntvals;idx2++){
         Ptmat[idx2][idx1]=tPvec[idx2];
       }
@@ -501,7 +517,8 @@ TRACE
    /*First generate E random value */
     randp=EPmin+rand01()*(EPmax-EPmin);
     /* find E value corresponding to random probability */
-    Eval=zero_find(Pfunc,randp,inxvec[idxstart],inxvec[idxstop],1e-5);
+    Eval=zero_find(Pfunc,randp,inxvec[idxstart],inxvec[idxstop],1e-5,
+      xylength,inxvec,Pvec);
    /* from a known E value generate an emission time value */
    /* find the index of the E values that bracket the random E value */
    idx1=0;
@@ -517,7 +534,8 @@ TRACE
    }
    randp=tyval[tidxstart]+rand01()*(tyval[tidxstop-1]-tyval[tidxstart]);
    if (randp>0.0){
-      tval=zero_find(tPfunc,randp,txval[tidxstart],txval[tidxstop-1],1e-5);}
+      tval=zero_find(tPfunc,randp,txval[tidxstart],txval[tidxstop-1],1e-5,
+        ntvals,txval,tyval); }
     else{
        tval=0;}
   E = Eval*1000.0;  /* Convert Energy from Ev to meV */

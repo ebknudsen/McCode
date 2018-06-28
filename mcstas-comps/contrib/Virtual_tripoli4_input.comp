@@ -91,7 +91,8 @@ T4_ANALYSE=10000, radius=0, T4_ANALYSE_EMIN=0, T4_ANALYSE_EMAX=0,smooth=1)
 OUTPUT PARAMETERS (hfile,head,nl,rep,begin_of_filename,begin_batch,do_rotate,do_translate,
 bx,by,bz,angle2z,nbatch,nsize,mean_x, mean_y, mean_z, intensity_extrapolated,
 min_x, min_y, min_z,    max_x , max_y , max_z ,
-min_vx, min_vy, min_vz, max_vx, max_vy, max_vz, n_count_extrapolated, repeat_cnt)
+min_vx, min_vy, min_vz, max_vx, max_vy, max_vz, n_count_extrapolated, repeat_cnt,
+first_batch, end_batch)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */
 
 SHARE
@@ -184,19 +185,19 @@ int tripoli_create_neutron(FILE *hfile, double *x,double *y,double *z,
  */
 char **tripoli_get_header(FILE *hfile,long *nl){
   int i;
-  char **head;
+  char **head, *s;
   char   word[T4_WORDSIZE];
 
   *nl=0;
-  fgets(word,T4_WORDSIZE,hfile);
+  s=fgets(word,T4_WORDSIZE,hfile);
   while(strncmp(word,"BEGIN_OF_BATCH",14)!=0){
-    fgets(word,T4_WORDSIZE,hfile);
+    s=fgets(word,T4_WORDSIZE,hfile);
     (*nl)++;
   }
   rewind(hfile);
   head=(char **)calloc(*nl,sizeof(char *));
   for(i=0;i<*nl;++i){
-    fgets(word,T4_WORDSIZE,hfile);
+    s=fgets(word,T4_WORDSIZE,hfile);
     head[i]=(char *)malloc(T4_WORDSIZE);
     strcpy(head[i],word);
   }

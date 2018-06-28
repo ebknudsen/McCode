@@ -134,16 +134,30 @@
 
 
 DEFINE COMPONENT Source_gen4
-DEFINITION PARAMETERS (string flux_file=0, string xdiv_file=0, string ydiv_file=0)
-SETTING PARAMETERS (radius=0.0, dist=0, xw=0, yh=0, E0=0, dE=0, Lambda0=0, dLambda=0, I1=0,
-h=0, w=0, gaussian=0, verbose=0, T1=0,
-flux_file_perAA=0, flux_file_log=0,
-
-Lmin=0,Lmax=0,Emin=0,Emax=0,T2=0,I2=0,T3=0,I3=0,length=0,phi_init=0,theta_init=0,HEtailA=0,HEtailL0=0)
-OUTPUT PARAMETERS (p_in,
-lambda0, lambda02, L2P,
-lambda0b, lambda02b, L2Pb,lambda0c, lambda02c, L2Pc,
-pTable, pTable_x, pTable_y)
+DEFINITION PARAMETERS ()
+SETTING PARAMETERS (
+  string flux_file=0, string xdiv_file=0, string ydiv_file=0,
+  radius=0.0, dist=0, xw=0, yh=0, E0=0, dE=0, Lambda0=0, dLambda=0, I1=0,
+  h=0, w=0, gaussian=0, verbose=0, T1=0,
+  flux_file_perAA=0, flux_file_log=0,
+  Lmin=0,Lmax=0,Emin=0,Emax=0,T2=0,I2=0,T3=0,I3=0,length=0,phi_init=0,
+  theta_init=0,HEtailA=0,HEtailL0=0)
+OUTPUT PARAMETERS (
+  p_in,lambda0, lambda02, L2P,
+  lambda0b, lambda02b, L2Pb,
+  lambda0c, lambda02c, L2Pc,
+  pTable,pTable_x,pTable_y,
+  pTable_xmin,
+  pTable_xmax,
+  pTable_xsum,
+  pTable_ymin,
+  pTable_ymax,
+  pTable_ysum,
+  pTable_dxmin,
+  pTable_dxmax,
+  pTable_dymin,
+  pTable_dymax
+)
 
 SHARE
 %{
@@ -184,29 +198,15 @@ char *str_dup_numeric(char *orig)
 
 DECLARE
 %{
-  double p_in;
-  double Lambda0;
-  double lambda0, lambda02, L2P;     /* first Maxwellian source */
-  double lambda0b, lambda02b, L2Pb;  /* second Maxwellian source */
-  double lambda0c, lambda02c, L2Pc;  /* third Maxwellian source */
   t_Table pTable;
   t_Table pTable_x;
   t_Table pTable_y;
-  double  pTable_xmin;
-  double  pTable_xmax;
-  double  pTable_xsum=0;
-  double  pTable_ymin;
-  double  pTable_ymax;
-  double  pTable_ysum=0;
-  double  pTable_dxmin;
-  double  pTable_dxmax;
-  double  pTable_dymin;
-  double  pTable_dymax;
 %}
 
 INITIALIZE
 %{
   double source_area, k;
+  pTable_xsum=pTable_ysum=0;
 
   /* spectrum characteristics */
   if (flux_file && strlen(flux_file) > 0) {
@@ -528,9 +528,9 @@ TRACE
     p *= cos(phi)*cos(theta);
     if (flux_file && strlen(flux_file) > 0)
     {
-       double w=Table_Value(pTable, lambda, 1);
-       if (flux_file_log) w=exp(w);
-       p *= w;
+       double W=Table_Value(pTable, lambda, 1);
+       if (flux_file_log) W=exp(W);
+       p *= W;
     }
     else if (T1 > 0 && I1 > 0)
     {

@@ -73,7 +73,9 @@
  *******************************************************************************/
 
 DEFINE COMPONENT ViewModISIS
-SETTING PARAMETERS (string Face="TS1_S04_Merlin.mcstas",E0, E1,modPosition=0,xw=0.12,yh=0.12,focus_xw=0.094,focus_yh=0.094,dist=1.7,int verbose=0, beamcurrent=1)
+SETTING PARAMETERS (string Face="TS1_S04_Merlin.mcstas",E0, E1,modPosition=0,
+  xw=0.12,yh=0.12,focus_xw=0.094,focus_yh=0.094,
+  dist=1.7,int verbose=0, beamcurrent=1)
 
 OUTPUT PARAMETERS(p_in,Tnpts,scaleSize,angleArea,Nsim,
   Ncount,TS,fullAngle,rtE0,rtE1)
@@ -102,29 +104,6 @@ typedef struct
 
 } Source_ViewMod;
 
-  /* New functions */
-
-  int cmdnumberD(char *,double*);
-  int cmdnumberI(char *,int*,const int);
-  double polInterp(double*,double*,int,double);
-  int findRDUM(char*);
-  int findTimeOffset(char*,double*);
-  FILE* openFile(char*);
-  FILE* openFileTest(char*);
-  void processHeader(FILE*, Source_ViewMod);
-  void readHtable(FILE*,const double,const double, Source_ViewMod);
-  int timeStart(char*);
-  int timeEnd(char*);
-  int energyBin(char*,double,double,double*,double*);
-  int notComment(char*);
-  void orderEnergy(double*,double*);
-  void cutToNumber(char*);
-  double convertEnergy(double);
-  double EtoLambda(double);
-  double calcRDum(double*, Source_ViewMod);
-
-  double strArea(Source_ViewMod);
-
 
 double**
 matrix(const int m,const int n)
@@ -148,7 +127,7 @@ matrix(const int m,const int n)
   for (i=0;i<m;i++)
     pd[i]=pv + (i*n);
   return pd;
-}
+} /* matrix */
 
 
 double
@@ -207,7 +186,7 @@ polInterp(double* X,double* Y,int Psize,double Aim)
       out+=errOut;
     }
   return out;
-}
+} /* polInterp */
 
 int
 binSearch(int Npts,double* AR,double V)
@@ -242,7 +221,7 @@ binSearch(int Npts,double* AR,double V)
 	klo=k;
     }
   return khi;
-}
+} /* binSearch */
 
 int
 cmdnumberD(char *mc,double* num)
@@ -290,7 +269,7 @@ cmdnumberD(char *mc,double* num)
   free(endptr);
   free(ss);
   return 1;
-}
+} /* cmdnumberD */
 
 int
 notComment(char* Line)
@@ -307,7 +286,7 @@ notComment(char* Line)
       Line[i]=='!' || Line[i]=='#')
     return 0;
   return 1;
-}
+} /* notComment */
 
 void
 orderEnergy(double* A,double *B)
@@ -320,7 +299,7 @@ orderEnergy(double* A,double *B)
       *B=tmp;
     }
   return;
-}
+} /* orderEnergy */
 
 int
 timeStart(char* Line)
@@ -337,7 +316,7 @@ timeStart(char* Line)
   for(i=0;i<len && isspace(Line[i]);i++);
   if (len-i<4) return 0;
   return (strncmp(Line+i,"time",4)) ? 0 : 1;
-}
+} /* timeStart */
 
 void
 cutToNumber(char* Line)
@@ -348,7 +327,7 @@ cutToNumber(char* Line)
   for(i=0;i<len && !isdigit(Line[i]) && Line[i]!='-';i++)
     Line[i]=' ';
   return;
-}
+} /* cutToNumber */
 
 int
 findTimeOffset(char* Line,double* TO)
@@ -371,7 +350,7 @@ findTimeOffset(char* Line,double* TO)
       return 1;
     }
   return 0;
-}
+} /* findTimeOffset */
 
 int
 findRDUM(char* Line)
@@ -388,7 +367,7 @@ findRDUM(char* Line)
   for(i=0;i<len && Line[i]!='r';i++);
   if (len-i<4) return 0;
   return (strncmp(Line+i,"rdum",4)) ? 0 : 1;
-}
+} /* findRDUM */
 
 double 
 convertEnergy(double E)
@@ -398,7 +377,7 @@ convertEnergy(double E)
   */
 {
   return (E>0.0) ? E : 81.793936/(E*E);
-}
+} /* convertEnergy */
 
 double 
 EtoLambda(double E)
@@ -408,7 +387,7 @@ EtoLambda(double E)
   */
 {
   return sqrt(81.793936/E);
-}
+} /* EtoLambda */
   
 
 int
@@ -426,7 +405,7 @@ timeEnd(char* Line)
   for(i=0;i<len && isspace(Line[i]);i++);
   if (len-i<5) return 0;
   return (strncmp(Line+i,"total",5)) ? 0 : 1;
-}
+} /* timeEnd */
 
 int
 energyBin(char* Line,double Einit,double Eend,double* Ea,double* Eb)
@@ -465,7 +444,7 @@ energyBin(char* Line,double Einit,double Eend,double* Ea,double* Eb)
   if (*Eb>Einit && *Ea<Eend)
     return 1;
   return 0;
-}
+} /* energyBin */
 
 double
 calcFraction(double EI,double EE,double Ea,double Eb)
@@ -492,7 +471,7 @@ calcFraction(double EI,double EE,double Ea,double Eb)
   //  fprintf(stderr,"frac %g, Ea %g,Eb %g, EI %g, EE %g\n",frac,Ea,Eb,EI,EE);
 
   return frac;
-}
+} /* calcFraction */
 
 double
 calcRDum(double* RPts, Source_ViewMod TS)
@@ -512,10 +491,10 @@ calcRDum(double* RPts, Source_ViewMod TS)
     }
   sum/=400.0;   // Convert to metres from cm
   return sum;
-}
+} /* calcRDum */
 
 void
-processHeader(FILE* TFile, Source_ViewMod TS)
+processHeader(FILE* TFile, Source_ViewMod TS, double modPosition, double xw, double yh)
   /*!
     Determine the window and the time offset
     \param TFile :: file [rewound on exit]
@@ -571,12 +550,13 @@ processHeader(FILE* TFile, Source_ViewMod TS)
 	}
     }
   return;
-}
+} /* processHeader */
 
 
 
 void
-readHtable(FILE* TFile,const double Einit,const double Eend, Source_ViewMod TS)
+readHtable(FILE* TFile,const double Einit,const double Eend, 
+  Source_ViewMod TS, double modPosition, double xw, double yh, int verbose)
 /*!
   Process a general h.o file to create an integrated
   table of results from Einit -> Eend
@@ -611,7 +591,7 @@ readHtable(FILE* TFile,const double Einit,const double Eend, Source_ViewMod TS)
   TS.nTime=0;
   TS.nEnergy=0;
   
-  processHeader(TFile, TS);
+  processHeader(TFile, TS, modPosition, xw, yh);
 
   // Read file and get time bins:
   while(fgets(ss,255,TFile) && Eend>Ea)
@@ -730,7 +710,7 @@ readHtable(FILE* TFile,const double Einit,const double Eend, Source_ViewMod TS)
   // fprintf(stderr,"ebin1 ebinN %g %g\n",TS.EnergyBin[0],TS.EnergyBin[TS.nEnergy-1]);
 
   return;
-}
+} /* readHtable */
 
 void
 getPoint(double* TV,double* EV,double* lim1, double* lim2, Source_ViewMod TS)
@@ -826,7 +806,7 @@ getPoint(double* TV,double* EV,double* lim1, double* lim2, Source_ViewMod TS)
       exit(1);
     }
   return;
-}
+} /* getPoint */
 
 int
 cmdnumberI(char *mc,int* num,const int len)
@@ -877,7 +857,7 @@ cmdnumberI(char *mc,int* num,const int len)
   free(endptr);
   free(ss);
   return 1;
-}
+} /* cmdnumberI */
 
 
 FILE* 
@@ -946,19 +926,21 @@ openFile(char* FileName)
   }
 
   /* 4) Is the file available within the MCSTAS install dir? */
-  sprintf(testFileName,"%s%c%s%c%s%c%s",MCSTAS,MC_PATHSEP_C,"contrib",MC_PATHSEP_C,"ISIS_tables",MC_PATHSEP_C,FileName);
+  sprintf(testFileName,"%s%c%s%c%s%c%s",
+    MCSTAS,MC_PATHSEP_C,"contrib",MC_PATHSEP_C,"ISIS_tables",MC_PATHSEP_C,FileName);
   efile=fopen(testFileName,"r");
   if (efile) {
-    fprintf(stderr," - Found in MCSTAS system dir: \n %s%c%s%c%s%\n",MCSTAS,MC_PATHSEP_C,"contrib",MC_PATHSEP_C,"ISIS_tables");
+    fprintf(stderr," - Found in MCSTAS system dir: \n %s%c%s%c%s\n",
+      MCSTAS,MC_PATHSEP_C,"contrib",MC_PATHSEP_C,"ISIS_tables");
     return efile;
   }
 
   /* If we reach here, the file was not found - raise fatal error */
-  fprintf(stderr,"% - Not found! \nPlease check your McStas installation and/or MCTABLES environment variable!\n",FileName);
+  fprintf(stderr,"%s - Not found! \nPlease check your McStas installation and/or MCTABLES environment variable!\n",FileName);
   exit(1);
-}
+} /* openFile */
 
-double strArea(Source_ViewMod TS)
+double strArea(Source_ViewMod TS, double focus_xw, double focus_yh, double dist)
 {
   /*
     Returns the mean Str view of the viewport
@@ -1014,7 +996,7 @@ double strArea(Source_ViewMod TS)
   fprintf(stderr,"Viewport Solid angle == %g str\n",A/(focus_xw*focus_yh*10000.0));
   fprintf(stderr,"Solid angle used == %g str\n",A);
   return A;
-}
+} /* strArea */
 
 %}
 
@@ -1051,7 +1033,7 @@ INITIALIZE
   rtE1=convertEnergy(E1);
   orderEnergy(&rtE0,&rtE1);
 
-  readHtable(Tfile,rtE0,rtE1, TS);
+  readHtable(Tfile,rtE0,rtE1, TS, modPosition, xw, yh, verbose);
   fclose(Tfile);
 
   /**********************************************************************/
@@ -1068,7 +1050,7 @@ INITIALIZE
 	      dist);
     }
   /* Do solid angle correction */
-  angleArea= strArea(TS);
+  angleArea= strArea(TS, focus_xw, focus_yh, dist);
 
   fprintf(stderr,"Totals:: %g %d %d \n",TS.Total,TS.nEnergy,TS.nTime);
 

@@ -69,7 +69,6 @@
 * smooth: [0/1]      Smooth sparsed event files for file repetitions.
 *
 * OUTPUT PARAMETERS
-* head: [char]       header buffer
 * nl: [long]         nb of lines in header
 * mean_x: [m]        source center coordinates
 * mean_y: [m]        source center coordinates
@@ -90,7 +89,7 @@ DEFINITION PARAMETERS ()
 SETTING PARAMETERS (string filename=0, string autocenter=0, repeat_count=1, verbose=0, intensity=0,MCNP_ANALYSE=10000,
 int surface_id=-1,
 nps=0,smooth=1)
-OUTPUT PARAMETERS (hfile,head,rep,begin_neutrons,do_rotate,do_translate,
+OUTPUT PARAMETERS (hfile,rep,begin_neutrons,do_rotate,do_translate,
 bx,by,bz,angle2z,mean_x, mean_y, mean_z,
 old_surface,surface,informed_event,informed_surface,
 min_x, min_y, min_z,    max_x , max_y , max_z ,
