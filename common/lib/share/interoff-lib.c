@@ -209,8 +209,9 @@ FILE *off_getBlocksIndex(char* filename, long* vtxSize, long* polySize )
   }
   if (strlen(line)>5)
   {
-      fprintf(stderr,"Error: First line in %s is too long (=%d). Possibly the line is not terminated by '\\n'.\n" 
-              "       The first line is required to be exactly 'OFF', '3' or 'ply'.\n",filename,strlen(line));
+      fprintf(stderr,"Error: First line in %s is too long (=%lu). Possibly the line is not terminated by '\\n'.\n" 
+              "       The first line is required to be exactly 'OFF', '3' or 'ply'.\n",
+              filename,(long unsigned)strlen(line));
       fclose(f);
       return(NULL);
   }
@@ -509,11 +510,11 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
     if (!ret) { 
       // invalid line: we skip it (probably a comment)
       char line[CHAR_BUF_LENGTH];
-      fgets(line, CHAR_BUF_LENGTH, f);
+      char *s=fgets(line, CHAR_BUF_LENGTH, f);
       continue; 
     }
     if (ret != 3) {
-      fprintf(stderr, "Error: can not read [xyz] coordinates for vertex %li in file %s (interoff/off_init). Read %i values.\n", 
+      fprintf(stderr, "Error: can not read [xyz] coordinates for vertex %li in file %s (interoff/off_init). Read %li values.\n", 
         i, offfile, ret);
       exit(2);
     }
@@ -596,11 +597,11 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
     if (!ret) { 
       // invalid line: we skip it (probably a comment)
       char line[CHAR_BUF_LENGTH];
-      fgets(line, CHAR_BUF_LENGTH, f);
+      char *s=fgets(line, CHAR_BUF_LENGTH, f);
       continue; 
     }
     if (ret != 1) {
-      fprintf(stderr, "Error: can not read polygon %i length in file %s (interoff/off_init)\n", 
+      fprintf(stderr, "Error: can not read polygon %li length in file %s (interoff/off_init)\n", 
         i, offfile);
       exit(3);
     }
@@ -612,7 +613,7 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
     // then read the vertex ID's
     for (j=0; j<nbVertex; j++) {
       double vtx=0;
-      fscanf(f, "%lg", &vtx);
+      ret=fscanf(f, "%lg", &vtx);
       faceArray[faceSize++] = vtx;   // add vertices index after length of polygon
     }
     i++;
@@ -811,7 +812,7 @@ void off_display(off_struct data)
     cmz /= nbVertex;
     
     char pixelinfo[1024];    
-    sprintf(pixelinfo, "%u,%u,%u,%i,%g,%g,%g,%g,%g,%g", data.mantidoffset+pixel, data.mantidoffset, data.mantidoffset+data.polySize-1, nbVertex, cmx, cmy, cmz, x1-cmx, y1-cmy, z1-cmz);
+    sprintf(pixelinfo, "%li,%li,%li,%i,%g,%g,%g,%g,%g,%g", data.mantidoffset+pixel, data.mantidoffset, data.mantidoffset+data.polySize-1, nbVertex, cmx, cmy, cmz, x1-cmx, y1-cmy, z1-cmz);
     for (j=2; j<=nbVertex; j++) {
       double x2,y2,z2;
       x2 = data.vtxArray[data.faceArray[i+j]].x;
