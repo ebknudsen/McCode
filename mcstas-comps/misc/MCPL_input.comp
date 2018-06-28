@@ -81,7 +81,7 @@ if(Emax<Emin){
         nparticles=ncount;
     }else{
         printf("Message(%s): MCPL file (%s) produced with %s.\n",NAME_CURRENT_COMP,filename,mcpl_hdr_srcname(inputfile));
-        printf("Message(%s): MCPL file (%s) contains %ld particles.\n",NAME_CURRENT_COMP,filename,nparticles); 
+        printf("Message(%s): MCPL file (%s) contains %lu particles.\n",NAME_CURRENT_COMP,filename,(long unsigned)nparticles); 
     }
     repeat_cnt = repeat_count;
     ismpislave=0;
@@ -90,9 +90,12 @@ if(Emax<Emin){
     ismpislave = mpi_node_rank;
     MPI_MASTER(
 #endif
-	     fprintf(stdout, "\n\n Warning: You are using MCPL_input with a repeat_count of %i:\n - Minimum neutron count requested is %ld x %i <= %ld",repeat_count,nparticles,repeat_count,repeat_cnt*nparticles); 
+	     fprintf(stdout, "\n\n Warning: You are using MCPL_input with a repeat_count of %lu:\n - Minimum neutron count requested is %lu x %lu <= %lu",
+	       (long unsigned)repeat_count,(long unsigned)nparticles,
+	       (long unsigned)repeat_count,(long unsigned)repeat_cnt*nparticles); 
 #if defined (USE_MPI)
-  fprintf(stdout, " x %i MPI nodes = %ld neutrons total\n",mpi_node_count,mpi_node_count*repeat_cnt*nparticles);
+  fprintf(stdout, " x %i MPI nodes = %lu neutrons total\n",
+    mpi_node_count,(long unsigned)mpi_node_count*repeat_cnt*nparticles);
      );
   mcset_ncount(mpi_node_count*repeat_cnt*nparticles);
 #else
@@ -101,7 +104,7 @@ if(Emax<Emin){
 #endif
 
     ncount=mcget_ncount();
-    fprintf(stdout,"Initialize ncount is %ld\n",ncount);
+    fprintf(stdout,"Initialize ncount is %lu\n",(long unsigned)ncount);
     read_neutrons=0;
     used_neutrons=0;
 
@@ -166,7 +169,7 @@ TRACE
 
     if (verbose && used_neutrons<11) {
       printf("id=%ld pdg=2112\tekin=%g MeV\tx=%g cm\ty=%g cm\tz=%g cm\tux=%g\tuy=%g\tuz=%g\tt=%g ms\tweight=%g\tpolx=%g\tpoly=%g\tpolz=%g\n",
-	     read_neutrons, particle->ekin, particle->position[0], particle->position[1], particle->position[2],
+	     (long unsigned)read_neutrons, particle->ekin, particle->position[0], particle->position[1], particle->position[2],
 	     particle->direction[0], particle->direction[1], particle->direction[2], particle->time, particle->weight,
 	     particle->polarisation[0], particle->polarisation[1], particle->polarisation[2]);
      
@@ -246,11 +249,13 @@ FINALLY
     ncount=mcget_ncount();
     
     if (used_neutrons!=read_neutrons){
-        fprintf(stdout,"Message(%s): You have used %ld of %ld neutrons available in the MCPL file.\n",NAME_CURRENT_COMP,used_neutrons,read_neutrons);
+        fprintf(stdout,"Message(%s): You have used %lu of %lu neutrons available in the MCPL file.\n",NAME_CURRENT_COMP,
+          (long unsigned)used_neutrons,(long unsigned)read_neutrons);
     }
     if (ncount != used_neutrons){
-        fprintf(stderr,"Warning (%s): You requested %ld neutrons from a file which contains %ld particles in general, of which only %ld are neutrons (within the wanted energy interval).\n"
-                "Please examine the recorded intensities carefully.\n",NAME_CURRENT_COMP,ncount,nparticles,used_neutrons);
+        fprintf(stderr,"Warning (%s): You requested %lu neutrons from a file which contains %lu particles in general, of which only %lu are neutrons (within the wanted energy interval).\n"
+                "Please examine the recorded intensities carefully.\n",
+          NAME_CURRENT_COMP,(long unsigned)ncount,(long unsigned)nparticles,(long unsigned)used_neutrons);
     }
 
 

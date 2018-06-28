@@ -52,31 +52,32 @@ OUTPUT PARAMETERS (PSD_N, PSD_p, PSD_p2)
 
 DECLARE
 %{
-double PSD_N[nx][ny];
-double PSD_p[nx][ny];
-double PSD_p2[nx][ny];
+  double PSD_N[nx][ny];
+  double PSD_p[nx][ny];
+  double PSD_p2[nx][ny];
 %}
 INITIALIZE
 %{
 int i,j;
 
 if (xwidth  > 0) { xmax = xwidth/2;  xmin = -xmax; }
-    if (yheight > 0) { ymax = yheight/2; ymin = -ymax; }
+  if (yheight > 0) { ymax = yheight/2; ymin = -ymax; }
 
-    if ((xmin >= xmax) || (ymin >= ymax)) {
-            printf("PSD_monitor: %s: Null detection area !\n"
-                   "ERROR        (xwidth,yheight,xmin,xmax,ymin,ymax). Exiting",
-           NAME_CURRENT_COMP);
-      exit(0);
-    }
+  if ((xmin >= xmax) || (ymin >= ymax)) {
+          printf("PSD_monitor: %s: Null detection area !\n"
+                 "ERROR        (xwidth,yheight,xmin,xmax,ymin,ymax). Exiting",
+         NAME_CURRENT_COMP);
+    exit(0);
+  }
 
-    for (i=0; i<nx; i++)
-     for (j=0; j<ny; j++)
-     {
+  for (i=0; i<nx; i++) {
+    for (j=0; j<ny; j++)
+    {
       PSD_N[i][j] = 0;
       PSD_p[i][j] = 0;
       PSD_p2[i][j] = 0;
-     }
+    }
+  }
   %}
 TRACE
   %{

@@ -73,12 +73,11 @@
 *******************************************************************************/
 
 DEFINE COMPONENT Pol_mirror
-DEFINITION PARAMETERS (useTables=0, rUpFunc=StdReflecFunc, rDownFunc=rUpFunc,
+DEFINITION PARAMETERS (useTables=0, 
+  rUpFunc=StdReflecFunc, rDownFunc=rUpFunc,
   rUpPar={0.99,0.0219,6.07,2.0,0.003}, rDownPar=rUpPar)
 SETTING PARAMETERS (p_reflect=-1, zwidth, yheight)
-OUTPUT PARAMETERS (
-  vector rUpParPtrV=rUpPar, vector rDownParPtrV=rDownPar,
-  rUpParPtr, rDownParPtr)
+OUTPUT PARAMETERS  (rUpParPtr, rDownParPtr)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */
 
 SHARE
@@ -114,9 +113,9 @@ INITIALIZE
             NAME_CURRENT_COMP, rDownPar);
     exit(1);
   }
-#else
-  rUpParPtr   = rUpParPtrV;
-  rDownParPtr = rDownParPtrV;
+#else // use function call with vector parameters
+  rUpParPtr   = (double [])rUpPar;
+  rDownParPtr = (double [])rDownPar;
 #endif
 
   if ((zwidth<=0) || (yheight <= 0)) {

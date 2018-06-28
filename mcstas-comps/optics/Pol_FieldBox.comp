@@ -35,8 +35,8 @@
 
 DEFINE COMPONENT Pol_FieldBox
 DEFINITION PARAMETERS (fieldFunction=const_magnetic_field)
-SETTING PARAMETERS (xwidth,yheight,zdepth, Bx,By,Bz, filename="")
-OUTPUT PARAMETERS (field_parameters)
+SETTING PARAMETERS (xwidth,yheight,zdepth, Bx,By,Bz, string filename="")
+OUTPUT PARAMETERS (field_parameters, const_field_parameters)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */
 
 SHARE
@@ -46,7 +46,7 @@ SHARE
 
 DECLARE
 %{
-    double const field_parameters[3];
+    double const_field_parameters[3];
     void *field_parameters;
 %}
 
@@ -56,7 +56,7 @@ INITIALIZE
       /*initialize the interpolation vertex structure*/
       struct interpolator_struct *interpolator = interpolator_load(filename, 3, 3, NULL);
       interpolator_info(interpolator);
-      field_parameters=(void *)interpolator;
+      field_parameters = (void *)interpolator;
   }  else {
       field_parameters = (void *) const_field_parameters;
   }

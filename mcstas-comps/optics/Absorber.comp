@@ -36,18 +36,14 @@
 DEFINE COMPONENT Absorber
 DEFINITION PARAMETERS ()
 SETTING PARAMETERS (xmin=0, xmax=0, ymin=0, ymax=0, zmin=0, zmax=0)
-
-DECLARE
-%{
-double t0,t1,xp,yp,zp,xm,ym,zm,xw, yh, zt;
-%}
+OUTPUT PARAMETERS(t0,t1,xp,yp,zp,xm,ym,zm,xw, yh, zt)
 
 INITIALIZE
 %{
-xw = xmax-xmin;
-yh = ymax-ymin;
-zt = zmax-zmin;
-xm = (xmax+xmin)/2;
+  xw = xmax-xmin;
+  yh = ymax-ymin;
+  zt = zmax-zmin;
+  xm = (xmax+xmin)/2;
   ym = (ymax+ymin)/2;
   zm = (zmax+zmin)/2;
   if (xw == 0 || yh == 0 || zt == 0)
