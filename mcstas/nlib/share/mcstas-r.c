@@ -77,6 +77,28 @@ mcparticle mcsetstate(double x, double y, double z, double vx, double vy, double
 } /* mcsetstate */
 
 /*******************************************************************************
+* mcgetstate: get neutron parameters from particle structure
+*******************************************************************************/
+#pragma acc routine seq
+mcparticle mcgetstate(mcparticle mcneutron, double *x, double *y, double *z,
+               double *vx, double *vy, double *vz, double *t,
+               double *sx, double *sy, double *sz, double *p)
+{
+  *x  =  mcneutron.x;
+  *y  =  mcneutron.y;
+  *z  =  mcneutron.z;
+  *vx =  mcneutron.vx;
+  *vy =  mcneutron.vy;
+  *vz =  mcneutron.vz;
+  *t  =  mcneutron.t;
+  *sx =  mcneutron.sx;
+  *sy =  mcneutron.sy;
+  *sz =  mcneutron.sz;
+  *p  =  mcneutron.p;
+} /* mcgetstate */
+
+
+/*******************************************************************************
 * mcgenstate: set default neutron parameters 
 *******************************************************************************/
 #pragma acc routine seq
@@ -85,6 +107,57 @@ mcparticle mcgenstate(void)
   return(mcsetstate(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
   /* old initialisation: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
 }
+
+/*******************************************************************************
+* mccoordschanges: old style rotation routine rot -> (x y z) ,(vx vy vz),(sx,sy,sz)
+*******************************************************************************/
+void
+mccoordschanges(Coords a, Rotation t, double *x, double *y, double *z,
+               double *vx, double *vy, double *vz, double *sx, double *sy, double *sz)
+{
+  Coords b, c;
+
+  b.x = *x;
+  b.y = *y;
+  b.z = *z;
+  c = rot_apply(t, b);
+  b = coords_add(c, a);
+  *x = b.x;
+  *y = b.y;
+  *z = b.z;
+
+  if ( (vz && vy  && vx) && (*vz != 0.0 || *vx != 0.0 || *vy != 0.0) ) 
+    mccoordschange_polarisation(t, vx, vy, vz);
+
+  if ( (sz && sy  && sx) && (*sz != 0.0 || *sx != 0.0 || *sy != 0.0) ) 
+    mccoordschange_polarisation(t, sx, sy, sz);
+
+}
+
+/*******************************************************************************
+* mcrestore_neutron: restores neutron coodinates from global array
+*******************************************************************************/
+#pragma acc routine seq
+mcparticle
+mcrestore_neutron(MCNUM *s, int index, double *x, double *y, double *z,
+               double *vx, double *vy, double *vz, double *t,
+               double *sx, double *sy, double *sz, double *p)
+{
+    double *dptr = &s[11*index];
+    *x  =  *dptr++;
+    *y  =  *dptr++;
+    *z  =  *dptr++;
+    *vx =  *dptr++;
+    *vy =  *dptr++;
+    *vz =  *dptr++;
+    *t  =  *dptr++;
+    *sx =  *dptr++;
+    *sy =  *dptr++;
+    *sz =  *dptr++;
+    *p  =  *dptr;
+    
+    return mcsetstate(*x, *y, *z, *vx, *vy, *vz, *t, *sx, *sy, *sz, *p);
+} /* mcrestore_neutron */
 
 /* intersection routines ==================================================== */
 
