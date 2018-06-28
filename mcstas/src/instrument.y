@@ -1351,7 +1351,7 @@ topatexp:   "PREVIOUS"
           if($1 && formal->id && strcmp($1, "NULL") && !strcmp($1, formal->id))
           {
             /* It was an instrument parameter */
-            $$ = exp_id($1);
+            $$ = exp_id($1); /* convert to instrument parameter */
             goto found;
           }
         }
@@ -1803,6 +1803,9 @@ check_comp_formals(List deflist, List setlist, char *compname)
   liter = list_iterate(deflist);
   while(formal = list_next(liter))
   {
+    if (!formal->id || !strlen(formal->id))
+      print_error("ERROR: Definition parameter name %s is empty (length=0) "
+      "in component %s\n", formal->id, compname);
     entry = symtab_lookup(formals, formal->id);
     if(entry != NULL)
       print_error("ERROR: Definition parameter name %s is used multiple times "
@@ -1814,6 +1817,9 @@ check_comp_formals(List deflist, List setlist, char *compname)
   liter = list_iterate(setlist);
   while(formal = list_next(liter))
   {
+    if (!formal->id || !strlen(formal->id))
+      print_error("ERROR: Setting parameter name %s is empty (length=0) "
+      "in component %s\n", formal->id, compname);
     entry = symtab_lookup(formals, formal->id);
     if(entry != NULL)
       print_error("ERROR: Setting parameter name %s is used multiple times "
@@ -1838,22 +1844,26 @@ check_instrument_formals(List formallist, char *instrname)
   /* We check the uniqueness. Any formal parameter that already appears in the
      formal list is reported. */
   liter = list_iterate(formallist);
-  while(formal = list_next(liter))
-  if (strcmp(formal->id,"")) {
-      /* find first definition of parameter */
-      List_handle liter2;
-      struct instr_formal *formal2;
+  while(formal = list_next(liter)) {
+    if (!formal->id || !strlen(formal->id))
+      print_error("ERROR: Instrument parameter name %s is empty (length=0) "
+      "in instrument %s\n", formal->id, instrname);
+    if (strcmp(formal->id,"")) {
+        /* find first definition of parameter */
+        List_handle liter2;
+        struct instr_formal *formal2;
 
-      liter2 = list_iterate(formallist);
-      while(formal2 = list_next(liter2)) {
-      	if (formal != formal2 && strlen(formal2->id) && !strcmp(formal->id, formal2->id)) {
-      		strcpy(formal2->id, "");  /* unactivate recurrent previous definition */
-      		if (verbose) print_warn(NULL, "Instrument parameter name %s is used multiple times "
-            "in instrument %s. Using last definition %s\n", formal->id, instrname,
-            	formal->isoptional ? exp_tostring(formal->default_value) : "");
-          break;
-      	}
-      }
+        liter2 = list_iterate(formallist);
+        while(formal2 = list_next(liter2)) {
+        	if (formal != formal2 && strlen(formal2->id) && !strcmp(formal->id, formal2->id)) {
+        		strcpy(formal2->id, "");  /* unactivate recurrent previous definition */
+        		if (verbose) print_warn(NULL, "Instrument parameter name %s is used multiple times "
+              "in instrument %s. Using last definition %s\n", formal->id, instrname,
+              	formal->isoptional ? exp_tostring(formal->default_value) : "");
+            break;
+        	}
+        }
+    }
   }
   list_iterate_end(liter);
 }

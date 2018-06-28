@@ -375,7 +375,7 @@ static void cogen_defundef(struct comp_inst *comp, List l, char define_it)
             }
           } /* for List */
         }
-        if (flag_noconflict)
+        if (flag_noconflict && strlen(c_formal->id))
           coutf("  #define %s (" ID_PRE "instrument->_parameters._%s)", 
             c_formal->id, c_formal->id);
         break;
@@ -411,7 +411,7 @@ int cogen_comp_init_defpar(struct comp_inst *comp)
     {
       struct Symtab_entry *entry = symtab_lookup(comp->defpar, c_formal->id);
       char                *val   = exp_tostring(entry->val);  /* replaced by instrument parameter when exsists */
-      coutf("  #define %s (%s)", c_formal->id, val);
+      coutf("  #define %s %s", c_formal->id, val);
       if (c_formal->type == instr_type_string || c_formal->type == instr_type_vector)
       {
         /* a string definition parameter should be converted into a setting parameter to avoid e.g.
