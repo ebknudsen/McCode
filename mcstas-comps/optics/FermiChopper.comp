@@ -400,7 +400,7 @@ TRACE
 
   /* zero arrays used to store positions */
   for (loopcounter=0; loopcounter < 5; loopcounter++)
-    FCVars.X[loopcounter] = FCVars.Z[loopcounter]=0
+    FCVars.X[loopcounter] = FCVars.Z[loopcounter]=0;
 
   /************** test, if the neutron interacts with the cylinder ***/
   if (cylinder_intersect (&t1, &t2, x, y, z, vx, vy, vz, radius, yheight))
