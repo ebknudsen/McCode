@@ -1004,13 +1004,15 @@ int cogen_comp_setpos(struct comp_inst *comp, struct comp_inst *last, struct ins
   /* output parameters of the component (private/declare) */
   cogen_comp_init_par(comp, instr, "PRIVATE");  // specific to each instance
   
-  /* position/rotation */
-  cogen_comp_init_position(comp, last, instr); // specific to each instance
-  
   /* undef aliases */
   cogen_defundef(comp, comp->def->set_par, PAR_UNDEF);
   cogen_defundef(comp, comp->def->out_par, PAR_UNDEF);
   cogen_defundef(comp, comp->def->def_par, PAR_UNDEF);
+  
+  /* position/rotation */
+  cogen_comp_init_position(comp, last, instr); // specific to each instance
+  
+  
   coutf("  #undef " ID_PRE "instance_MYSELF");
   
   coutf("  %sinstrument->counter_N[%i]  = %sinstrument->counter_P[%i] = %sinstrument->counter_P2[%i] = 0;",
