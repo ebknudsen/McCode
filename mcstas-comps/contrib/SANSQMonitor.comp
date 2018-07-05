@@ -38,25 +38,27 @@
 
 DEFINE COMPONENT SANSQMonitor
 
-DEFINITION PARAMETERS (string RFilename = "RDetector", string qFilename = "QDetector", NumberOfBins = 100, restore_neutron = 0)
+DEFINITION PARAMETERS (NumberOfBins = 100)
 
-SETTING PARAMETERS (RadiusDetector, DistanceFromSample, LambdaMin = 1.0, Lambda0 = 0.0)
+SETTING PARAMETERS (string RFilename = "RDetector", string qFilename = "QDetector",
+  RadiusDetector, DistanceFromSample, LambdaMin = 1.0, Lambda0 = 0.0, restore_neutron = 0)
 
-OUTPUT PARAMETERS (Nofq, Iofq, IofqSquared, NofR, IofR, IofRSquared)
+OUTPUT PARAMETERS (TwoThetaMax,qMax,Nofq,Iofq,IofqSquared,
+  NofR,IofR,IofRSquared)
 
 DECLARE
 %{
-// Declarations
-double TwoThetaMax;
-double qMax;
+  // Declarations
+  double TwoThetaMax;
+  double qMax;
 
-double Nofq[NumberOfBins];
-double Iofq[NumberOfBins];
-double IofqSquared[NumberOfBins];
+  double Nofq[NumberOfBins];
+  double Iofq[NumberOfBins];
+  double IofqSquared[NumberOfBins];
 
-double NofR[NumberOfBins];
-double IofR[NumberOfBins];
-double IofRSquared[NumberOfBins];
+  double NofR[NumberOfBins];
+  double IofR[NumberOfBins];
+  double IofRSquared[NumberOfBins];
 %}
 
 INITIALIZE
@@ -78,15 +80,15 @@ for (i = 0; i < NumberOfBins; ++i) {
 TRACE
 %{
 	// Declarations
-    int i;
-    double TwoTheta;
+  int i;
+  double TwoTheta;
 	double Lambda;
 
 	double R;
 	double RLow;
 	double RHigh;
 
-    double q;
+  double q;
 	double qLow;
 	double qHigh;
 
@@ -94,10 +96,10 @@ TRACE
 	double TwoThetaHigh;
 	double AreaOfSlice;
     
-    PROP_Z0;
+  PROP_Z0;
 
 	// Computation of R
-    R = sqrt(pow(x, 2) + pow(y, 2));
+  R = sqrt(pow(x, 2) + pow(y, 2));
 
 	// Computation of q
 	if (Lambda0 <= 0.0) {
@@ -106,8 +108,8 @@ TRACE
 		Lambda = Lambda0;
 	}
 
-    TwoTheta = atan(R / DistanceFromSample);
-    q = 4.0 * PI * sin(TwoTheta / 2.0) / Lambda;
+  TwoTheta = atan(R / DistanceFromSample);
+  q = 4.0 * PI * sin(TwoTheta / 2.0) / Lambda;
 
 	// Put neutron in the correct r-bin
 	if (R < RadiusDetector) {
@@ -146,9 +148,9 @@ TRACE
     }
 
 	// Restore neutron if requested
-    if (restore_neutron) {
+  if (restore_neutron) {
 //		RESTORE_NEUTRON(INDEX_CURRENT_COMP, x, y, z, vx, vy, vz, t, sx, sy, sz, p);
-    }
+  }
 %}
 
 SAVE

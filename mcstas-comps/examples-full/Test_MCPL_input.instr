@@ -31,18 +31,20 @@ DEPENDENCY "-DMCPLPATH=@MCCODE_LIB@/libs/mcpl/voutput.mcpl"
 DECLARE
 %{
   long long ncount_i;
+  
+  #define QUOTE(name) #name
+  #define STR(macro) QUOTE(macro)
+
+  #ifndef MCPLPATH
+  #define MCPLPATH=/usr/share/mcstas/2.3/MCPL/voutput.mcpl
+  #endif
+
+  #define MCPLFILE STR(MCPLPATH)
 %}
 
 INITIALIZE
 %{
-#define QUOTE(name) #name
-#define STR(macro) QUOTE(macro)
 
-#ifndef MCPLPATH
-#define MCPLPATH=/usr/share/mcstas/2.3/MCPL/voutput.mcpl
-#endif
-
-#define MCPLFILE STR(MCPLPATH)
 
 printf("Using the input file: %s\n", MCPLFILE);
 

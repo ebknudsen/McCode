@@ -117,11 +117,14 @@
 
 
 DEFINE COMPONENT Sample_nxs
-DEFINITION PARAMETERS ( int TransOnly=0, int IncohScat=1, int MultiScat=1 )
-SETTING PARAMETERS ( xwidth=0.05, yheight=0.05, zthick=0.05, radius=0.0, string nxsFileName="", int max_hkl=8, d_phi=0, string strainFileName="" )
+DEFINITION PARAMETERS ()
+SETTING PARAMETERS ( int TransOnly=0, int IncohScat=1, int MultiScat=1,
+  xwidth=0.05, yheight=0.05, zthick=0.05, radius=0.0, 
+  string nxsFileName="", int max_hkl=8, d_phi=0, string strainFileName="" )
 OUTPUT PARAMETERS (isrect,intersect,nxs_init_success,p_transmit,xsect_total,xsect_coherent,
-xsect_incoherent,xsect_absorption,
-lambda,velocity,fullpath,t1,t2,uc,A,mu_factor,sd,V2L)
+  xsect_incoherent,xsect_absorption,
+  lambda,velocity,fullpath,t1,t2,uc,A,mu_factor,sd,V2L,atomInfoList)
+  
 DEPENDENCY "-I@MCCODE_LIB@/libs/libnxs/ @MCCODE_LIB@/libs/libnxs/libnxs.a"
 
 
@@ -133,28 +136,28 @@ SHARE
 %include "read_table-lib"
 
 enum StrainDistribution {
-AxialSym1D,     /* 1D axial symmetric, i.e. cylinder sample with strain gradient along radius */
-AxialSym2D      /* 2D axial symmetric, i.e. cylinder sample with strain gradient along radius and along height */
-/*NoSym1D*/
+  AxialSym1D,     /* 1D axial symmetric, i.e. cylinder sample with strain gradient along radius */
+  AxialSym2D      /* 2D axial symmetric, i.e. cylinder sample with strain gradient along radius and along height */
+  /*NoSym1D*/
 };
 
 typedef struct {
-/** values from FILE **/
-/* strains in the sample represented by lattice spacing */
-int n_entries;          /* number of entries for hoop, radial, axial */
-double *pos_x;          /* lists of all positions */
-double *pos_y;
-double *pos_z;
-double *strains_hoop;   /* lists of all strain values */
-double *strains_radial;
-double *strains_axial;
-double d0_hoop;         /* reference values */
-double d0_radial;
-double d0_axial;
-enum StrainDistribution strain_distr;  /* strain distribution mode */
+  /** values from FILE **/
+  /* strains in the sample represented by lattice spacing */
+  int n_entries;          /* number of entries for hoop, radial, axial */
+  double *pos_x;          /* lists of all positions */
+  double *pos_y;
+  double *pos_z;
+  double *strains_hoop;   /* lists of all strain values */
+  double *strains_radial;
+  double *strains_axial;
+  double d0_hoop;         /* reference values */
+  double d0_radial;
+  double d0_axial;
+  enum StrainDistribution strain_distr;  /* strain distribution mode */
 } StrainData;
 
-int readStrainFile( char *fileName, StrainData *sd )
+int readStrainFile( char *fileName, StrainData *sd, char *comp_name )
 {
   /* read the file */
   t_Table dataTable;
@@ -174,7 +177,8 @@ int readStrainFile( char *fileName, StrainData *sd )
   /*try to read the strain data from a file - return immidiately if not succesful*/
   status=Table_Read(&dataTable, fileName, 1); /* read 1st block data from file into table */
   if(status==-1){
-      fprintf(stderr,"%s: Warning: Could not read table from '%s' - using default values.\n", NAME_CURRENT_COMP, fileName);
+      fprintf(stderr,"%s: Warning: Could not read table from '%s' - using default values.\n", 
+        comp_name, fileName);
       sd->n_entries = 0;
       return -1;
   }
@@ -187,24 +191,24 @@ int readStrainFile( char *fileName, StrainData *sd )
       sd->d0_hoop = atof(parsing[0]);
     else
     {
-      fprintf(stderr, "%s: Warning: No value for 'd0_hoop' found in file %s\n", NAME_CURRENT_COMP, fileName);
+      fprintf(stderr, "%s: Warning: No value for 'd0_hoop' found in file %s\n", comp_name, fileName);
     }
     if( parsing[1] )
       sd->d0_radial = atof(parsing[1]);
     else
     {
-      fprintf(stderr, "%s: Warning: No value for 'd0_radial' found in file %s\n", NAME_CURRENT_COMP, fileName);
+      fprintf(stderr, "%s: Warning: No value for 'd0_radial' found in file %s\n", comp_name, fileName);
     }
     if( parsing[2] )
       sd->d0_axial = atof(parsing[2]);
     else
     {
-      fprintf(stderr, "%s: Warning: No value for 'd0_axial' found in file %s\n", NAME_CURRENT_COMP, fileName);
+      fprintf(stderr, "%s: Warning: No value for 'd0_axial' found in file %s\n", comp_name, fileName);
     }
   }
   else
   {
-    fprintf(stderr, "%s: Warning: parsing file %s\n", NAME_CURRENT_COMP, fileName);
+    fprintf(stderr, "%s: Warning: parsing file %s\n", comp_name, fileName);
     return -1;
   }
 
@@ -240,7 +244,7 @@ int readStrainFile( char *fileName, StrainData *sd )
     /* check if data exists (at least minimum number of columns) */
     if( dataTable.columns < minimum_columns )
     {
-      fprintf(stderr, "%s: Error: There are too few table columns in '%s' to process strain data - using default values now\n", NAME_CURRENT_COMP, fileName);
+      fprintf(stderr, "%s: Error: There are too few table columns in '%s' to process strain data - using default values now\n", comp_name, fileName);
       sd->n_entries = 0;
       return -1;
     }
@@ -319,41 +323,41 @@ int readStrainFile( char *fileName, StrainData *sd )
 DECLARE
 %{
 
-int isrect;
-int intersect;
-int nxs_init_success;
+  int isrect;
+  int intersect;
+  int nxs_init_success;
 
-/* probabilities */
-double p_transmit;
+  /* probabilities */
+  double p_transmit;
 
-/* cross sections */
-double xsect_total;
-double xsect_coherent;
-double xsect_incoherent;
-double xsect_absorption;
+  /* cross sections */
+  double xsect_total;
+  double xsect_coherent;
+  double xsect_incoherent;
+  double xsect_absorption;
 
 
-/* wavelength + velocity of the neutron */
-double lambda;
-double velocity;
+  /* wavelength + velocity of the neutron */
+  double lambda;
+  double velocity;
 
-/* neutron path through the sample */
-double fullpath;
+  /* neutron path through the sample */
+  double fullpath;
 
-/* intersection times */
-double t1;
-double t2;
+  /* intersection times */
+  double t1;
+  double t2;
 
-/* sample */
-NXS_UnitCell uc;
-NXS_AtomInfo *atomInfoList;
+  /* sample */
+  NXS_UnitCell uc;
+  NXS_AtomInfo *atomInfoList;
 
-double A;
-double mu_factor;
-StrainData sd;
+  double A;
+  double mu_factor;
+  StrainData sd;
 
-/* velocity to lambda conversion */
-double V2L;
+  /* velocity to lambda conversion */
+  double V2L;
 %}
 
 
@@ -373,7 +377,7 @@ if ( !radius || !yheight )
 }
 
 
-if( readStrainFile( strainFileName, &sd ) )
+if( readStrainFile( strainFileName, &sd, NAME_CURRENT_COMP ) )
 {
   fprintf(stderr, "%s: No strain data found! Recalculation of d-values not used.\n", NAME_CURRENT_COMP);
   sd.n_entries = 0;

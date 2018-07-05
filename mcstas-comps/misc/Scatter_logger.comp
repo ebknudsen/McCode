@@ -32,7 +32,7 @@
 DEFINE COMPONENT Scatter_logger
 DEFINITION PARAMETERS ()
 SETTING PARAMETERS ()
-OUTPUT PARAMETERS ()
+OUTPUT PARAMETERS (bounce_store_index, bounce_store_overrun)
 
 SHARE
   %{
@@ -71,13 +71,13 @@ SHARE
       printf("Warning (%s): Scatter_log overrun at %llu - not logging any more events\n",NAME_CURRENT_COMP,mcget_run_num());\
       bounce_store_overrun=1;\
     }\
-    do {mcDEBUG_SCATTER(mcnlx, mcnly, mcnlz, mcnlvx, mcnlvy, mcnlvz, \
-			mcnlt,mcnlsx,mcnlsy,mcnlsz, mcnlp); mcScattered++;} while(0);\
+    do {mcDEBUG_SCATTER(x, y, z, vx, vy, vz, \
+			t,sx,sy,sz, p); SCATTERED++;} while(0);\
 } while(0)
 
 #define SCATTER0\
-    do {mcDEBUG_SCATTER(mcnlx, mcnly, mcnlz, mcnlvx, mcnlvy, mcnlvz, \
-			mcnlt,mcnlsx,mcnlsy,mcnlsz, mcnlp); mcScattered++;} while(0)
+    do {mcDEBUG_SCATTER(x, y, z, vx, vy, vz, \
+			t,sx,sy,sz, p); SCATTERED++;} while(0)
 
   const int BOUNCE_LOG_SIZE=1000000;
   struct Generalized_State_t *Bounce_store;

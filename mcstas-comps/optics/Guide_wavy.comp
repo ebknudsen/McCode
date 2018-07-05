@@ -60,25 +60,25 @@
 DEFINE COMPONENT Guide_wavy
 DEFINITION PARAMETERS ()
 SETTING PARAMETERS (w1, h1, w2=0, h2=0, l,
-R0=0.995, Qc=0.0218, alpha=0, m=0, W=0,
-alpha1=4.38, m1=2, W1=0.003,
-alpha2=4.38, m2=2, W2=0.003,
-alpha3=4.38, m3=2, W3=0.003,
-alpha4=4.38, m4=2, W4=0.003,
-wavy_z=0, wavy_xy=0)
+  R0=0.995, Qc=0.0218, alpha=0, m=0, W=0,
+  alpha1=4.38, m1=2, W1=0.003,
+  alpha2=4.38, m2=2, W2=0.003,
+  alpha3=4.38, m3=2, W3=0.003,
+  alpha4=4.38, m4=2, W4=0.003,
+  wavy_z=0, wavy_xy=0)
 OUTPUT PARAMETERS (whalf,hhalf, lwhalf, lhhalf, norm_nv, norm_nh, f_h, f_v, eta_z, eta_xy)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */
 SHARE %{
-%include "ref-lib"
+  %include "ref-lib"
 %}
 DECLARE
 %{
-double whalf,hhalf, lwhalf, lhhalf, norm_nv, norm_nh, f_h, f_v, eta_z, eta_xy;
+  double whalf,hhalf, lwhalf, lhhalf, norm_nv, norm_nh, f_h, f_v, eta_z, eta_xy;
 %}
 
 INITIALIZE
 %{
-if (m)     { m1=m2=m3=m4=m; }
+  if (m)     { m1=m2=m3=m4=m; }
   if (alpha) { alpha1=alpha2=alpha3=alpha4=alpha; }
   if (W)     { W1=W2=W3=W4=W; }
 
@@ -105,7 +105,7 @@ TRACE
   double vdotn_v1,vdotn_v2,vdotn_h1,vdotn_h2;   /* Dot products. */
   double vdotn;
   double d_xy, d_z;                             /* Random angles */
-  double m0, alpha0, W;
+  double m0, alpha0, w;
   int i;                                        /* Which mirror hit? */
   double q;                                     /* Q [1/AA] of reflection */
   double dvx, dvy, dvz;                         /* Velocity change */
@@ -207,7 +207,7 @@ and the rotated bottom normal vector is { -l d_xy,  l + f_v d_z,  f_v + l d_z }
     switch(i)
     {
       case 1:                   /* Left vertical mirror */
-        m0=m1; W=W1; alpha0=alpha1;
+        m0=m1; w=W1; alpha0=alpha1;
         norm_n2 =  (-l+d_z*f_h)*(-l+d_z*f_h)+(d_xy*l)*(d_xy*l)
                   +(f_h-d_z*l)*(f_h-d_z*l); /* Square of length of n vector */
         vdotn = (vx*(-l+f_h*d_z)+ vy*(l*d_xy)+ vz*(f_h-l*d_z) );
@@ -217,7 +217,7 @@ and the rotated bottom normal vector is { -l d_xy,  l + f_v d_z,  f_v + l d_z }
         dvz = -2*(f_h-l*d_z)*vdotn/norm_n2;
         break;
       case 2:                   /* Right vertical mirror */
-        m0=m2; W=W2; alpha0=alpha2;
+        m0=m2; w=W2; alpha0=alpha2;
         norm_n2 =  (l+d_z*f_h)*(l+d_z*f_h)+(-d_xy*l)*(-d_xy*l)
                   +(f_h+d_z*l)*(f_h+d_z*l); /* Square of length of n vector */
         vdotn = (vx*(l+f_h*d_z)+ vy*(-l*d_xy)+ vz*(f_h+l*d_z) );
@@ -227,7 +227,7 @@ and the rotated bottom normal vector is { -l d_xy,  l + f_v d_z,  f_v + l d_z }
         dvz = -2*(f_h+l*d_z)*vdotn/norm_n2;
         break;
       case 3:                   /* Lower horizontal mirror */
-        m0=m3; W=W3; alpha0=alpha3;
+        m0=m3; w=W3; alpha0=alpha3;
         norm_n2 =  (d_xy*l)*(d_xy*l)+(-l+d_z*f_v)*(-l+d_z*f_v)
                   +(f_v-d_z*l)*(f_v-d_z*l); /* Square of length of n vector */
         vdotn = (vx*(l*d_xy)+ vy*(-l+f_v*d_z)+ vz*(f_v-l*d_z) );
@@ -237,7 +237,7 @@ and the rotated bottom normal vector is { -l d_xy,  l + f_v d_z,  f_v + l d_z }
         dvz = -2*(f_v-l*d_z)*vdotn/norm_n2;
         break;
       case 4:                   /* Upper horizontal mirror */
-        m0=m4; W=W4; alpha0=alpha4;
+        m0=m4; w=W4; alpha0=alpha4;
         norm_n2 =  (-d_xy*l)*(-d_xy*l)+(l+d_z*f_v)*(l+d_z*f_v)
                   +(f_v+d_z*l)*(f_v+d_z*l); /* Square of length of n vector */
         vdotn = (vx*(-l*d_xy)+ vy*(l+f_v*d_z)+ vz*(f_v+l*d_z) );
@@ -252,7 +252,7 @@ and the rotated bottom normal vector is { -l d_xy,  l + f_v d_z,  f_v + l d_z }
     }
     /* Now compute reflectivity. */
     {
-        double par[] = {R0, Qc, alpha0, m0, W};
+        double par[] = {R0, Qc, alpha0, m0, w};
         StdReflecFunc(q, par, &R);
         if (R > 0)
           p *= R;

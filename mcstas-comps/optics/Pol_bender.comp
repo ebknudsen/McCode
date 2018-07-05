@@ -92,7 +92,7 @@ rTopUpPar={0.99,0.0219,6.07,2.0,0.003},
 rTopDownPar={0.99,0.0219,6.07,2.0,0.003},
 rBotUpPar=rTopUpPar, rBotDownPar=rTopDownPar,
 rLeftUpPar=rTopUpPar, rLeftDownPar=rTopDownPar,
-rRightUpPar=rLeftUpPar, rRightDownPar=rLeftDownPar)
+rRightUpPar=rLeftUpPar, rRightDownPar=rLeftDownPar, useTables=0)
 SETTING PARAMETERS (xwidth, yheight, length, radius, G=9.8, int nslit=1, d=0.0, int debug=0, int endFlat=0,
 int drawOption=1)
 OUTPUT PARAMETERS (localG, normTopBot, normIn, normOut,
@@ -105,8 +105,8 @@ rRightUpParPtr, rRightDownParPtr)
 
 SHARE
 %{
-%include "pol-lib"
-%include "ref-lib"
+  %include "pol-lib"
+  %include "ref-lib"
 %}
 
 DECLARE
@@ -116,23 +116,23 @@ Coords normTopBot, normIn, normOut;
 Coords pointTop, pointBot, pointIn, pointOut;
 
 #if (useTables)
-  t_Table *rTopUpParPtr     = 0;
-  t_Table *rTopDownParPtr   = 0;
-  t_Table *rBotUpParPtr     = 0;
-  t_Table *rBotDownParPtr   = 0;
-  t_Table *rLeftUpParPtr    = 0;
-  t_Table *rLeftDownParPtr  = 0;
-  t_Table *rRightUpParPtr   = 0;
-  t_Table *rRightDownParPtr = 0;
+  t_Table *rTopUpParPtr;
+  t_Table *rTopDownParPtr;
+  t_Table *rBotUpParPtr;
+  t_Table *rBotDownParPtr;
+  t_Table *rLeftUpParPtr;
+  t_Table *rLeftDownParPtr;
+  t_Table *rRightUpParPtr;
+  t_Table *rRightDownParPtr;
 #else
-  double rTopUpParPtr[]     = (double [])rTopUpPar;
-  double rTopDownParPtr[]   = (double [])rTopDownPar;
-  double rBotUpParPtr[]     = (double [])rBotUpPar;
-  double rBotDownParPtr[]   = (double [])rBotDownPar;
-  double rLeftUpParPtr[]    = (double [])rLeftUpPar;
-  double rLeftDownParPtr[]  = (double [])rLeftDownPar;
-  double rRightUpParPtr[]   = (double [])rRightUpPar;
-  double rRightDownParPtr[] = (double [])rRightDownPar;
+  double *rTopUpParPtr;
+  double *rTopDownParPtr;
+  double *rBotUpParPtr;
+  double *rBotDownParPtr;
+  double *rLeftUpParPtr;
+  double *rLeftDownParPtr;
+  double *rRightUpParPtr;
+  double *rRightDownParPtr;
 #endif
 %}
 
@@ -189,6 +189,15 @@ INITIALIZE
 	    NAME_CURRENT_COMP, rRightDownPar);
     exit(1);
   }
+#else
+  rTopUpParPtr     = (double [])rTopUpPar;
+  rTopDownParPtr   = (double [])rTopDownPar;
+  rBotUpParPtr     = (double [])rBotUpPar;
+  rBotDownParPtr   = (double [])rBotDownPar;
+  rLeftUpParPtr    = (double [])rLeftUpPar;
+  rLeftDownParPtr  = (double [])rLeftDownPar;
+  rRightUpParPtr   = (double [])rRightUpPar;
+  rRightDownParPtr = (double [])rRightDownPar;
 #endif
 
   if ((xwidth<=0) || (yheight <= 0) || (length<=0) || (radius==0)) {

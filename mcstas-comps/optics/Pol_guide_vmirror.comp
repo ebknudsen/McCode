@@ -64,18 +64,16 @@
 
 DEFINE COMPONENT Pol_guide_vmirror
 DEFINITION PARAMETERS (xwidth, yheight, length,
-rFunc=StdReflecFunc, rUpFunc=StdReflecFunc,
-rDownFunc=StdReflecFunc,
-rPar    ={1.0, 0.0219, 4.07, 3.2, 0.003},
-rUpPar  ={1.0, 0.0219, 4.07, 3.2, 0.003},
-rDownPar={0.1, 0.0219, 4.07, 3.2, 0.003},
-useTables=0)
+  rFunc   =StdReflecFunc, rUpFunc=rFunc, rDownFunc=rFunc,
+  rPar    ={1.0, 0.0219, 4.07, 3.2, 0.003},
+  rUpPar  =rPar, rDownPar=rPar,
+  useTables=0)
 SETTING PARAMETERS (int debug=0)
 OUTPUT PARAMETERS (localG,
-normalTop, normalBot, normalLeft, normalRight, normalInOut,
-pointTop, pointBot, pointLeft, pointRight,
-pointIn, pointOut,
-rParPtr, rUpParPtr, rDownParPtr)
+  normalTop, normalBot, normalLeft, normalRight, normalInOut,
+  pointTop, pointBot, pointLeft, pointRight,
+  pointIn, pointOut,
+  rParPtr, rUpParPtr, rDownParPtr)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */
 
 SHARE
@@ -86,18 +84,18 @@ SHARE
 
 DECLARE
 %{
-Coords localG;
-Coords normalTop, normalBot, normalLeft, normalRight, normalInOut;
-Coords pointTop, pointBot, pointLeft, pointRight, pointIn, pointOut;
+  Coords localG;
+  Coords normalTop, normalBot, normalLeft, normalRight, normalInOut;
+  Coords pointTop, pointBot, pointLeft, pointRight, pointIn, pointOut;
 
 #if (useTables)
-  t_Table *rParPtr     = 0;
-  t_Table *rUpParPtr   = 0;
-  t_Table *rDownParPtr = 0;
+  t_Table *rParPtr;
+  t_Table *rUpParPtr;
+  t_Table *rDownParPtr;
 #else
-  double rParPtr[]     = (double [])rPar;
-  double rUpParPtr[]   = (double [])rUpPar;
-  double rDownParPtr[] = (double [])rDownPar;
+  double *rParPtr;
+  double *rUpParPtr;
+  double *rDownParPtr;
 #endif
   %}
 
@@ -122,6 +120,10 @@ INITIALIZE
 	    NAME_CURRENT_COMP, rDownPar);
     exit(1);
   }
+#else // use function call with vector parameters
+  rParPtr     = (double [])rPar;
+  rUpParPtr   = (double [])rUpPar;
+  rDownParPtr = (double [])rDownPar;
 #endif
 
   if ((xwidth<=0) || (yheight<= 0) || (length<=0)) {
