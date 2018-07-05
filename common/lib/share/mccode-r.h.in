@@ -296,7 +296,7 @@ char  *mcsig_message;
 /* number of SCATTER calls in current comp: mcScattered defined in generated C code */
 /* Anyway the usage of MCGETPAR requires that we use sometimes bare names...
 */
-#define MC_GETPAR2(comp, par) (mcinstance_ ## comp->parameters.par)
+#define MC_GETPAR2(comp, par) (mcinstance_ ## comp->_parameters.par)
 #define MC_GETPAR(comp, par) MC_GETPAR2(comp,par)
 /* Flag to indicate if neutron needs to be restored: mcRestore defined in generated C code */
 #define MC_GET2(comp, field) (mcinstance_ ## comp->field)
