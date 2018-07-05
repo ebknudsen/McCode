@@ -43,9 +43,9 @@ SHARE
     int _comp, _idx;
   };
 
-#define SCATTER_LOG do { \
-    if (bounce_store_index<BOUNCE_LOG_SIZE-1){\
-      struct Generalized_State_t *bp=&(Bounce_store[bounce_store_index]);\
+#define SCATTER_LOG(Size,Store,index,overrun) do { \
+    if (index<Size-1){\
+      struct Generalized_State_t *bp=&(Store[index]);\
       if( (bp-1)->_p!=p || (bp-1)->_vx!=vx || (bp-1)->_vy!=vy || (bp-1)->_vz!=vz ){\
         Coords ctmp=POS_A_CURRENT_COMP;\
         Coords _r = coords_set(x,y,z);\
@@ -64,12 +64,12 @@ SHARE
         bp->_p=p;\
         bp->_nid=mcget_run_num();\
         bp->_comp=INDEX_CURRENT_COMP;\
-        bp->_idx=bounce_store_index;\
-        bounce_store_index++;\
+        bp->_idx=index;\
+        index++;\
       }\
-    }else if(bounce_store_index==(BOUNCE_LOG_SIZE-1) && !bounce_store_overrun){\
+    }else if(index==(Size-1) && !overrun){\
       printf("Warning (%s): Scatter_log overrun at %llu - not logging any more events\n",NAME_CURRENT_COMP,mcget_run_num());\
-      bounce_store_overrun=1;\
+      overrun=1;\
     }\
     do {mcDEBUG_SCATTER(x, y, z, vx, vy, vz, \
 			t,sx,sy,sz, p); SCATTERED++;} while(0);\
@@ -104,7 +104,7 @@ INITIALIZE
 TRACE
 %{
 #undef SCATTER
-#define SCATTER SCATTER_LOG
+#define SCATTER SCATTER_LOG(BOUNCE_LOG_SIZE, Bounce_store, bounce_store_index,bounce_store_overrun)
 
 #undef mcabsorb
 #define mcabsorb scatter_logger_stop

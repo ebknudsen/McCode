@@ -73,13 +73,11 @@ COMPONENT a1 = Progress_bar()
 
 
 COMPONENT source = Source_gen (
-    xwidth = 0.104, yheighth=0.15, focus_xw = 0.08, focus_yh = 0.15,
+    xwidth = 0.104, yheight=0.15, focus_xw = 0.08, focus_yh = 0.15,
     dist = 1.14,lambda0 = Lambda_source, dlambda = dLambda_source,
     T1=289.42, I1=(3.083e12/4/PI),
     T2=120.002,I2=(3.575e12/4/PI),
-    T3=24.144,I3=(7.26e12/4/PI),
-    HEtailA=8.004e11/4/PI,
-    HEtailL0=-0.299)
+    T3=24.144,I3=(7.26e12/4/PI)
   AT (0,0,0) RELATIVE armSource
 
 COMPONENT Lmonsource1 = L_monitor(

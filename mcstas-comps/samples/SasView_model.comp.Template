@@ -137,23 +137,27 @@ SETTING PARAMETERS (
     focus_r=0)
 
 OUTPUT PARAMETERS ( 
+    model_pars_ptr,
     my_a_v, 
     shape)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
 DEPENDENCY "-std=c99"
 
+SHARE %{
+  %include "sasview_proxy.c"
+%}
+
 DECLARE
 %{
-  %include "sasview_proxy.c"
 
-  float model_pars_ptr[] = model_pars;
+  float *model_pars_ptr;
 
   double my_a_v, q, shape;
 %}
 
 INITIALIZE
 %{
-
+  model_pars_ptr = model_pars;
   shape=-1;  /* -1:no shape, 0:cyl, 1:box, 2:sphere  */
   if (xwidth && yheight && zdepth)  
     shape=1; 

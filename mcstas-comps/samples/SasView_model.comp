@@ -2177,24 +2177,28 @@ focus_aw=0,
 focus_ah=0,
 focus_r=0)
 
-OUTPUT PARAMETERS (
-my_a_v,
-shape)
-/* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */
+OUTPUT PARAMETERS ( 
+    model_pars_ptr,
+    my_a_v, 
+    shape)
+/* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
 DEPENDENCY "-std=c99"
+
+SHARE %{
+  %include "sasview_proxy.c"
+%}
 
 DECLARE
 %{
-%include "sasview_proxy.c"
 
-float model_pars_ptr[] = model_pars;
+  float *model_pars_ptr;
 
-double my_a_v, q_v, q, shape;
+  double my_a_v, q, shape;
 %}
 
 INITIALIZE
 %{
-
+  model_pars_ptr = model_pars;
 shape=-1;  /* -1:no shape, 0:cyl, 1:box, 2:sphere  */
 if (xwidth && yheight && zdepth)
     shape=1;
@@ -2203,7 +2207,7 @@ if (xwidth && yheight && zdepth)
   else if (radius > 0 && !yheight)
     shape=2;
   if (shape < 0)
-    exit(fprintf(stderr, "Sans_spheres: %s: sample has invalid dimensions.\n"
+    exit(fprintf(stderr, "SasView_model: %s: sample has invalid dimensions.\n"
                          "ERROR     Please check parameter values.\n", NAME_CURRENT_COMP));
 
   /* now compute target coords if a component index is supplied */
@@ -2217,7 +2221,7 @@ if (xwidth && yheight && zdepth)
   }
 
   if (!(target_x || target_y || target_z)) {
-    printf("Sans_spheres: %s: The target is not defined. Using direct beam (Z-axis).\n",
+    printf("SasView_model: %s: The target is not defined. Using direct beam (Z-axis).\n",
       NAME_CURRENT_COMP);
     target_z=1;
   }

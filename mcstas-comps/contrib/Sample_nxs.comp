@@ -593,18 +593,18 @@ if( intersect && (t2>0) && nxs_init_success )
         if (roulette_ball <= xsect_coherent)
         {
           int j;
-          int max_hkl = -1;
+          int max_hkl1 = -1;
           double contrib = 0.0;
-          while( max_hkl<(int)uc.nHKL-1 && 2.0*uc.hklList[max_hkl+1].dhkl-lambda > 1E-6 )
+          while( max_hkl1<(int)uc.nHKL-1 && 2.0*uc.hklList[max_hkl1+1].dhkl-lambda > 1E-6 )
           {
             max_hkl++;
-            contrib += uc.hklList[max_hkl].FSquare * uc.hklList[max_hkl].multiplicity * uc.hklList[max_hkl].dhkl;
+            contrib += uc.hklList[max_hkl1].FSquare * uc.hklList[max_hkl1].multiplicity * uc.hklList[max_hkl1].dhkl;
           }
 
           /* determine lattice plane (for scattering) */
           roulette_ball = rand01() * contrib;
           contrib = 0.0;
-          for( j=0; j<max_hkl; j++ )
+          for( j=0; j<max_hkl1; j++ )
           {
             contrib += uc.hklList[j].FSquare * uc.hklList[j].multiplicity * uc.hklList[j].dhkl;
             if( roulette_ball < contrib )
