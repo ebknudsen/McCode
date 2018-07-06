@@ -1846,8 +1846,9 @@ check_instrument_formals(List formallist, char *instrname)
   liter = list_iterate(formallist);
   while(formal = list_next(liter)) {
     if (!formal->id || !strlen(formal->id))
-      print_error("ERROR: Instrument parameter name %s is empty (length=0) "
-      "in instrument %s\n", formal->id, instrname);
+      continue;
+      // print_error("ERROR: Instrument parameter name %s is empty (length=0) "
+      // "in instrument %s\n", formal->id, instrname);
     if (strcmp(formal->id,"")) {
         /* find first definition of parameter */
         List_handle liter2;

@@ -344,6 +344,9 @@ static void cogen_defundef(struct comp_inst *comp, List l, char define_it)
     liter = list_iterate(l);
     while(c_formal = list_next(liter)) {
       int flag_noconflict=1;
+      
+      if (!c_formal->id || !strlen(c_formal->id))
+        continue; // skip invalid parameter names
       switch (define_it) {
       case GLOBAL_INSTANCE_PAR_REF:
         coutf("  #define %s (" ID_PRE "instance_%s->_parameters.%s)", 
@@ -1130,19 +1133,25 @@ int cogen_decls(struct instr_def *instr)
   cout("   (Used in e.g. " ID_PRE "inputparse and I/O function (e.g. detector_out) */");
   cout("");
   
-  liter = list_iterate(instr->formals);
   int numipar=0;
   cout("struct " ID_PRE "instrument_parameters_struct {");
-  while(i_formal = list_next(liter))
-  {
-    if (strlen(i_formal->id)) {
-      coutf("  %s _%s;", instr_formal_type_names_real[i_formal->type], i_formal->id);
-      numipar++;
+  
+  if (!list_len(instr->formals)) {
+    coutf("  char %s_has_no_parameter;", instr->name);
+  } else {
+  
+    liter = list_iterate(instr->formals);
+  
+  
+    while(i_formal = list_next(liter))
+    {
+      if (i_formal->id && strlen(i_formal->id)) {
+        coutf("  %s _%s;", instr_formal_type_names_real[i_formal->type], i_formal->id);
+        numipar++;
+      }
     }
-    else
-      coutf("  char %s_has_no_parameter;", instr->name);
+    list_iterate_end(liter);
   }
-  list_iterate_end(liter);
   cout("};");
   cout("");
   
