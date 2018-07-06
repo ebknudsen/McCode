@@ -1632,10 +1632,11 @@ int cogen_trace(struct instr_def *instr)
       list_len(instr->complist));
     coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "_absorbed");
     #if MCCODE_PROJECT == 1     /* neutron */
-    cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE "comp); } while(0)");
+    cout( "#define ABSORB0 do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE "comp); } while(0)");
     #elif MCCODE_PROJECT == 2   /* xray */
-    cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); ABSORBED++; return(" ID_PRE "comp); } while(0)");
+    cout( "#define ABSORB0 do { DEBUG_STATE(); DEBUG_ABSORB(); ABSORBED++; return(" ID_PRE "comp); } while(0)");
     #endif
+    cout( "#define ABSORB ABSORB0");
     cout( "#define " ID_PRE "instance_MYSELF " ID_PRE "comp");
     
     liter = list_iterate(instr->complist);
@@ -1653,6 +1654,7 @@ int cogen_trace(struct instr_def *instr)
     cout("#undef STORE_NEUTRON"  );
     cout("#undef ABSORBED" );
     cout("#undef ABSORB");
+    cout("#undef ABSORB0");
     cout("#undef " ID_PRE "instance_MYSELF");
     cout("");
   } /* end trace for classes */
@@ -1675,16 +1677,18 @@ int cogen_trace(struct instr_def *instr)
       list_len(instr->complist));
   coutf("#define %s (" ID_PRE MCCODE_PARTICLE "->%s)", "ABSORBED" , "_absorbed");
   #if MCCODE_PROJECT == 1     /* neutron */
-  cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE MCCODE_PARTICLE ");} while(0)");
+  cout( "#define ABSORB0 do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(" ID_PRE MCCODE_PARTICLE ");} while(0)");
   #elif MCCODE_PROJECT == 2   /* xray */
-  cout( "#define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); ABSORBED++; return(" ID_PRE MCCODE_PARTICLE ");} while(0)");
+  cout( "#define ABSORB0 do { DEBUG_STATE(); DEBUG_ABSORB(); ABSORBED++; return(" ID_PRE MCCODE_PARTICLE ");} while(0)");
   #endif
+  cout( "#define ABSORB ABSORB0");
   liter = list_iterate(instr->complist);
   while((comp = list_next(liter)) != NULL)
     warnings += cogen_comp_trace(comp, instr);
   list_iterate_end(liter);
   cout("");
   cout("#undef ABSORB");
+  cout("#undef ABSORB0");
   /* instrument section comment */
   if (verbose) fprintf(stderr, "Writing instrument '%s' %s\n", 
     instr->name, "TRACE");
@@ -1704,7 +1708,8 @@ int cogen_trace(struct instr_def *instr)
   cout("");
   cout("  /* init variables and counters for TRACE */");
   
-  cout("  #define ABSORB do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(ABSORBED);} while(0)");
+  cout("  #define ABSORB0 do { DEBUG_STATE(); DEBUG_ABSORB(); MAGNET_OFF; ABSORBED++; return(ABSORBED);} while(0)");
+  cout("  #define ABSORB ABSORB0");
   
   /* Debugging (initial state). */
   cout("  DEBUG_ENTER();");
@@ -1900,6 +1905,7 @@ int cogen_trace(struct instr_def *instr)
   cout("  #undef STORE_NEUTRON"  );
   cout("  #undef ABSORBED");
   cout("  #undef ABSORB");
+  cout("  #undef ABSORB0");
   
   cout("");
   cout("  return(" ID_PRE MCCODE_PARTICLE "->_index);");

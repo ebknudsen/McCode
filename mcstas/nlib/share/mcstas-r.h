@@ -49,7 +49,10 @@
 #define SE2V     437.393377        /* Convert sqrt(E)[meV] to v[m/s] */
 #define VS2E     5.22703725e-6     /* Convert (v[m/s])**2 to E[meV] */
 
-#define SCATTER do {DEBUG_SCATTER(); SCATTERED++;} while(0)
+#define SCATTER0 do {DEBUG_SCATTER(); SCATTERED++;} while(0)
+#define SCATTER SCATTER0
+
+#define JUMPTOCOMP(comp) mcneutron->_index = INDEX_COMP(comp);
 
 #define MAGNET_ON \
   do { \
