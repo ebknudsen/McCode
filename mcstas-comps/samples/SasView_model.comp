@@ -2198,7 +2198,7 @@ DECLARE
 
 INITIALIZE
 %{
-  model_pars_ptr = model_pars;
+  model_pars_ptr = (float[])model_pars;
 shape=-1;  /* -1:no shape, 0:cyl, 1:box, 2:sphere  */
 if (xwidth && yheight && zdepth)
     shape=1;
@@ -2234,7 +2234,7 @@ TRACE
   double t0, t1, v, l_full, l, l_1, dt, d_phi, theta, my_s;
   double aim_x=0, aim_y=0, aim_z=1, axis_x, axis_y, axis_z;
   double arg, tmp_vx, tmp_vy, tmp_vz, vout_x, vout_y, vout_z;
-  double f, solid_angle, vx_i, vy_i, vz_i, qx, qy, qz;
+  double f, solid_angle, vx_i, vy_i, vz_i, q, qx, qy, qz;
   char intersect=0;
 
   /* Intersection neutron trajectory / sample (sample surface) */

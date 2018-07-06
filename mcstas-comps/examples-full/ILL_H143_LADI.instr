@@ -453,8 +453,7 @@ EXTEND %{
   /* take into account detector efficiency (absorption law) */
   if (!SCATTERED) ABSORB;
   double eff=0.5;
-  double v=sqrt(vx*vx+vy*vy+vz*vz);
-  p *= 1.0-exp(3960.0/v*log(1.0-eff/100.0));
+  p *= 1.0-exp(3960.0/sqrt(vx*vx+vy*vy+vz*vz)*log(1.0-eff/100.0));
 %}
   
 COMPONENT ImagePlate = Monitor_nD(
