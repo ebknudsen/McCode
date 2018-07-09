@@ -2285,8 +2285,8 @@ void mcdis_Circle(double x, double y, double z, double r, double nx, double ny, 
     int i;
     if(nx==0 && ny && nz==0){
         for (i=0;i<24; i++){
-            mcdis_line(x+r*sin(i*2*M_PI/24),y,z+r*cos(i*2*M_PI/24),
-                    x+r*sin((i+1)*2*M_PI/24),y,z+r*cos((i+1)*2*M_PI/24));
+            mcdis_line(x+r*sin(i*2*PI/24),y,z+r*cos(i*2*PI/24),
+                    x+r*sin((i+1)*2*PI/24),y,z+r*cos((i+1)*2*PI/24));
         }
     }else{
         double mx,my,mz;
@@ -2297,8 +2297,8 @@ void mcdis_Circle(double x, double y, double z, double r, double nx, double ny, 
         for (i=0;i<24; i++){
             double ux,uy,uz;
             double wx,wy,wz;
-            rotate(ux,uy,uz, mx,my,mz, i*2*M_PI/24, nx,ny,nz);
-            rotate(wx,wy,wz, mx,my,mz, (i+1)*2*M_PI/24, nx,ny,nz);
+            rotate(ux,uy,uz, mx,my,mz, i*2*PI/24, nx,ny,nz);
+            rotate(wx,wy,wz, mx,my,mz, (i+1)*2*PI/24, nx,ny,nz);
             mcdis_line(x+ux*r,y+uy*r,z+uz*r,
                     x+wx*r,y+wy*r,z+wz*r);
         }
@@ -2330,7 +2330,7 @@ void mcdis_cylinder( double x, double y, double z,
     /*draw circle*/
     for (i=0; i<24; i++){
         double ux,uy,uz;
-        rotate(ux,uy,uz, mx,my,mz, i*2*M_PI/24, nx,ny,nz);
+        rotate(ux,uy,uz, mx,my,mz, i*2*PI/24, nx,ny,nz);
         mcdis_line(x+nx*h_2+ux*r, y+ny*h_2+uy*r, z+nz*h_2+uz*r,
                  x-nx*h_2+ux*r, y-ny*h_2+uy*r, z-nz*h_2+uz*r);
     }
@@ -2347,7 +2347,7 @@ void mcdis_sphere(double x, double y, double z, double r, int N){
     nx=0;ny=0;nz=1;
     mcdis_Circle(x,y,z,r,nx,ny,nz);
     for (i=1;i<N;i++){
-        rotate(nx,ny,nz, nx,ny,nz, M_PI/N, 0,1,0);
+        rotate(nx,ny,nz, nx,ny,nz, PI/N, 0,1,0);
         mcdis_Circle(x,y,z,r,nx,ny,nz);
     }
     /*lastly draw a great circle perpendicular to all N circles*/
