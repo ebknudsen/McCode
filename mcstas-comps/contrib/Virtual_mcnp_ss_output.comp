@@ -70,7 +70,7 @@
 DEFINE COMPONENT Virtual_mcnp_ss_output
 DEFINITION PARAMETERS(string file="rssa")
 SETTING PARAMETERS (verbose=1)
-OUTPUT PARAMETERS(hfile,to_mcstas,from_mcstas,counterout)
+OUTPUT PARAMETERS(hfile,to_mcstas,from_mcstas,counterout,ntrk,nhis)
 DEPENDENCY "-L@MCCODE_LIB@/libs/neutronics/ -lneutronics -lgfortran"
 
 SHARE
@@ -87,21 +87,24 @@ SHARE
 
 DECLARE
 %{
-FILE *hfile;                    /* Neutron input file handle */
+  FILE *hfile;                    /* Neutron input file handle */
 
-double to_mcstas[8];
-double from_mcstas[8];
-unsigned int counterout;
+  double to_mcstas[8];
+  double from_mcstas[8];
+  unsigned int counterout;
+  unsigned int ntrk;
+  unsigned int nhis;
 %}
 
 INITIALIZE
 %{
-counterout = 0;
 
-char  exit_flag=0;  /* set to 1 if end of simulation */
-long   filesize  =0;
+  char   exit_flag=0;  /* set to 1 if end of simulation */
+  long   filesize  =0;
 
-struct stat stfile;
+  counterout = 0;
+
+  struct stat stfile;
 /* Open neutron input file. */
 /* (If empty filename given, present warning in case of verbose, perform nothing) */
 
@@ -122,6 +125,8 @@ struct stat stfile;
     // put hardcoded nhis and ntrk values here
     //    ntrk=10;
     //    nhis=10;
+    ntrk=10;  
+    nhis=10;  // Number of histories in MCNP SSW file
     writeheader_(&ntrk,&nhis);
 
     if (verbose) printf("Number of histories in MCNP SSW file: %d \n ", nhis);

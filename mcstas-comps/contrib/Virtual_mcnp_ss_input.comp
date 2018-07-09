@@ -70,6 +70,7 @@
 DEFINE COMPONENT Virtual_mcnp_ss_input
 DEFINITION PARAMETERS (string file="rssa")
 SETTING PARAMETERS (verbose=1)
+OUTPUT PARAMETERS(hfile, to_mcstas,from_mcstas,ntrk,nhis,counter)
 DEPENDENCY "-L@MCCODE_LIB@/libs/neutronics/ -lneutronics -lgfortran"
 
 SHARE
@@ -86,26 +87,26 @@ SHARE
 
 DECLARE
 %{
-FILE *hfile;                    /* Neutron input file handle */
+  FILE *hfile;                    /* Neutron input file handle */
 
-double to_mcstas[8];
-double from_mcstas[8];
-unsigned int ntrk;
-unsigned int nhis;
-unsigned int counter;
+  double to_mcstas[8];
+  double from_mcstas[8];
+  unsigned int ntrk;
+  unsigned int nhis;
+  unsigned int counter;
 %}
 
 INITIALIZE
 %{
-ntrk = 0;
-nhis = 0;
-counter = 0;
+  ntrk = 0;
+  nhis = 0;
+  counter = 0;
 
 
-char  exit_flag=0;  /* set to 1 if end of simulation */
-long   filesize  =0;
+  char  exit_flag=0;  /* set to 1 if end of simulation */
+  long   filesize  =0;
 
-struct stat stfile;
+  struct stat stfile;
 /* Open neutron input file. */
 /* (If empty filename given, present warning in case of verbose, perform nothing) */
 
