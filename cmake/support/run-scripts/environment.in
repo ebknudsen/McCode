@@ -26,8 +26,8 @@ echo
 echo To end using this version of mcstas, exit this shell.
 echo
 export PS1='@FLAVOR@-@MCCODE_VERSION@ env \W \$ '
-if [ -x "\${SHELL}" ]; then
-  \${SHELL}
+if [ -x "${SHELL}" ]; then
+  ${SHELL}
 else
   /bin/sh
 fi
