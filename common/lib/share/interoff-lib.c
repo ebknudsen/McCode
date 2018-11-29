@@ -14,6 +14,10 @@
 * Release: $Revision$
 * Version: McStas X.Y
 *
+* Revision to read optional face color values from off files
+* by: Peter Link
+* Date: Mar 10, 2017
+*  
 * Object File Format intersection library for McStas. Requires the qsort function.
 *
 * Such files may be obtained with e.g.
@@ -206,13 +210,6 @@ FILE *off_getBlocksIndex(char* filename, long* vtxSize, long* polySize )
   {
     fprintf(stderr, "Error: Can not read 1st line in file %s (interoff/off_getBlocksIndex)\n", filename);
     exit(1);
-  }
-  if (strlen(line)>5)
-  {
-      fprintf(stderr,"Error: First line in %s is too long (=%d). Possibly the line is not terminated by '\\n'.\n" 
-              "       The first line is required to be exactly 'OFF', '3' or 'ply'.\n",filename,strlen(line));
-      fclose(f);
-      return(NULL);
   }
 
   if (strncmp(line,"OFF",3) && strncmp(line,"3",1) && strncmp(line,"ply",1))
@@ -481,6 +478,7 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
   Coords* vtxArray        =NULL;
   Coords* normalArray     =NULL;
   unsigned long* faceArray=NULL;
+  unsigned long* facepropsArray=NULL;  /* PL: added to hold keys to the table of supermirror m-values */
   FILE*   f               =NULL; /* the FILE with vertices and polygons */
   double minx=FLT_MAX,maxx=-FLT_MAX,miny=FLT_MAX,maxy=-FLT_MAX,minz=FLT_MAX,maxz=-FLT_MAX;
 
@@ -584,11 +582,13 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
   );
   normalArray= malloc(polySize*sizeof(Coords));
   faceArray  = malloc(polySize*10*sizeof(unsigned long)); // we assume polygons have less than 9 vertices
+  facepropsArray = malloc(polySize*sizeof(unsigned long)); // array to hold the index of the face properties table
+  
   if (!normalArray || !faceArray) return(0);
   
   // fill faces
   faceSize=0;
-  i=0;
+  i=0; // there will be polysize number of faces!
   while (i<polySize && ~feof(f)) {
     int  nbVertex=0, j=0;
     // read the length of this polygon
@@ -615,6 +615,15 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
       fscanf(f, "%lg", &vtx);
       faceArray[faceSize++] = vtx;   // add vertices index after length of polygon
     }
+    /* PL: to add the mirror properties use the optional color map index of the faces in the off-file definition,
+       i.e. read one more integer on the line!
+       this way will not work for files which do not have exactly this format
+       it would be better to replace the original fscanf by reading the full line and interpreting it afterwards. 
+     */  
+    int mirrorprops=0;
+    fscanf(f, "%d", &mirrorprops);
+    facepropsArray[i] = mirrorprops;
+    printf(" faceprop %d \n",mirrorprops);
     i++;
   }
 
@@ -666,6 +675,7 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
   data->vtxArray   = vtxArray;
   data->normalArray= normalArray;
   data->faceArray  = faceArray;
+  data->facepropsArray  = facepropsArray;
   data->vtxSize    = vtxSize;
   data->polySize   = polySize;
   data->faceSize   = faceSize;
@@ -676,6 +686,7 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
 /*******************************************************************************
 * int off_intersect_all(double* t0, double* t3,
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x, double y, double z,
      double vx, double vy, double vz,
      off_struct *data )
@@ -685,10 +696,12 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
 * RETURN: the number of polyhedra which trajectory intersects
 *         t0 and t3 are the smallest incoming and outgoing intersection times
 *         n0 and n3 are the corresponding normal vectors to the surface
+* PL:     faceindex0 and faceindex3 are the corresponding indices of the face
 *         data is the full OFF structure, including a list intersection type
 *******************************************************************************/
 int off_intersect_all(double* t0, double* t3,
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x,  double y,  double z,
      double vx, double vy, double vz,
      off_struct *data )
@@ -697,6 +710,7 @@ int off_intersect_all(double* t0, double* t3,
     Coords B={x+vx, y+vy, z+vz};
     int t_size=off_clip_3D_mod(data->intersects, A, B,
       data->vtxArray, data->vtxSize, data->faceArray, data->faceSize, data->normalArray );
+    /* t_size is the number of found intersections */
     qsort(data->intersects, t_size, sizeof(intersection),  off_compare);
     off_cleanDouble(data->intersects, &t_size);
     off_cleanInOut(data->intersects,  &t_size);
@@ -717,9 +731,14 @@ int off_intersect_all(double* t0, double* t3,
         if (n0) *n0 = data->intersects[i-1].normal;
         if (t3) *t3 = data->intersects[i].time;
         if (n3) *n3 = data->intersects[i].normal;
+        // PL: added this to get a hand on the index of the reflecting face / polygon id
+        if (faceindex0) *faceindex0 = data->intersects[i-1].index;
+        if (faceindex3) *faceindex3 = data->intersects[i].index;        
       } else {
         if (t0) *t0 = data->intersects[0].time; 	 
-	      if (n0) *n0 = data->intersects[0].normal;
+	    if (n0) *n0 = data->intersects[0].normal;
+        if (faceindex0) *faceindex0 = data->intersects[0].index;
+       
       }
       /* should also return t[0].index and t[i].index as polygon ID */
       return t_size;
@@ -730,6 +749,7 @@ int off_intersect_all(double* t0, double* t3,
 /*******************************************************************************
 * int off_intersect(double* t0, double* t3,
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x, double y, double z,
      double vx, double vy, double vz,
      off_struct data )
@@ -739,19 +759,22 @@ int off_intersect_all(double* t0, double* t3,
 * RETURN: the number of polyhedra which trajectory intersects
 *         t0 and t3 are the smallest incoming and outgoing intersection times
 *         n0 and n3 are the corresponding normal vectors to the surface
+* PL:     faceindex0 and faceindex3 are the corresponding indices of the face
 *******************************************************************************/
 int off_intersect(double* t0, double* t3,
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x,  double y,  double z,
      double vx, double vy, double vz,
      off_struct data )
 {
-  return off_intersect_all(t0, t3, n0, n3, x, y, z, vx, vy, vz, &data );
+  return off_intersect_all(t0, t3, n0, n3, faceindex0, faceindex3, x, y, z, vx, vy, vz, &data );
 } /* off_intersect */
 
 /*****************************************************************************
 * int off_x_intersect(double* l0, double* l3,
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x, double y, double z,
      double kx, double ky, double kz,
      off_struct data )
@@ -761,9 +784,11 @@ int off_intersect(double* t0, double* t3,
 * RETURN: the number of polyhedra the trajectory intersects
 *         l0 and l3 are the smallest incoming and outgoing intersection lengths
 *         n0 and n3 are the corresponding normal vectors to the surface
+* PL:     faceindex0 and faceindex3 are the corresponding indices of the face
 *******************************************************************************/
 int off_x_intersect(double *l0,double *l3,
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x,  double y,  double z,
      double kx, double ky, double kz,
      off_struct data )
@@ -775,7 +800,7 @@ int off_x_intersect(double *l0,double *l3,
   int n;
   invk=1/sqrt(scalar_prod(kx,ky,kz,kx,ky,kz));
   jx=kx*invk;jy=ky*invk;jz=kz*invk;
-  n=off_intersect(l0,l3,n0,n3,x,y,z,jx,jy,jz,data);
+  n=off_intersect(l0,l3,n0,n3,faceindex0,faceindex3,x,y,z,jx,jy,jz,data);
   return n;
 }
 

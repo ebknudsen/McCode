@@ -65,6 +65,7 @@ typedef struct off_struct {
     Coords* vtxArray;
     Coords* normalArray;
     unsigned long* faceArray;
+    unsigned long* facepropsArray;
     char *filename;
     int mantidflag;
     long mantidoffset;
@@ -88,6 +89,7 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
 /*******************************************************************************
 * int off_intersect_all(double* t0, double* t3, 
      Coords *n0, Coords *n3,
+     unsigned long *fi0, unsigned long *fi3,
      double x, double y, double z, 
      double vx, double vy, double vz, 
      off_struct *data )
@@ -101,6 +103,7 @@ long off_init(  char *offfile, double xwidth, double yheight, double zdepth,
 *******************************************************************************/
 int off_intersect_all(double* t0, double* t3, 
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x, double y, double z, 
      double vx, double vy, double vz, 
      off_struct *data );
@@ -108,6 +111,7 @@ int off_intersect_all(double* t0, double* t3,
 /*******************************************************************************
 * int off_intersect(double* t0, double* t3, 
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x, double y, double z, 
      double vx, double vy, double vz, 
      off_struct data )
@@ -120,6 +124,7 @@ int off_intersect_all(double* t0, double* t3,
 *******************************************************************************/
 int off_intersect(double* t0, double* t3, 
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x, double y, double z, 
      double vx, double vy, double vz, 
      off_struct data );
@@ -127,6 +132,7 @@ int off_intersect(double* t0, double* t3,
 /*****************************************************************************
 * int off_intersectx(double* l0, double* l3, 
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x, double y, double z, 
      double kx, double ky, double kz, 
      off_struct data )
@@ -139,6 +145,7 @@ int off_intersect(double* t0, double* t3,
 *******************************************************************************/
 int off_x_intersect(double *l0,double *l3,
      Coords *n0, Coords *n3,
+     unsigned long *faceindex0, unsigned long *faceindex3,
      double x,  double y,  double z, 
      double kx, double ky, double kz, 
      off_struct data );
