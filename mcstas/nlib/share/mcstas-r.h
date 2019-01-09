@@ -199,7 +199,7 @@
   } while(0)
 
 #pragma acc routine seq
-mcparticle mcsetstate(double x, double y, double z, double vx, double vy, double vz,
+particle mcsetstate(double x, double y, double z, double vx, double vy, double vz,
                 double t, double sx, double sy, double sz, double p);
 
 #ifdef DEBUG

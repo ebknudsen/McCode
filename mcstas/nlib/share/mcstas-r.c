@@ -51,10 +51,10 @@ int (*mcMagneticField) (double, double, double, double,
 * mcsetstate: transfer parameters into global McStas variables 
 *******************************************************************************/
 #pragma acc routine seq
-mcparticle mcsetstate(double x, double y, double z, double vx, double vy, double vz,
+particle mcsetstate(double x, double y, double z, double vx, double vy, double vz,
            double t, double sx, double sy, double sz, double p)
 {
-  mcparticle mcneutron;
+  particle mcneutron;
 
   mcneutron.x  = x;
   mcneutron.y  = y;
@@ -80,7 +80,7 @@ mcparticle mcsetstate(double x, double y, double z, double vx, double vy, double
 * mcgetstate: get neutron parameters from particle structure
 *******************************************************************************/
 #pragma acc routine seq
-mcparticle mcgetstate(mcparticle mcneutron, double *x, double *y, double *z,
+particle mcgetstate(particle mcneutron, double *x, double *y, double *z,
                double *vx, double *vy, double *vz, double *t,
                double *sx, double *sy, double *sz, double *p)
 {
@@ -102,7 +102,7 @@ mcparticle mcgetstate(mcparticle mcneutron, double *x, double *y, double *z,
 * mcgenstate: set default neutron parameters 
 *******************************************************************************/
 #pragma acc routine seq
-mcparticle mcgenstate(void)
+particle mcgenstate(void)
 {
   return(mcsetstate(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
   /* old initialisation: mcsetstate(0, 0, 0, 0, 0, 1, 0, sx=0, sy=1, sz=0, 1); */
@@ -138,7 +138,7 @@ mccoordschanges(Coords a, Rotation t, double *x, double *y, double *z,
 * mcrestore_neutron: restores neutron coodinates from global array
 *******************************************************************************/
 #pragma acc routine seq
-mcparticle
+particle
 mcrestore_neutron(MCNUM *s, int index, double *x, double *y, double *z,
                double *vx, double *vy, double *vz, double *t,
                double *sx, double *sy, double *sz, double *p)

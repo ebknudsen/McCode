@@ -101,9 +101,9 @@ mcseed=(long)ct;
     signal( SIGSEGV,SIG_IGN);   /* segmentation violation */
 #endif
 #endif /* !NOSIGNALS */
-  mcsiminfo_init(NULL); /* open SIM */
+  siminfo_init(NULL); /* open SIM */
   SIG_MESSAGE("[" __FILE__ "] main INITIALISE");
-  mcinit();
+  init();
 #ifndef NOSIGNALS
 #ifdef SIGINT
   if (signal( SIGINT ,sighandler) == SIG_IGN)
@@ -140,13 +140,13 @@ mcseed=(long)ct;
 #endif
 /* End RNG in CUDA case */
 
-      mcparticle particleN = mcgenstate(); // initial particle
+      particle particleN = mcgenstate(); // initial particle
       particleN._uid = Xmcrun_num;
 /* CUDA */
 #if MC_ALG_RAND == 5 
       particleN.MCRANDstate = MCRANDstate;
 #endif
-      mcraytrace(particleN);
+      raytrace(particleN);
     }
   /* Likely we need an undef random here... */
 
@@ -160,7 +160,7 @@ mcseed=(long)ct;
 #endif
 
 /* save/finally executed by master node/thread */
-  mcfinally();
+  finally();
 
 #ifdef USE_MPI
   MPI_Finalize();

@@ -83,9 +83,9 @@ int  mctraceenabled        = 0;
 char mcinstrument_name[CHAR_BUF_LENGTH];
 char mcinstrument_source[CHAR_BUF_LENGTH];
 char *mcinstrument_exe = NULL;
-int  mcnumipar             = 0;
+int  numipar             = 0;
 struct mcinputtable_struct mcinputtable[CHAR_BUF_LENGTH];
-mcstatic FILE *mcsiminfo_file        = NULL;
+mcstatic FILE *siminfo_file        = NULL;
 
 /* default global variables for mcformat converter */
 int  files_to_convert_NB    = 0;          /* nb of files to convert */
@@ -347,47 +347,47 @@ void fileparts_free(struct fileparts_struct parts)
 } /* fileparts_free */
 
 struct McStas_file_format {
-  char   *Source;
-  char   *Creator;
-  char   *Editor;
-  char   *InstrName;
-  char   *filename;
-  char   *Format;
-  char   *Date;
-  char   *EndDate;
-  double  Ncount;
-  char   *component;
-  char   *type;
-  char   *title;
-  char   *xlabel;
-  char   *ylabel;
-  char   *zlabel;
-  char   *xvar;
-  char   *yvar;
-  char   *zvar;
-  char   *xylimits;
-  char   *position;
-  char   *gravitation;
-  char   *outputname;
-  char   *Ncount_str;
+  char    *Source;
+  char    *Creator;
+  char    *Editor;
+  char    *InstrName;
+  char    *filename;
+  char    *Format;
+  char    *Date;
+  char    *EndDate;
+  double   Ncount;
+  char    *component;
+  char    *type;
+  char    *title;
+  char    *xlabel;
+  char    *ylabel;
+  char    *zlabel;
+  char    *xvar;
+  char    *yvar;
+  char    *zvar;
+  char    *xylimits;
+  char    *position;
+  char    *gravitation;
+  char    *outputname;
+  char    *Ncount_str;
 
   t_Table *Data;
 
-  long    m, n, p;
-  double  x1, x2, y1, y2, z1, z2;
-  char   *ratio;
-  double  RunNum;
-  double *p0, *p1, *p2;
-  double Nsum, Psum, P2sum;
-  Coords  POSITION;
+  long     m, n, p;
+  double   x1, x2, y1, y2, z1, z2;
+  char    *ratio;
+  double   RunNum;
+  double  *p0, *p1, *p2;
+  double   Nsum, Psum, P2sum;
+  Coords   POSITION;
 
-  int  mcnumipar;
-  struct mcinputtable_struct *mcinputtable;
-  char *mcdirname;
-  double Scan_ipar_value;
-  int    Scan_ipar_index;
-  double Scan_mon_distance;
-  int    Scan_mon_index;
+  int      mcnumipar;
+  struct   mcinputtable_struct *mcinputtable;
+  char    *mcdirname;
+  double   Scan_ipar_value;
+  int      Scan_ipar_index;
+  double   Scan_mon_distance;
+  int      Scan_mon_index;
 }; /* McStas_file_format */
 
 struct McStas_file_format *Files_to_Merge=NULL;
@@ -506,7 +506,7 @@ void mcformat_print_mcstas_struct(struct McStas_file_format McStasStruct)
   printf("  p1         = %s\n", McStasStruct.p1 ? "OK": "NULL");
   printf("  p2         = %s\n", McStasStruct.p2 ? "OK": "NULL");
   printf("  POSITION   = %g %g %g\n", McStasStruct.POSITION.x, McStasStruct.POSITION.y, McStasStruct.POSITION.z);
-  printf("  mcnumipar  = %d\n", McStasStruct.mcnumipar);
+  printf("  numipar  = %d\n", McStasStruct.mcnumipar);
   printf("  inputtable = %s\n", McStasStruct.mcinputtable ? "OK": "NULL");
 }
 
@@ -616,7 +616,7 @@ struct McStas_file_format mcformat_read_mcstas(char *filename)
       "Date",
       "EndDate",
       "File",   /* original filename */
-      "Source","Instrument-source",
+      "Source","mcinstrument-source",
       "instrument",
       "Ncount",
       "Gravitation",
@@ -812,7 +812,7 @@ struct McStas_file_format mcformat_read_mcstas(char *filename)
   char *tok=s;
   char *equal_sign=NULL;
   char *name_start=NULL;
-  mcnumipar = 0;
+  numipar = 0;
   while (tok) { /* extract parameter=value as clean names */
     tok = strstr(s, "Parameters");
     if (!tok) tok = strstr(s, "parameters");
@@ -834,11 +834,11 @@ struct McStas_file_format mcformat_read_mcstas(char *filename)
       if (name && value && strlen(name) && strlen(value)) {
         char *name_label = str_dup_label(name);
         /*printf("name_to_equal='%s' name='%s' value='%s'\n", name_to_equal, name, value); */
-        mcinputtable[mcnumipar].name = name_label;
-        mcinputtable[mcnumipar].type = instr_type_string;
-        mcinputtable[mcnumipar].val  = value;
-        mcinputtable[mcnumipar].par  = NULL;
-        mcnumipar++;
+        mcinputtable[numipar].name = name_label;
+        mcinputtable[numipar].type = instr_type_string;
+        mcinputtable[numipar].val  = value;
+        mcinputtable[numipar].par  = NULL;
+        numipar++;
       }
       memfree(name_to_equal);
     }
@@ -847,9 +847,9 @@ struct McStas_file_format mcformat_read_mcstas(char *filename)
   } /* end while tok */
 
   /* now transfer mcinputtable into McStasStruct */
-  McStasStruct.mcnumipar = mcnumipar;
-  McStasStruct.mcinputtable = (struct mcinputtable_struct *)mem(mcnumipar*sizeof(struct mcinputtable_struct));
-  for (i=0; i<mcnumipar; i++) {
+  McStasStruct.mcnumipar = numipar;
+  McStasStruct.mcinputtable = (struct mcinputtable_struct *)mem(numipar*sizeof(struct mcinputtable_struct));
+  for (i=0; i<numipar; i++) {
     McStasStruct.mcinputtable[i] = mcinputtable[i];
   }
 
@@ -1044,7 +1044,7 @@ int mcformat_output(struct McStas_file_format McStasStruct)
   if (!mcdircount) {
     if (!strlen(mcinstrument_name)) strcpy(mcinstrument_name, McStasStruct.InstrName);
     if (!strlen(mcinstrument_source)) strcpy(mcinstrument_source, McStasStruct.Source);
-    if (!mcsiminfo_file) mcsiminfo_init(NULL); /* open SIM file once */
+    if (!siminfo_file) siminfo_init(NULL); /* open SIM file once */
   } else {
     if (!mcmergemode) i=mcdircount-1;
     else {
@@ -1061,9 +1061,9 @@ int mcformat_output(struct McStas_file_format McStasStruct)
       mcsources[i]   = str_dup(McStasStruct.Source);
       strncpy(mcinstrument_name,     str_last_word(mcinstrnames[i]), CHAR_BUF_LENGTH);
       strncpy(mcinstrument_source  , str_dup(mcsources[i]), CHAR_BUF_LENGTH);
-      mcsiminfo_init(NULL); /* open new SIM file in this dir for the first time */
-      mcsimfiles[i]  = mcsiminfo_file;
-    } else mcsiminfo_file = mcsimfiles[i];
+      siminfo_init(NULL); /* open new SIM file in this dir for the first time */
+      mcsimfiles[i]  = siminfo_file;
+    } else siminfo_file = mcsimfiles[i];
     mcdirname = mcdirnames[i];
   }
 
@@ -1078,9 +1078,9 @@ int mcformat_output(struct McStas_file_format McStasStruct)
   mcncount  = McStasStruct.Ncount;
   strncpy(mcinstrument_source, str_dup(McStasStruct.Source), CHAR_BUF_LENGTH);
   strncpy(mcinstrument_name  , str_last_word(McStasStruct.InstrName), CHAR_BUF_LENGTH);
-  /* transfer mcnumipar */
-  mcnumipar = McStasStruct.mcnumipar;
-  for (i=0; i<mcnumipar; i++) {
+  /* transfer numipar */
+  numipar = McStasStruct.mcnumipar;
+  for (i=0; i<numipar; i++) {
     mcinputtable[i] = McStasStruct.mcinputtable[i];
   }
   mcdirname = McStasStruct.mcdirname;
@@ -1540,7 +1540,7 @@ void mcformat_scan_compare(int nb)
       and have same name in different directories/columns
       but different ipar values */
 
-    /* allocate array: scan_length1(rows)*(mcnumipar+2*mon_count) */
+    /* allocate array: scan_length1(rows)*(numipar+2*mon_count) */
     t_Table Scan;
     if (!Table_Init(&Scan,
       scan_length1,
@@ -1620,14 +1620,14 @@ void mcformat_scan_compare(int nb)
       Files_to_Merge[scan_index1].mcinputtable[ipar_var].name, NULL);
     /* output scan multiarray */
     /* for PGPLOT: open mcstas.sim */
-    if (strcasestr(mcformat, "McCode")) mcsiminfo_init(NULL); /* open new SIM file in this dir for the first time */
-    else mcsiminfo_name=NULL;
+    if (strcasestr(mcformat, "McCode")) siminfo_init(NULL); /* open new SIM file in this dir for the first time */
+    else siminfo_name=NULL;
     char *datfile=NULL;
     if (!datfile) datfile = str_cat("mcstas.", "dat", NULL);
     strcat(mcformat, " scan ");
     if (mcverbose)
       printf("Writing scan file=%s (%s) into directory %s: %s=%g:%g\n",
-        datfile, mcsiminfo_name, mcdirname,
+        datfile, siminfo_name, mcdirname,
         Files_to_Merge[scan_index1].mcinputtable[ipar_var].name, ipar_min, ipar_max);
     strcpy(mcinstrument_name,   Files_to_Merge[scan_index1].InstrName);
     strcpy(mcinstrument_source, Files_to_Merge[scan_index1].Source);
@@ -1642,7 +1642,7 @@ void mcformat_scan_compare(int nb)
       Files_to_Merge[scan_index1].POSITION);
 
     /* for PGPLOT: close mcstas.sim */
-    if (strstr(mcformat, "McCode")) mcsiminfo_close();
+    if (strstr(mcformat, "McCode")) siminfo_close();
     Table_Free(&Scan);
     memfree(datfile);
     memfree(youts);
@@ -1873,15 +1873,15 @@ int main(int argc, char *argv[])
 
   /* clean up: close all SIM files */
   if (!mcdisable_output_files) {
-    if (!mcdircount) mcsiminfo_close();
+    if (!mcdircount) siminfo_close();
     else {
       for (j=0; j<mcdircount; j++) {
         if (mcsimfiles[j]) {
           mcdirname = mcdirnames[j];
-          mcsiminfo_file     = mcsimfiles[j];
+          siminfo_file     = mcsimfiles[j];
           strncpy(mcinstrument_source, str_last_word(mcinstrnames[j]), CHAR_BUF_LENGTH);
           strncpy(mcinstrument_name  , str_last_word(mcsources[j]), CHAR_BUF_LENGTH);
-          mcsiminfo_close();
+          siminfo_close();
           mcsimfiles[j] = NULL;
           memfree(mcinstrnames[j]);
           memfree(mcsources[j]);

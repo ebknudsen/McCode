@@ -680,7 +680,7 @@ MCDETECTOR mcdetector_statistics(
 *                    compute basic stat, write "Detector:" line
 * RETURN:            detector structure. Invalid data if detector.p1 == NULL
 *                    Invalid detector sets m=0 and filename=""
-*                    Simulation data  sets m=0 and filename=mcsiminfo_name
+*                    Simulation data  sets m=0 and filename=siminfo_name
 * This function is equivalent to the old 'mcdetector_out', returning a structure
 *******************************************************************************/
 MCDETECTOR mcdetector_import(
@@ -886,7 +886,7 @@ MCDETECTOR mcdetector_import(
 
 /*******************************************************************************
 * mcinfo_out: output instrument tags/info (only in SIM)
-* Used in: mcsiminfo_init (ascii), mcinfo(stdout)
+* Used in: siminfo_init (ascii), mcinfo(stdout)
 *******************************************************************************/
 static void mcinfo_out(char *pre, FILE *f)
 {
@@ -896,7 +896,7 @@ static void mcinfo_out(char *pre, FILE *f)
   if (!f || mcdisable_output_files) return;
 
   /* create parameter string ================================================ */
-  for(i = 0; i < mcnumipar; i++)
+  for(i = 0; i < numipar; i++)
   {
     char ThisParam[CHAR_BUF_LENGTH];
     if (strlen(mcinputtable[i].name) > CHAR_BUF_LENGTH) break;
@@ -909,7 +909,7 @@ static void mcinfo_out(char *pre, FILE *f)
 
   /* output data ============================================================ */
   if (f != stdout)
-    fprintf(f, "%sFile: %s%c%s\n",    pre, mcdirname, MC_PATHSEP_C, mcsiminfo_name);
+    fprintf(f, "%sFile: %s%c%s\n",    pre, mcdirname, MC_PATHSEP_C, siminfo_name);
   else
     fprintf(f, "%sCreator: %s\n",     pre, MCCODE_STRING);
 
@@ -931,7 +931,7 @@ static void mcinfo_out(char *pre, FILE *f)
 
 /*******************************************************************************
 * mcruninfo_out: output simulation tags/info (both in SIM and data files)
-* Used in: mcsiminfo_init (ascii case), mcdetector_out_xD_ascii
+* Used in: siminfo_init (ascii case), mcdetector_out_xD_ascii
 *******************************************************************************/
 static void mcruninfo_out(char *pre, FILE *f)
 {
@@ -958,7 +958,7 @@ static void mcruninfo_out(char *pre, FILE *f)
 #endif
 
   /* output parameter string ================================================ */
-  for(i = 0; i < mcnumipar; i++) {
+  for(i = 0; i < numipar; i++) {
       if (mcinputtable[i].par){
 	/* Parameters with a default value */
 	if(mcinputtable[i].val && strlen(mcinputtable[i].val)){
@@ -974,19 +974,19 @@ static void mcruninfo_out(char *pre, FILE *f)
 } /* mcruninfo_out */
 
 /*******************************************************************************
-* mcsiminfo_out:    wrapper to fprintf(mcsiminfo_file)
+* siminfo_out:    wrapper to fprintf(siminfo_file)
 *******************************************************************************/
-void mcsiminfo_out(char *format, ...)
+void siminfo_out(char *format, ...)
 {
   va_list ap;
 
-  if(mcsiminfo_file && !mcdisable_output_files)
+  if(siminfo_file && !mcdisable_output_files)
   {
     va_start(ap, format);
-    vfprintf(mcsiminfo_file, format, ap);
+    vfprintf(siminfo_file, format, ap);
     va_end(ap);
   }
-} /* mcsiminfo_out */
+} /* siminfo_out */
 
 
 /*******************************************************************************
@@ -1073,9 +1073,9 @@ MCDETECTOR mcdetector_out_0D_ascii(MCDETECTOR detector)
   
   /* Write data set information to simulation description file. */
   MPI_MASTER(
-    mcsiminfo_out("\nbegin data\n"); // detector.component
-    mcdatainfo_out("  ", mcsiminfo_file, detector);
-    mcsiminfo_out("end data\n");
+    siminfo_out("\nbegin data\n"); // detector.component
+    mcdatainfo_out("  ", siminfo_file, detector);
+    siminfo_out("end data\n");
     /* Don't write if filename is NULL: mcnew_file handles this (return NULL) */
     outfile = mcnew_file(detector.component, "dat", &exists);
     if(outfile)
@@ -1102,9 +1102,9 @@ MCDETECTOR mcdetector_out_1D_ascii(MCDETECTOR detector)
 
   MPI_MASTER(
     /* Write data set information to simulation description file. */
-    mcsiminfo_out("\nbegin data\n"); // detector.filename
-    mcdatainfo_out("  ", mcsiminfo_file, detector);
-    mcsiminfo_out("end data\n");
+    siminfo_out("\nbegin data\n"); // detector.filename
+    mcdatainfo_out("  ", siminfo_file, detector);
+    siminfo_out("end data\n");
     /* Loop over array elements, writing to file. */
     /* Don't write if filename is NULL: mcnew_file handles this (return NULL) */
     outfile = mcnew_file(detector.filename, "dat", &exists);
@@ -1140,9 +1140,9 @@ MCDETECTOR mcdetector_out_2D_ascii(MCDETECTOR detector)
       /* write header only if file has just been created (not appending) */
       if (!exists) {
         /* Write data set information to simulation description file. */
-        mcsiminfo_out("\nbegin data\n"); // detector.filename
-        mcdatainfo_out("  ", mcsiminfo_file, detector);
-        mcsiminfo_out("end data\n");
+        siminfo_out("\nbegin data\n"); // detector.filename
+        mcdatainfo_out("  ", siminfo_file, detector);
+        siminfo_out("end data\n");
       
         mcruninfo_out( "# ", outfile);
         mcdatainfo_out("# ", outfile,   detector);
@@ -1315,7 +1315,7 @@ char *mcinfo_readfile(char *filename)
 
 /*******************************************************************************
 * mcinfo_out: output instrument/simulation groups in NeXus file
-* Used in: mcsiminfo_init (nexus)
+* Used in: siminfo_init (nexus)
 *******************************************************************************/
 static void mcinfo_out_nexus(NXhandle f)
 {
@@ -1344,12 +1344,12 @@ static void mcinfo_out_nexus(NXhandle f)
     nxprintf(nxhandle, "program_name", MCCODE_STRING);
     nxprintf(f, "start_time", ctime(&t));
     nxprintf(f, "title", "%s%s%s simulation generated by instrument %s", 
-      mcdirname && strlen(mcdirname) ? mcdirname : ".", MC_PATHSEP_S, mcsiminfo_name,
+      mcdirname && strlen(mcdirname) ? mcdirname : ".", MC_PATHSEP_S, siminfo_name,
       mcinstrument_name);
     nxprintattr(f, "program_name", MCCODE_STRING);
     nxprintattr(f, "instrument",   mcinstrument_name);
     nxprintattr(f, "simulation",   "%s%s%s",
-        mcdirname && strlen(mcdirname) ? mcdirname : ".", MC_PATHSEP_S, mcsiminfo_name);
+        mcdirname && strlen(mcdirname) ? mcdirname : ".", MC_PATHSEP_S, siminfo_name);
 
     /* write NeXus instrument group */
     if (NXmakegroup(f, "instrument", "NXinstrument") == NX_OK)
@@ -1361,7 +1361,7 @@ static void mcinfo_out_nexus(NXhandle f)
       string = (char*)malloc(CHAR_BUF_LENGTH);
       if (string) {
         strcpy(string, "");
-        for(i = 0; i < mcnumipar; i++)
+        for(i = 0; i < numipar; i++)
         {
           char ThisParam[CHAR_BUF_LENGTH];
           snprintf(ThisParam, CHAR_BUF_LENGTH, " %s(%s)", mcinputtable[i].name,
@@ -1398,7 +1398,7 @@ static void mcinfo_out_nexus(NXhandle f)
         nxprintattr(f, "file_size", "%li", length);
         nxprintattr(f, "MCCODE_STRING", MCCODE_STRING);
         NXclosedata(f);
-        nxprintf (f,"instrument_source", "%s " MCCODE_NAME " " MCCODE_PARTICLE " Monte Carlo simulation", mcinstrument_name);
+        nxprintf (f,"mcinstrument_source", "%s " MCCODE_NAME " " MCCODE_PARTICLE " Monte Carlo simulation", mcinstrument_name);
         free(buffer);
       } else
         nxprintf (f, "description", "File %s not found (instrument description %s is missing)", 
@@ -1427,9 +1427,9 @@ static void mcinfo_out_nexus(NXhandle f)
     if (NXopengroup(f, "simulation", "NXnote") == NX_OK) {
 
       nxprintattr(f, "name",   "%s%s%s",
-        mcdirname && strlen(mcdirname) ? mcdirname : ".", MC_PATHSEP_S, mcsiminfo_name);
+        mcdirname && strlen(mcdirname) ? mcdirname : ".", MC_PATHSEP_S, siminfo_name);
       
-      nxprintf   (f, "name",      "%s",     mcsiminfo_name);
+      nxprintf   (f, "name",      "%s",     siminfo_name);
       nxprintattr(f, "Format",    mcformat && strlen(mcformat) ? mcformat : MCCODE_NAME);
       nxprintattr(f, "URL",       "http://www.mccode.org");
       nxprintattr(f, "program",   MCCODE_STRING);
@@ -1448,7 +1448,7 @@ static void mcinfo_out_nexus(NXhandle f)
       if (NXopengroup(f, "Param", "NXparameters") == NX_OK) {
         int i;
         char string[CHAR_BUF_LENGTH];
-        for(i = 0; i < mcnumipar; i++) {
+        for(i = 0; i < numipar; i++) {
           if (mcget_run_num() || (mcinputtable[i].val && strlen(mcinputtable[i].val))) {
             if (mcinputtable[i].par == NULL)
               strncpy(string, (mcinputtable[i].val ? mcinputtable[i].val : ""), CHAR_BUF_LENGTH);
@@ -1488,7 +1488,7 @@ mcdatainfo_out_nexus(NXhandle f, MCDETECTOR detector)
     detector.filename && strlen(detector.filename) ? 
       detector.filename : detector.component);
 
-  /* the NXdetector group has been created in mcinfo_out_nexus (mcsiminfo_init) */
+  /* the NXdetector group has been created in mcinfo_out_nexus (siminfo_init) */
   if (NXopengroup(f, "data", "NXdetector") == NX_OK) {
 
     /* create and open the data group */
@@ -1665,7 +1665,7 @@ int mcdetector_out_data_nexus(NXhandle f, MCDETECTOR detector)
     detector.filename && strlen(detector.filename) ? 
       detector.filename : detector.component);
 
-  /* the NXdetector group has been created in mcinfo_out_nexus (mcsiminfo_init) */
+  /* the NXdetector group has been created in mcinfo_out_nexus (siminfo_init) */
   if (NXopengroup(f, "data", "NXdetector") == NX_OK) {
 
     /* the NXdata group has been created in mcdatainfo_out_nexus */
@@ -1815,9 +1815,9 @@ MCDETECTOR mcdetector_out_2D_nexus(MCDETECTOR detector)
 /* ========================================================================== */
 
 /*******************************************************************************
-* mcsiminfo_init:   open SIM and write header
+* siminfo_init:   open SIM and write header
 *******************************************************************************/
-FILE *mcsiminfo_init(FILE *f)
+FILE *siminfo_init(FILE *f)
 {
   int exists=0;
   int index;
@@ -1839,66 +1839,66 @@ FILE *mcsiminfo_init(FILE *f)
   }
   
   /* open the SIM file if not defined yet */
-  if (mcsiminfo_file || mcdisable_output_files) 
-    return (mcsiminfo_file);
+  if (siminfo_file || mcdisable_output_files) 
+    return (siminfo_file);
     
 #ifdef USE_NEXUS
   /* only master writes NeXus header: calls NXopen(nxhandle) */
   if (mcformat && strcasestr(mcformat, "NeXus")) {
 	  MPI_MASTER(
-	  mcsiminfo_file = mcnew_file(mcsiminfo_name, "h5", &exists);
-    if(!mcsiminfo_file)
+	  siminfo_file = mcnew_file(siminfo_name, "h5", &exists);
+    if(!siminfo_file)
       fprintf(stderr,
 	      "Warning: could not open simulation description file '%s'\n",
-	      mcsiminfo_name);
+	      siminfo_name);
 	  else
 	    mcinfo_out_nexus(nxhandle);
 	  );
-    return(mcsiminfo_file); /* points to nxhandle */
+    return(siminfo_file); /* points to nxhandle */
   }
 #endif
   
   /* write main description file (only MASTER) */
   MPI_MASTER(
 
-  mcsiminfo_file = mcnew_file(mcsiminfo_name, "sim", &exists);
-  if(!mcsiminfo_file)
+  siminfo_file = mcnew_file(siminfo_name, "sim", &exists);
+  if(!siminfo_file)
     fprintf(stderr,
 	    "Warning: could not open simulation description file '%s'\n",
-	    mcsiminfo_name);
+	    siminfo_name);
   else
   {
     /* write SIM header */
     time_t t=time(NULL);
-    mcsiminfo_out("%s simulation description file for %s.\n", 
+    siminfo_out("%s simulation description file for %s.\n", 
       MCCODE_NAME, mcinstrument_name);
-    mcsiminfo_out("Date:    %s", ctime(&t)); /* includes \n */
-    mcsiminfo_out("Program: %s\n\n", MCCODE_STRING);
+    siminfo_out("Date:    %s", ctime(&t)); /* includes \n */
+    siminfo_out("Program: %s\n\n", MCCODE_STRING);
     
-    mcsiminfo_out("begin instrument: %s\n", mcinstrument_name);
-    mcinfo_out(   "  ", mcsiminfo_file);
-    mcsiminfo_out("end instrument\n");
+    siminfo_out("begin instrument: %s\n", mcinstrument_name);
+    mcinfo_out(   "  ", siminfo_file);
+    siminfo_out("end instrument\n");
 
-    mcsiminfo_out("\nbegin simulation: %s\n", mcdirname);
-    mcruninfo_out("  ", mcsiminfo_file);
-    mcsiminfo_out("end simulation\n");
+    siminfo_out("\nbegin simulation: %s\n", mcdirname);
+    mcruninfo_out("  ", siminfo_file);
+    siminfo_out("end simulation\n");
 
   }
-  return (mcsiminfo_file);
+  return (siminfo_file);
   
   ); /* MPI_MASTER */
   
-} /* mcsiminfo_init */
+} /* siminfo_init */
 
 /*******************************************************************************
-*   mcsiminfo_close:  close SIM
+*   siminfo_close:  close SIM
 *******************************************************************************/
-void mcsiminfo_close()
+void siminfo_close()
 {
 #ifdef USE_MPI  
   if(mpi_node_rank == mpi_node_root) {
 #endif
-  if(mcsiminfo_file && !mcdisable_output_files) {
+  if(siminfo_file && !mcdisable_output_files) {
 #ifdef USE_NEXUS
     if (mcformat && strcasestr(mcformat, "NeXus")) {
       time_t t=time(NULL);
@@ -1908,16 +1908,16 @@ void mcsiminfo_close()
       NXclose(&nxhandle);
     } else {
 #endif
-      fclose(mcsiminfo_file);
+      fclose(siminfo_file);
 #ifdef USE_NEXUS
     }
 #endif
 #ifdef USE_MPI  
   }
 #endif
-    mcsiminfo_file = NULL;
+    siminfo_file = NULL;
   }
-} /* mcsiminfo_close */
+} /* siminfo_close */
 
 /*******************************************************************************
 * mcdetector_out_0D: wrapper for 0D (single value).
@@ -2688,7 +2688,7 @@ inline double scalar_prod(
 * mccoordschange: applies rotation to (x y z) and (vx vy vz) and Spin (sx,sy,sz)
 *******************************************************************************/
 #pragma acc routine seq
-void mccoordschange(Coords a, Rotation t, mcparticle *particle)
+void mccoordschange(Coords a, Rotation t, particle *particle)
 {
   Coords b, c;
 
@@ -3484,10 +3484,10 @@ mchelp(char *pgmname)
   fprintf(stderr,
   "This instrument has been compiled with MPI support.\n  Use 'mpirun %s [options] [parm=value ...]'.\n", pgmname);
 #endif
-  if(mcnumipar > 0)
+  if(numipar > 0)
   {
     fprintf(stderr, "Instrument parameters are:\n");
-    for(i = 0; i < mcnumipar; i++)
+    for(i = 0; i < numipar; i++)
       if (mcinputtable[i].val && strlen(mcinputtable[i].val))
         fprintf(stderr, "  %-16s(%s) [default='%s']\n", mcinputtable[i].name,
         (*mcinputtypes[mcinputtable[i].type].parminfo)(mcinputtable[i].name),
@@ -3644,14 +3644,14 @@ mcparseoptions(int argc, char *argv[])
   int paramset = 0, *paramsetarray;
   char *usedir=NULL;
 
-  /* Add one to mcnumipar to avoid allocating zero size memory block. */
-  paramsetarray = (int*)malloc((mcnumipar + 1)*sizeof(*paramsetarray));
+  /* Add one to numipar to avoid allocating zero size memory block. */
+  paramsetarray = (int*)malloc((numipar + 1)*sizeof(*paramsetarray));
   if(paramsetarray == NULL)
   {
     fprintf(stderr, "Error: insufficient memory (mcparseoptions)\n");
     exit(1);
   }
-  for(j = 0; j < mcnumipar; j++)
+  for(j = 0; j < numipar; j++)
     {
       paramsetarray[j] = 0;
       if (mcinputtable[j].val != NULL && strlen(mcinputtable[j].val))
@@ -3735,7 +3735,7 @@ mcparseoptions(int argc, char *argv[])
     {
       *p++ = '\0';
 
-      for(j = 0; j < mcnumipar; j++)
+      for(j = 0; j < numipar; j++)
         if(!strcmp(mcinputtable[j].name, argv[i]))
         {
           int status;
@@ -3751,7 +3751,7 @@ mcparseoptions(int argc, char *argv[])
           paramset = 1;
           break;
         }
-      if(j == mcnumipar)
+      if(j == numipar)
       {                                /* Unrecognized parameter name */
         fprintf(stderr, "Error: unrecognized parameter %s (mcparseoptions)\n", argv[i]);
         exit(1);
@@ -3769,7 +3769,7 @@ mcparseoptions(int argc, char *argv[])
     mcreadparams();                /* Prompt for parameters if not specified. */
   else
   {
-    for(j = 0; j < mcnumipar; j++)
+    for(j = 0; j < numipar; j++)
       if(!paramsetarray[j])
       {
         fprintf(stderr, "Error: Instrument parameter %s left unset (mcparseoptions)\n",
@@ -3891,7 +3891,7 @@ void sighandler(int sig)
   if (sig == SIG_TERM)
   {
     printf("# " MCCODE_STRING ": Finishing simulation (save results and exit)\n");
-    mcfinally();
+    finally();
     exit(0);
   }
   else
@@ -3929,7 +3929,7 @@ void neutronics_main_(float *inx, float *iny, float *inz, float *invx, float *in
   time_t t;
   t = (time_t)mcstartdate;
   mcstartdate = t;  /* set start date before parsing options and creating sim file */
-  mcinit();
+  init();
 
   /* *** parse options *** */
   SIG_MESSAGE("[" __FILE__ "] main START");
@@ -3967,3 +3967,7 @@ void neutronics_main_(float *inx, float *iny, float *inz, float *invx, float *in
 
 #endif /* !MCCODE_H */
 /* End of file "mccode-r.c". */
+
+
+
+// END MCCODE-R

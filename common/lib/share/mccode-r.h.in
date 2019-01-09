@@ -19,7 +19,7 @@
 * and macros must be declared (see details in the code)
 *
 *   struct mcinputtable_struct mcinputtable[];
-*   int mcnumipar;
+*   int numipar;
 *   char mcinstrument_name[], mcinstrument_source[];
 *   int mctraceenabled, mcdefaultmain;
 *   extern MCNUM  mccomp_storein[];
@@ -167,8 +167,8 @@ typedef MCNUM Rotation[3][3];
 /* the following variables are defined in the McStas generated C code
    but should be defined externally in case of independent library usage */
 #ifndef DANSE
-extern struct mcinputtable_struct mcinputtable[]; /* list of instrument parameters */
-extern int    mcnumipar;                          /* number of instrument parameters */
+extern struct mcinputtable_struct mcinputtable[];         /* list of instrument parameters */
+extern int    numipar;                                    /* number of instrument parameters */
 extern char   mcinstrument_name[], mcinstrument_source[]; /* instrument name and filename */
 extern char  *mcinstrument_exe;                           /* executable path = argv[0] or NULL */
 extern char   mcinstrument_code[];                        /* contains the initial 'instr' file */
@@ -296,10 +296,10 @@ char  *mcsig_message;
 /* number of SCATTER calls in current comp: mcScattered defined in generated C code */
 /* Anyway the usage of MCGETPAR requires that we use sometimes bare names...
 */
-#define MC_GETPAR2(comp, par) (mcinstance_ ## comp->_parameters.par)
+#define MC_GETPAR2(comp, par) (instance_ ## comp->_parameters.par)
 #define MC_GETPAR(comp, par) MC_GETPAR2(comp,par)
 /* Flag to indicate if neutron needs to be restored: mcRestore defined in generated C code */
-#define MC_GET2(comp, field) (mcinstance_ ## comp->field)
+#define MC_GET2(comp, field) (instance_ ## comp->field)
 #define MC_GET(comp, field) MC_GET2(comp,field)
 
 
@@ -446,11 +446,11 @@ double randnorm(void);
 double randtriangle(void);
 
 #ifndef DANSE
-int mcinit(void);
-int mcraytrace(mcparticle);
+int init(void);
+int raytrace(particle);
 int mcsave(FILE *);
-int mcfinally(void);
-int mcdisplay(void);
+int finally(void);
+int display(void);
 #endif
 
 /* simple vector algebra ==================================================== */
@@ -543,7 +543,7 @@ void rot_copy(Rotation dest, Rotation src);
 void rot_transpose(Rotation src, Rotation dst);
 Coords rot_apply(Rotation t, Coords a);
 
-void mccoordschange(Coords a, Rotation t, mcparticle *particle);
+void mccoordschange(Coords a, Rotation t, particle *particle);
 void mccoordschange_polarisation(Rotation t, double *sx, double *sy, double *sz);
 
 double mcestimate_error(double N, double p1, double p2);
@@ -554,7 +554,7 @@ void mcreadparams(void);
                 double t, double sx, double sy, double sz, double p);
 */
 #pragma acc routine seq
-mcparticle mcgenstate(void);
+particle mcgenstate(void);
 
 /* trajectory/shape intersection routines */
 int inside_rectangle(double, double, double, double);
@@ -655,18 +655,18 @@ struct mcdetector_struct {
 typedef struct mcdetector_struct MCDETECTOR;
 
 static   char *mcdirname             = NULL;      /* name of output directory */
-static   char *mcsiminfo_name        = "mccode";  /* default output sim file name */
+static   char *siminfo_name        = "mccode";  /* default output sim file name */
 char    *mcformat                    = NULL;      /* NULL (default) or a specific format */
 
 /* file I/O definitions and function prototypes */
 
 #ifndef MC_EMBEDDED_RUNTIME /* the mcstatic variables (from mccode-r.c) */
-extern FILE * mcsiminfo_file;     /* handle to the output siminfo file */
+extern FILE * siminfo_file;     /* handle to the output siminfo file */
 extern int    mcgravitation;      /* flag to enable gravitation */
 #pragma acc declare create ( mcgravitation )
 extern int    mcdotrace;          /* flag to print MCDISPLAY messages */
 #else
-mcstatic FILE *mcsiminfo_file        = NULL;
+mcstatic FILE *siminfo_file        = NULL;
 #endif
 
 /* I/O function prototypes ================================================== */
