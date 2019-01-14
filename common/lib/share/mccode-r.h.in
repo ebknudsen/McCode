@@ -20,7 +20,7 @@
 *
 *   struct mcinputtable_struct mcinputtable[];
 *   int numipar;
-*   char mcinstrument_name[], mcinstrument_source[];
+*   char instrument_name[], instrument_source[];
 *   int mctraceenabled, mcdefaultmain;
 *   extern MCNUM  mccomp_storein[];
 *   extern MCNUM  mcAbsorbProp[];
@@ -50,7 +50,7 @@
    be made static. */
 
 #ifdef MC_EMBEDDED_RUNTIME
-#define mcstatic 
+#define mcstatic
 #else
 #define mcstatic
 #endif
@@ -149,8 +149,8 @@
    instr_formal_type_names array in cogen.c. */
 enum instr_formal_types
   {
-    instr_type_int, 
-    instr_type_string, instr_type_char, 
+    instr_type_int,
+    instr_type_string, instr_type_char,
     instr_type_vector, instr_type_double
   };
 struct mcinputtable_struct { /* defines instrument parameters */
@@ -169,9 +169,9 @@ typedef MCNUM Rotation[3][3];
 #ifndef DANSE
 extern struct mcinputtable_struct mcinputtable[];         /* list of instrument parameters */
 extern int    numipar;                                    /* number of instrument parameters */
-extern char   mcinstrument_name[], mcinstrument_source[]; /* instrument name and filename */
-extern char  *mcinstrument_exe;                           /* executable path = argv[0] or NULL */
-extern char   mcinstrument_code[];                        /* contains the initial 'instr' file */
+extern char   instrument_name[], instrument_source[]; /* instrument name and filename */
+extern char  *instrument_exe;                           /* executable path = argv[0] or NULL */
+extern char   instrument_code[];                        /* contains the initial 'instr' file */
 
 #ifndef MC_ANCIENT_COMPATIBILITY
 extern int mctraceenabled, mcdefaultmain;
@@ -286,10 +286,10 @@ char  *mcsig_message;
 /* wrapper to get absolute and relative position of comp */
 /* mccomp_posa and mccomp_posr are defined in McStas generated C code */
 #define POS_A_COMP_INDEX(index) \
-    (mcinstrument->_position_absolute[index])
+    (instrument->_position_absolute[index])
 #define POS_R_COMP_INDEX(index) \
-    (mcinstrument->_position_relative[index])
-    
+    (instrument->_position_relative[index])
+
 /* Note: The two-stage approach to MC_GETPAR is NOT redundant; without it,
 * after #define C sample, MC_GETPAR(C,x) would refer to component C, not to
 * component sample. Such are the joys of ANSI C.
@@ -329,7 +329,7 @@ char  *mcsig_message;
 #endif
 
 #ifdef DEBUG
-#define DEBUG_INSTR() if(!mcdotrace); else { printf("INSTRUMENT:\n"); printf("Instrument '%s' (%s)\n", mcinstrument_name, mcinstrument_source); }
+#define DEBUG_INSTR() if(!mcdotrace); else { printf("INSTRUMENT:\n"); printf("Instrument '%s' (%s)\n", instrument_name, instrument_source); }
 #define DEBUG_COMPONENT(name,c,t) if(!mcdotrace); else {\
   printf("COMPONENT: \"%s\"\n" \
          "POS: %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g\n", \
@@ -400,7 +400,7 @@ void mcdis_sphere(double x, double y, double z, double r, int N);
 #  define srandom mc_srandom
 #elif MC_RAND_ALG == 3
   /* "Mersenne Twister" generate by opencl with GPU. */
-#  define MC_RAND_MAX ((unsigned int) 0xffffffff) 
+#  define MC_RAND_MAX ((unsigned int) 0xffffffff)
 #  define random  mt_random_opencl
 #  define srandom mt_srandom_opencl
 //#  define srandom mt_srandom
@@ -409,10 +409,10 @@ void mcdis_sphere(double x, double y, double z, double r, int N);
 #define random randjunk
 #  define MC_RAND_MAX RAND_MAX
 #elif MC_RAND_ALG == 5
-  /* Use CUDA rand algo - we should check for availability 
+  /* Use CUDA rand algo - we should check for availability
      of CUDA libs - and otherwise fail*/
 #  include "openacc_curand.h"
-#  define MC_RAND_MAX ((unsigned int) 0xffffffff) 
+#  define MC_RAND_MAX ((unsigned int) 0xffffffff)
 #  define srandom mc_srandom
 #  define random randjunk /* random will be overwritten in main pragma loop */
 #  define printf_sys printf

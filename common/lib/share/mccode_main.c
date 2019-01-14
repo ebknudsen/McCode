@@ -19,7 +19,7 @@ int mccode_main(int argc, char *argv[])
   MPI_Init(&argc,&argv);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_node_count); /* get number of nodes */
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_node_rank);
-  MPI_Comm_set_name(MPI_COMM_WORLD, mcinstrument_name);
+  MPI_Comm_set_name(MPI_COMM_WORLD, instrument_name);
   MPI_Get_processor_name(mpi_node_name, &mpi_node_name_len);
 #endif /* USE_MPI */
 
@@ -31,7 +31,7 @@ mcseed=(long)ct;
   if (mpi_node_count > 1) {
     MPI_MASTER(
     printf("Simulation '%s' (%s): running on %i nodes (master is '%s', MPI version %i.%i).\n",
-      mcinstrument_name, mcinstrument_source, mpi_node_count, mpi_node_name, MPI_VERSION, MPI_SUBVERSION);
+      instrument_name, instrument_source, mpi_node_count, mpi_node_name, MPI_VERSION, MPI_SUBVERSION);
     );
     /* share the same seed, then adapt random seed for each node */
     MPI_Bcast(&mcseed, 1, MPI_LONG, 0, MPI_COMM_WORLD); /* root sends its seed to slaves */
@@ -45,10 +45,10 @@ mcseed=(long)ct;
   SIG_MESSAGE("[" __FILE__ "] main START");
   mcformat=getenv(FLAVOR_UPPER "_FORMAT") ?
            getenv(FLAVOR_UPPER "_FORMAT") : FLAVOR_UPPER;
-  mcinstrument_exe = argv[0]; /* store the executable path */
+  instrument_exe = argv[0]; /* store the executable path */
   /* read simulation parameters and options */
   mcparseoptions(argc, argv); /* sets output dir and format */
-  
+
 #ifdef USE_MPI
   if (mpi_node_count > 1) {
     /* share the same seed, then adapt random seed for each node */
@@ -143,7 +143,7 @@ mcseed=(long)ct;
       particle particleN = mcgenstate(); // initial particle
       particleN._uid = Xmcrun_num;
 /* CUDA */
-#if MC_ALG_RAND == 5 
+#if MC_ALG_RAND == 5
       particleN.MCRANDstate = MCRANDstate;
 #endif
       raytrace(particleN);

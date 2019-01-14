@@ -80,9 +80,9 @@ void  str_free(char *);   /* Free memory for string. */
 /* default global variables required by mccode-r (usually generated in cogen) */
 int  mcdefaultmain         = 1;
 int  mctraceenabled        = 0;
-char mcinstrument_name[CHAR_BUF_LENGTH];
-char mcinstrument_source[CHAR_BUF_LENGTH];
-char *mcinstrument_exe = NULL;
+char instrument_name[CHAR_BUF_LENGTH];
+char instrument_source[CHAR_BUF_LENGTH];
+char *instrument_exe = NULL;
 int  numipar             = 0;
 struct mcinputtable_struct mcinputtable[CHAR_BUF_LENGTH];
 mcstatic FILE *siminfo_file        = NULL;
@@ -641,10 +641,10 @@ struct McStas_file_format mcformat_read_mcstas(char *filename)
       if (parsing[3])   McStasStruct.Date       = str_dup_numeric(parsing[3]);  /* mcstartdate */
       if (parsing[4])   McStasStruct.EndDate    = str_dup_numeric(parsing[4]);  /* DATL */
 /*   if (parsing[5])   McStasStruct.filename   = str_dup(parsing[5]); */
-      if (parsing[6])   McStasStruct.Source     = str_dup_label(parsing[6]);  /* mcinstrument_source */
+      if (parsing[6])   McStasStruct.Source     = str_dup_label(parsing[6]);  /* instrument_source */
       if (parsing[7] && !McStasStruct.Source)
                         McStasStruct.Source     = str_dup_label(parsing[7]);
-      if (parsing[8])   McStasStruct.InstrName  = str_dup_label(parsing[8]);  /* mcinstrument_name */
+      if (parsing[8])   McStasStruct.InstrName  = str_dup_label(parsing[8]);  /* instrument_name */
       if (parsing[9])   McStasStruct.Ncount_str = str_dup_numeric(parsing[9]);
       if (parsing[10])  McStasStruct.gravitation= str_dup_numeric(parsing[10]);/* mcgravitation */
       if (parsing[11])  McStasStruct.type       = str_dup_label(parsing[11]); /* array_Xd */
@@ -1042,8 +1042,8 @@ int mcformat_output(struct McStas_file_format McStasStruct)
   /* determine in which directory we are and set SIM file */
 
   if (!mcdircount) {
-    if (!strlen(mcinstrument_name)) strcpy(mcinstrument_name, McStasStruct.InstrName);
-    if (!strlen(mcinstrument_source)) strcpy(mcinstrument_source, McStasStruct.Source);
+    if (!strlen(instrument_name)) strcpy(instrument_name, McStasStruct.InstrName);
+    if (!strlen(instrument_source)) strcpy(instrument_source, McStasStruct.Source);
     if (!siminfo_file) siminfo_init(NULL); /* open SIM file once */
   } else {
     if (!mcmergemode) i=mcdircount-1;
@@ -1059,8 +1059,8 @@ int mcformat_output(struct McStas_file_format McStasStruct)
       mcdirname      = McStasStruct.mcdirname;
       mcinstrnames[i]= str_dup(McStasStruct.InstrName);
       mcsources[i]   = str_dup(McStasStruct.Source);
-      strncpy(mcinstrument_name,     str_last_word(mcinstrnames[i]), CHAR_BUF_LENGTH);
-      strncpy(mcinstrument_source  , str_dup(mcsources[i]), CHAR_BUF_LENGTH);
+      strncpy(instrument_name,     str_last_word(mcinstrnames[i]), CHAR_BUF_LENGTH);
+      strncpy(instrument_source  , str_dup(mcsources[i]), CHAR_BUF_LENGTH);
       siminfo_init(NULL); /* open new SIM file in this dir for the first time */
       mcsimfiles[i]  = siminfo_file;
     } else siminfo_file = mcsimfiles[i];
@@ -1076,8 +1076,8 @@ int mcformat_output(struct McStas_file_format McStasStruct)
   mcgravitation       = (McStasStruct.gravitation && strstr(McStasStruct.gravitation, "yes") ? 1 : 0);
   mcrun_num = McStasStruct.RunNum;
   mcncount  = McStasStruct.Ncount;
-  strncpy(mcinstrument_source, str_dup(McStasStruct.Source), CHAR_BUF_LENGTH);
-  strncpy(mcinstrument_name  , str_last_word(McStasStruct.InstrName), CHAR_BUF_LENGTH);
+  strncpy(instrument_source, str_dup(McStasStruct.Source), CHAR_BUF_LENGTH);
+  strncpy(instrument_name  , str_last_word(McStasStruct.InstrName), CHAR_BUF_LENGTH);
   /* transfer numipar */
   numipar = McStasStruct.mcnumipar;
   for (i=0; i<numipar; i++) {
@@ -1096,8 +1096,8 @@ int mcformat_output(struct McStas_file_format McStasStruct)
   } else if (!mcdisable_output_files)
   mcdetector_out_2D(McStasStruct.title,
     McStasStruct.xlabel, McStasStruct.ylabel,
-    McStasStruct.x1, McStasStruct.x2, McStasStruct.y1, McStasStruct.y2, 
-    McStasStruct.m, McStasStruct.n,  
+    McStasStruct.x1, McStasStruct.x2, McStasStruct.y1, McStasStruct.y2,
+    McStasStruct.m, McStasStruct.n,
     McStasStruct.p0,
     McStasStruct.p1,
     McStasStruct.p2,
@@ -1629,14 +1629,14 @@ void mcformat_scan_compare(int nb)
       printf("Writing scan file=%s (%s) into directory %s: %s=%g:%g\n",
         datfile, siminfo_name, mcdirname,
         Files_to_Merge[scan_index1].mcinputtable[ipar_var].name, ipar_min, ipar_max);
-    strcpy(mcinstrument_name,   Files_to_Merge[scan_index1].InstrName);
-    strcpy(mcinstrument_source, Files_to_Merge[scan_index1].Source);
+    strcpy(instrument_name,   Files_to_Merge[scan_index1].InstrName);
+    strcpy(instrument_source, Files_to_Merge[scan_index1].Source);
     if (!mcdisable_output_files)
     mcdetector_out_2D(title,
       Files_to_Merge[scan_index1].mcinputtable[ipar_var].name,
-      Files_to_Merge[scan_index1].ylabel, 
-      ipar_min, ipar_max, 0, 0, 
-      -scan_length1, Files_to_Merge[scan_index1].mcnumipar+2*mon_count, 
+      Files_to_Merge[scan_index1].ylabel,
+      ipar_min, ipar_max, 0, 0,
+      -scan_length1, Files_to_Merge[scan_index1].mcnumipar+2*mon_count,
       NULL, Scan.data, NULL, datfile,
       Files_to_Merge[scan_index1].component,
       Files_to_Merge[scan_index1].POSITION);
@@ -1816,10 +1816,10 @@ int main(int argc, char *argv[])
   mcformat_parseoptions(argc, argv);
 
   if (!files_to_convert_NB) {  mcformat_usage(argv[0]); exit(-1); }
-  
+
   /* check format */
-  if (!mcformat || !strlen(mcformat) 
-   || !strcasecmp(mcformat, "McStas") || !strcasecmp(mcformat, "McXtrace") 
+  if (!mcformat || !strlen(mcformat)
+   || !strcasecmp(mcformat, "McStas") || !strcasecmp(mcformat, "McXtrace")
    || !strcasecmp(mcformat, "PGPLOT"))
     mcformat = "MCCODE";
 
@@ -1852,8 +1852,8 @@ int main(int argc, char *argv[])
   }
   mcnbconvert = mcdircount = 0;
 
-  strcpy(mcinstrument_source, "");
-  strcpy(mcinstrument_name  , "");
+  strcpy(instrument_source, "");
+  strcpy(instrument_name  , "");
 
   /* calls the conversion routine. SIM file opened at first conversion in mcformat_convert */
   for(j = 0; j < files_to_convert_NB; j++) {
@@ -1879,8 +1879,8 @@ int main(int argc, char *argv[])
         if (mcsimfiles[j]) {
           mcdirname = mcdirnames[j];
           siminfo_file     = mcsimfiles[j];
-          strncpy(mcinstrument_source, str_last_word(mcinstrnames[j]), CHAR_BUF_LENGTH);
-          strncpy(mcinstrument_name  , str_last_word(mcsources[j]), CHAR_BUF_LENGTH);
+          strncpy(instrument_source, str_last_word(mcinstrnames[j]), CHAR_BUF_LENGTH);
+          strncpy(instrument_name  , str_last_word(mcsources[j]), CHAR_BUF_LENGTH);
           siminfo_close();
           mcsimfiles[j] = NULL;
           memfree(mcinstrnames[j]);

@@ -76,7 +76,7 @@
 %token TOK_DEFINITION "DEFINITION"
 %token TOK_END        "END"
 %token TOK_FINALLY    "FINALLY"
-%token TOK_INITIALISE "INITIALISE" 
+%token TOK_INITIALISE "INITIALISE"
 %token TOK_INSTRUMENT "INSTRUMENT"
 %token TOK_DISPLAY    "DISPLAY" /* same as MCDISPLAY */
 %token TOK_PRIVATE    "PRIVATE" /* same as OUTPUT PARAMETERS */
@@ -281,7 +281,7 @@ trace: /* empty */
           cb->quoted_filename = def->trace_code->quoted_filename;
           cb->linenum         = def->trace_code->linenum;
           list_cat(cb->lines, def->trace_code->lines);
-          list_cat(cb->lines, $5->lines);  
+          list_cat(cb->lines, $5->lines);
         }
         $$ = cb;
       }
@@ -507,7 +507,7 @@ declare:    /* empty */
           cb->quoted_filename = def->decl_code->quoted_filename;
           cb->linenum         = def->decl_code->linenum;
           list_cat(cb->lines, def->decl_code->lines);
-          list_cat(cb->lines, $5->lines); 
+          list_cat(cb->lines, $5->lines);
         }
         $$ = cb;
       }
@@ -538,7 +538,7 @@ initialize:   /* empty */
           cb->linenum         = def->init_code->linenum;
           list_cat(cb->lines, def->init_code->lines);
           list_cat(cb->lines, $5->lines);
-        } 
+        }
         $$ = cb;
       }
     | "INITIALISE" codeblock
@@ -838,33 +838,33 @@ complist:   /* empty */
               List_handle          liter;
               char                *par;
               struct comp_iformal *formal;
-              
+
               liter = list_iterate($2->def->out_par);
               while(par = list_next(liter)) {
                 if (!strcmp($2->name, par))
                   print_error("ERROR: Component instance name "
               "'%s' matches an internal OUTPUT parameter of component class %s at "
-              "line %s:%d.\nPlease change the instance name.\n", 
+              "line %s:%d.\nPlease change the instance name.\n",
               $2->name, $2->def->name, instr_current_filename, instr_current_line);
               }
               list_iterate_end(liter);
-              
+
               liter = list_iterate($2->def->set_par);
               while(formal = list_next(liter)) {
                 if (!strcmp($2->name, formal->id))
                   print_error("ERROR: Component instance name "
                   "'%s' matches an internal SETTING parameter of component class %s at "
-                  "line %s:%d.\nPlease change the instance name.\n", 
+                  "line %s:%d.\nPlease change the instance name.\n",
                   $2->name, $2->def->name, instr_current_filename, instr_current_line);
               }
               list_iterate_end(liter);
-              
+
               liter = list_iterate($2->def->def_par);
               while(formal = list_next(liter)) {
                 if (!strcmp($2->name, formal->id))
                   print_error("ERROR: Component instance name "
                   "'%s' matches an internal DEFINITION parameter of component class %s at "
-                  "line %s:%d.\nPlease change the instance name.\n", 
+                  "line %s:%d.\nPlease change the instance name.\n",
                   $2->name, $2->def->name, instr_current_filename, instr_current_line);
               }
               list_iterate_end(liter);
@@ -872,7 +872,7 @@ complist:   /* empty */
             /* if we come there, instance is not an OUTPUT name */
             symtab_add(comp_instances, $2->name, $2);
             list_add(comp_instances_list, $2);
-            if (verbose && $2->def) 
+            if (verbose && $2->def)
               fprintf(stderr, "Component[%li]: %s = %s().\n", comp_current_index, $2->name, $2->def->name);
           }
         } /* if shared */
@@ -950,7 +950,7 @@ instref: "COPY" '(' compref ')' actuallist /* make a copy of a previous instance
         struct comp_def *def;
         struct comp_inst *comp;
         def = read_component($1);
-        
+
         palloc(comp);
         comp->def          = def;
         comp->extend = codeblock_new();
@@ -978,7 +978,7 @@ removable:    /* empty */
       }
 ;
 
-component: removable split "COMPONENT" instname '=' instref 
+component: removable split "COMPONENT" instname '=' instref
       {
         struct comp_inst *comp;
 
@@ -992,7 +992,7 @@ component: removable split "COMPONENT" instname '=' instref
       when place orientation groupref extend jumps
       {
         struct comp_inst *comp = myself_comp;
-        
+
         if ($8) comp->when  = $8;
 
         palloc(comp->pos);
@@ -1289,7 +1289,7 @@ jumpname: "PREVIOUS"
     }
 ;
 
-dependency: 
+dependency:
     {
     }
   | "DEPENDENCY" TOK_STRING
@@ -1569,15 +1569,15 @@ print_usage(void)
   fprintf(stderr, "  If run-time libraries are not embedded, you will have to pre-compile\n");
   fprintf(stderr, "    them (.c -> .o) before assembling the program.\n");
   fprintf(stderr, "  The default component search list is usually defined by the environment\n");
-  fprintf(stderr, "    variable '" MCCODE_LIBENV "' %s (default is " 
+  fprintf(stderr, "    variable '" MCCODE_LIBENV "' %s (default is "
   #if MCCODE_PROJECT == 1
     MCSTAS
   #elif MCCODE_PROJECT == 2
     MCXTRACE
   #endif
   ") \n", getenv(MCCODE_LIBENV) ? getenv(MCCODE_LIBENV) : "");
-  fprintf(stderr, "  Use '" ID_PRE "run' to both run " MCCODE_NAME " and the C compiler.\n");
-  fprintf(stderr, "  Use '" ID_PRE "gui' to run the " MCCODE_NAME " GUI.\n");
+  fprintf(stderr, "  Use 'run' to both run " MCCODE_NAME " and the C compiler.\n");
+  fprintf(stderr, "  Use 'gui' to run the " MCCODE_NAME " GUI.\n");
   fprintf(stderr, "SEE ALSO: mcrun, mcplot, mcdisplay, mcresplot, mcstas2vitess, mcgui, mcformat, mcdoc\n");
   fprintf(stderr, "DOC:      Please visit <" MCCODE_BUGREPORT ">\n");
   exit(1);
@@ -1889,7 +1889,7 @@ comp_formals_actuals(struct comp_inst *comp, Symtab actuals)
   defpar = symtab_create();
   setpar = symtab_create();
   if (!comp || !comp->def) return;
-  
+
   /* definition parameters */
   liter = list_iterate(comp->def->def_par);
   while(formal = list_next(liter))
@@ -1924,7 +1924,7 @@ comp_formals_actuals(struct comp_inst *comp, Symtab actuals)
     }
   }
   list_iterate_end(liter);
-  
+
   /* setting parameters */
   liter = list_iterate(comp->def->set_par);
   while(formal = list_next(liter))

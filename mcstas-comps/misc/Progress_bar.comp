@@ -60,7 +60,7 @@ StartTime=0;
 EndTime=0;
 CurrentTime=0;
 
-fprintf(stdout, "[%s] Initialize\n", mcinstrument_name);
+fprintf(stdout, "[%s] Initialize\n", instrument_name);
   if (percent*mcget_ncount()/100 < 1e5) {
     percent=1e5*100.0/mcget_ncount();
   }
@@ -113,17 +113,17 @@ TRACE
 
 SAVE
 %{
-  MPI_MASTER(fprintf(stdout, "\nSave [%s]\n", mcinstrument_name););
+  MPI_MASTER(fprintf(stdout, "\nSave [%s]\n", instrument_name););
   if (profile && strlen(profile) && strcmp(profile,"NULL") && strcmp(profile,"0")) {
     char filename[256];
-    if (!strlen(profile) || !strcmp(profile,"NULL") || !strcmp(profile,"0")) strcpy(filename, mcinstrument_name);
+    if (!strlen(profile) || !strcmp(profile,"NULL") || !strcmp(profile,"0")) strcpy(filename, instrument_name);
     else strcpy(filename, profile);
     DETECTOR_OUT_1D(
         "Intensity profiler",
         "Component index [1]",
         "Intensity",
         "prof", 1, mcNUMCOMP, mcNUMCOMP-1,
-        &(mcinstrument->counter_N[1]),&(mcinstrument->counter_P[1]),&(mcinstrument->counter_P2[1]),
+        &(instrument->counter_N[1]),&(instrument->counter_P[1]),&(instrument->counter_P2[1]),
         filename);
 
   }
@@ -133,7 +133,7 @@ FINALLY
 %{
   time_t NowTime;
   time(&NowTime);
-  fprintf(stdout, "\nFinally [%s: %s]. Time: ", mcinstrument_name, mcdirname ? mcdirname : ".");
+  fprintf(stdout, "\nFinally [%s: %s]. Time: ", instrument_name, mcdirname ? mcdirname : ".");
   if (difftime(NowTime,StartTime) < 60.0)
     fprintf(stdout, "%g [s] ", difftime(NowTime,StartTime));
   else if (difftime(NowTime,StartTime) > 3600.0)
@@ -145,7 +145,7 @@ FINALLY
 
 MCDISPLAY
 %{
-  
+
 %}
 
 END

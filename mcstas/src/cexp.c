@@ -69,13 +69,13 @@ mknonvalueexp(char *s)
 * generated names in the generated simulation (the extern names must be
 * copied unchanged). But in this first version a simpler scheme is used: all
 * identifier expressions are simply strings, and all normal identifiers refer
-* to instrument parameters (which have ID_PRE and "ip" prepended).
+* to instrument parameters.
 *******************************************************************************/
 
 CExp
 exp_id(char *id)  /* used in e.g. cogen:cogen_comp_init_par */
 {
-  return mkvalueexp(str_cat(ID_PRE, "instrument->_parameters._", id, NULL));
+  return mkvalueexp(str_cat("instrument->_parameters._", id, NULL));
 }
 
 CExp

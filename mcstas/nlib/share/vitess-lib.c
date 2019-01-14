@@ -204,7 +204,7 @@ vitess_parseopt(int argc, char *argv[],
           wei_min = atof(&(argv[i][3]));    /* minimal weight for tracing neutron */
       }
     }
-    else 
+    else
     { /* First look for a matching double parameter. */
       for(j = 0; dchr[j]; j++)
       {
@@ -275,7 +275,7 @@ void WriteInstrData(long nModuleNo, VectorType Pos, double dLength, double dRotZ
     char cNF=' ';
     if (bOldFrame) cNF='F';
     fprintf(pFile, "%3ld %3d %-18.18s %7.3f %7.3f %7.3f %7.3f  %8.3f %8.3f  %12.4e %12.4e %12.4e %c %5i %5d\n",
-                   nModuleNo, 500, mcinstrument_name, dLength, Pos[0], Pos[1], Pos[2],
+                   nModuleNo, 500, instrument_name, dLength, Pos[0], Pos[1], Pos[2],
                    180.0/M_PI*dRotZ, 180.0/M_PI*dRotY, 0.0, 0.0, 0.0, cNF, 0, 0);
     /* mark end of actual part */
     if (vitess_outfile!=NULL && nModuleNo > 0)
@@ -333,7 +333,7 @@ void ReadInstrData(long* pModuleNo, VectorType Pos, double* pLength, double* pRo
 
 
 vitess_write(double NumNeutRead, double NumNeutWritten, double CntRate, double CntRateSqr,
-             double dShiftX,     double dShiftY,        double dShiftZ, 
+             double dShiftX,     double dShiftY,        double dShiftZ,
              double dHorizAngle, double dVertAngle)
 {
   double dRotMatrix[3][3], dRotY, dRotZ, dLength,
@@ -343,7 +343,7 @@ vitess_write(double NumNeutRead, double NumNeutWritten, double CntRate, double C
   VectorType Shift,  /* Shift of end position        [m] */
              EndPos; /* end position of prev. module [m] */
 
-  fprintf(LogFilePtr,"\n\nVITESS 2.6 / McStas 1.9  module %s\n", mcinstrument_name);
+  fprintf(LogFilePtr,"\n\nVITESS 2.6 / McStas 1.9  module %s\n", instrument_name);
 
   /* update 'instrument.inf' */
   ReadInstrData(&nModuleNo, EndPos, &dLength, &dRotZ, &dRotY);
