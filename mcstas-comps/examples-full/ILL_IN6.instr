@@ -199,7 +199,7 @@ INITIALIZE
     if (SPEED     <0)     iSPEED=speed;            else iSPEED=SPEED;
     Frequency = iSPEED/60;
 
-    printf("Instrument Simulation %s (%s)\n", mcinstrument_name, mcinstrument_source);
+    printf("Instrument Simulation %s (%s)\n", instrument_name, instrument_source);
     printf("  using computed monochromator take-off angles: %g %g %g [deg]\n", A1, A2, A3);
     printf("Wavelength               [AA]  %g\n",  lambda);
     printf("Neutron velocity         [m/s] %g\n",  vi);

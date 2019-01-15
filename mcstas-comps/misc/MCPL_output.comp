@@ -91,7 +91,7 @@ INITIALIZE
     /*reset filename to be whatever mcpl actually calls it. It may have added .mcpl*/
     snprintf(myfilename,strlen(myfilename)+5,"%s",mcpl_outfile_filename(outputfile));
 
-    snprintf(line,255,"%s %s %s",MCCODE_NAME,MCCODE_VERSION,mcinstrument_name);
+    snprintf(line,255,"%s %s %s",MCCODE_NAME,MCCODE_VERSION,instrument_name);
     mcpl_hdr_set_srcname(outputfile,line);
     mcpl_enable_universal_pdgcode(outputfile,2112);/*all particles are neutrons*/
     snprintf(line,255,"Output by COMPONENT: %s",NAME_CURRENT_COMP);
@@ -99,7 +99,7 @@ INITIALIZE
 
     /*also add the instrument file and the command line as blobs*/
     FILE *fp;
-    if( (fp=fopen(mcinstrument_source,"rb"))!=NULL){
+    if( (fp=fopen(instrument_source,"rb"))!=NULL){
         unsigned char *buffer;
         int size,status;
         /*find the file size by seeking to end, "tell" the position, and then go back again*/
@@ -119,7 +119,7 @@ INITIALIZE
     int ii;
     char clr[2048],*clrp;
     clrp=clr;
-    clrp+=snprintf(clrp,2048,"%s",mcinstrument_exe);
+    clrp+=snprintf(clrp,2048,"%s",instrument_exe);
     for (ii=0;ii<mcnumipar;ii++){
         clrp+=snprintf(clrp,2048-(clrp-clr)," %s=%s",mcinputtable[ii].name,mcinputtable[ii].val);
     }

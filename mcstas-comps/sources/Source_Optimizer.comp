@@ -1435,7 +1435,7 @@ FINALLY
     else
     {
        if (Vars.Flag_Verbose) printf("Source_Optimizer: %s write source description file %s.\n", NAME_CURRENT_COMP, Vars.file);
-       fprintf(hfile,"# Instrument-source: %s\n", mcinstrument_source);
+       fprintf(hfile,"# Instrument-source: %s\n", instrument_source);
        fprintf(hfile,"# type: array_2d(%i,6) \n",Vars.nbins);
        fprintf(hfile,"# component: %s\n", NAME_CURRENT_COMP);
        fprintf(hfile,"# title: General Optimizer distributions\n");
