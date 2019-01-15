@@ -1474,7 +1474,7 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
 *   and calls all component definition sections
 * input:  an instrument definition structure
 *
-* generates the mcinit function, called by mccode_main
+* generates the init function, called by mccode_main
 *   after mcparseoptions, calling itself mcreadparams
 ***************************************************************************** */
 int cogen_init(struct instr_def *instr)

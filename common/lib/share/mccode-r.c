@@ -533,7 +533,7 @@ FILE *mcnew_file(char *name, char *ext, int *exists)
 /*******************************************************************************
 * mcdetector_statistics: compute detector statistics, error bars, [x I I_err N] 1D
 * RETURN:            updated detector structure
-* Used by: mcdetector_import
+* Used by: detector_import
 *******************************************************************************/
 MCDETECTOR mcdetector_statistics(
   MCDETECTOR detector)
@@ -557,7 +557,7 @@ MCDETECTOR mcdetector_statistics(
   if (detector.rank == 1 && strcasestr(detector.format,"McCode")) {
     this_p1 = (double *)calloc(detector.m*detector.n*detector.p*4, sizeof(double));
     if (!this_p1)
-      exit(-fprintf(stderr, "Error: Out of memory creating %li 1D " MCCODE_STRING " data set for file '%s' (mcdetector_import)\n",
+      exit(-fprintf(stderr, "Error: Out of memory creating %li 1D " MCCODE_STRING " data set for file '%s' (detector_import)\n",
         detector.m*detector.n*detector.p*4*sizeof(double*), detector.filename));
   }
 
@@ -676,14 +676,14 @@ MCDETECTOR mcdetector_statistics(
 } /* mcdetector_statistics */
 
 /*******************************************************************************
-* mcdetector_import: build detector structure, merge non-lists from MPI
+* detector_import: build detector structure, merge non-lists from MPI
 *                    compute basic stat, write "Detector:" line
 * RETURN:            detector structure. Invalid data if detector.p1 == NULL
 *                    Invalid detector sets m=0 and filename=""
 *                    Simulation data  sets m=0 and filename=siminfo_name
 * This function is equivalent to the old 'mcdetector_out', returning a structure
 *******************************************************************************/
-MCDETECTOR mcdetector_import(
+MCDETECTOR detector_import(
   char *format,
   char *component, char *title,
   long m, long n,  long p,
@@ -856,7 +856,7 @@ MCDETECTOR mcdetector_import(
 
 
   return(detector);
-} /* mcdetector_import */
+} /* detector_import */
 
 /* end MCDETECTOR import section ============================================ */
 
@@ -1928,7 +1928,7 @@ MCDETECTOR mcdetector_out_0D(char *t, double p0, double p1, double p2,
                          char *c, Coords posa)
 {
   /* import and perform basic detector analysis (and handle MPI reduce) */
-  MCDETECTOR detector = mcdetector_import(mcformat,
+  MCDETECTOR detector = detector_import(mcformat,
     c, (t ? t : MCCODE_STRING " data"),
     1, 1, 1,
     "I", "", "",
@@ -1961,7 +1961,7 @@ MCDETECTOR mcdetector_out_1D(char *t, char *xl, char *yl,
         char *c, Coords posa)
 {
   /* import and perform basic detector analysis (and handle MPI_Reduce) */
-  MCDETECTOR detector = mcdetector_import(mcformat,
+  MCDETECTOR detector = detector_import(mcformat,
     c, (t ? t : MCCODE_STRING " 1D data"),
     n, 1, 1,
     xl, yl, (n > 1 ? "Signal per bin" : " Signal"),
@@ -2002,7 +2002,7 @@ MCDETECTOR mcdetector_out_2D(char *t, char *xl, char *yl,
 
   /* import and perform basic detector analysis (and handle MPI_Reduce) */
   if (abs(m) == 1) {/* n>1 on Y, m==1 on X: 1D, no X axis*/
-    detector = mcdetector_import(mcformat,
+    detector = detector_import(mcformat,
       c, (t ? t : MCCODE_STRING " 1D data"),
       n, 1, 1,
       yl, "", "Signal per bin",
@@ -2010,7 +2010,7 @@ MCDETECTOR mcdetector_out_2D(char *t, char *xl, char *yl,
       y1, y2, x1, x2, 0, 0, f,
       p0, p1, p2, posa); /* write Detector: line */
   } else if (abs(n)==1) {/* m>1 on X, n==1 on Y: 1D, no Y axis*/
-    detector = mcdetector_import(mcformat,
+    detector = detector_import(mcformat,
       c, (t ? t : MCCODE_STRING " 1D data"),
       m, 1, 1,
       xl, "", "Signal per bin",
@@ -2018,7 +2018,7 @@ MCDETECTOR mcdetector_out_2D(char *t, char *xl, char *yl,
       x1, x2, y1, y2, 0, 0, f,
       p0, p1, p2, posa); /* write Detector: line */
   }else {
-    detector = mcdetector_import(mcformat,
+    detector = detector_import(mcformat,
       c, (t ? t : MCCODE_STRING " 2D data"),
       m, n, 1,
       xl, yl, "Signal per bin",
