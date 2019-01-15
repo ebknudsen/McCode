@@ -21,7 +21,7 @@
 *   struct mcinputtable_struct mcinputtable[];
 *   int numipar;
 *   char instrument_name[], instrument_source[];
-*   int mctraceenabled, mcdefaultmain;
+*   int traceenabled, defaultmain;
 *   extern MCNUM  mccomp_storein[];
 *   extern MCNUM  mcAbsorbProp[];
 *   extern MCNUM  mcScattered;
@@ -174,7 +174,7 @@ extern char  *instrument_exe;                           /* executable path = arg
 extern char   instrument_code[];                        /* contains the initial 'instr' file */
 
 #ifndef MC_ANCIENT_COMPATIBILITY
-extern int mctraceenabled, mcdefaultmain;
+extern int traceenabled, defaultmain;
 #endif
 #endif
 
@@ -448,7 +448,7 @@ double randtriangle(void);
 #ifndef DANSE
 int init(void);
 int raytrace(particle);
-int mcsave(FILE *);
+int save(FILE *);
 int finally(void);
 int display(void);
 #endif

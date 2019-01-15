@@ -50,8 +50,8 @@
 
 #ifndef DANSE
 #ifdef MC_ANCIENT_COMPATIBILITY
-int mctraceenabled = 0;
-int mcdefaultmain  = 0;
+int traceenabled = 0;
+int defaultmain  = 0;
 #endif
 /* else defined directly in the McCode generated C code */
 
@@ -916,8 +916,8 @@ static void mcinfo_out(char *pre, FILE *f)
   fprintf(f, "%sSource: %s\n",   pre, instrument_source);
   fprintf(f, "%sParameters: %s\n",    pre, Parameters);
 
-  fprintf(f, "%sTrace_enabled: %s\n", pre, mctraceenabled ? "yes" : "no");
-  fprintf(f, "%sDefault_main: %s\n",  pre, mcdefaultmain ?  "yes" : "no");
+  fprintf(f, "%sTrace_enabled: %s\n", pre, traceenabled ? "yes" : "no");
+  fprintf(f, "%sDefault_main: %s\n",  pre, defaultmain ?  "yes" : "no");
   fprintf(f, "%sEmbedded_runtime: %s\n", pre,
 #ifdef MC_EMBEDDED_RUNTIME
          "yes"
@@ -1378,8 +1378,8 @@ static void mcinfo_out_nexus(NXhandle f)
       nxprintf   (f, "name",          instrument_name);
       nxprintattr(f, "Source",        instrument_source);
 
-      nxprintattr(f, "Trace_enabled", mctraceenabled ? "yes" : "no");
-      nxprintattr(f, "Default_main",  mcdefaultmain ?  "yes" : "no");
+      nxprintattr(f, "Trace_enabled", traceenabled ? "yes" : "no");
+      nxprintattr(f, "Default_main",  defaultmain ?  "yes" : "no");
       nxprintattr(f, "Embedded_runtime",
   #ifdef MC_EMBEDDED_RUNTIME
            "yes"
@@ -3537,7 +3537,7 @@ mcusage(char *pgmname)
 static void
 mcenabletrace(void)
 {
- if(mctraceenabled)
+ if(traceenabled)
   mcdotrace = 1;
  else
  {
@@ -3883,7 +3883,7 @@ void sighandler(int sig)
   if (sig == SIG_SAVE)
   {
     printf("# " MCCODE_STRING ": Saving data and resume simulation (continue)\n");
-    mcsave(NULL);
+    save(NULL);
     fflush(stdout);
     return;
   }

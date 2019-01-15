@@ -78,8 +78,8 @@ char *str_quote(char *string);  /* Quote string for inclusion in C code */
 void  str_free(char *);   /* Free memory for string. */
 
 /* default global variables required by mccode-r (usually generated in cogen) */
-int  mcdefaultmain         = 1;
-int  mctraceenabled        = 0;
+int  defaultmain         = 1;
+int  traceenabled        = 0;
 char instrument_name[CHAR_BUF_LENGTH];
 char instrument_source[CHAR_BUF_LENGTH];
 char *instrument_exe = NULL;

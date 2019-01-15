@@ -21,7 +21,7 @@
 *   struct mcinputtable_struct mcinputtable[];
 *   int mcnumipar;
 *   char instrument_name[], instrument_source[];
-*   int mctraceenabled, mcdefaultmain;
+*   int traceenabled, defaultmain;
 *   extern MCNUM  mccomp_storein[];
 *   extern MCNUM  instrument.counter_AbsorbProp[];
 *   extern MCNUM  mcScattered;

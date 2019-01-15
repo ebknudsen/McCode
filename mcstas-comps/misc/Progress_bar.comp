@@ -107,7 +107,7 @@ TRACE
     IntermediateCnts = floor(IntermediateCnts*100/percent/mcget_ncount())*percent*mcget_ncount()/100;
     /* raise flag to indicate that we did something */
     SCATTER;
-    if (flag_save) mcsave(NULL);
+    if (flag_save) save(NULL);
   }
 %}
 

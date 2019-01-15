@@ -1376,18 +1376,10 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
 
   /* then write the instrument main code, which calls component ones */
   cout("#define instance_MYSELF instrument");
-  // this will prefix 'mc' to the save function, but neither of init, display and finally
-  if (strcmp(section_lower, "save") == 0) {
-    coutf("int mc%s(%s) { /* called by mccode_main for %s:%s */",
-      section_lower,
-      !strcmp(section, "SAVE") ? "FILE *handle" : "void",
-      instr->name, section);
-  } else {
-    coutf("int %s(%s) { /* called by mccode_main for %s:%s */",
-      section_lower,
-      !strcmp(section, "SAVE") ? "FILE *handle" : "void",
-      instr->name, section);
-  }
+  coutf("int %s(%s) { /* called by mccode_main for %s:%s */",
+    section_lower,
+    !strcmp(section, "SAVE") ? "FILE *handle" : "void",
+    instr->name, section);
 
   if (!strcmp(section, "INITIALISE"))
   {
@@ -1402,7 +1394,7 @@ int cogen_section(struct instr_def *instr, char *section, char *section_lower, s
     coutf("  if (!handle) siminfo_init(NULL);");
   else if (!strcmp(section, "FINALLY")) {
     coutf("  siminfo_init(NULL);");
-    coutf("  mcsave(siminfo_file); /* save data when simulation ends */");
+    coutf("  save(siminfo_file); /* save data when simulation ends */");
   }
   else if (!strcmp(section, "DISPLAY"))
     cout("  printf(\"MCDISPLAY: start\\n\");");
@@ -1495,7 +1487,7 @@ int cogen_init(struct instr_def *instr)
 *   and calls all component definition sections
 * input:  an instrument definition structure
 *
-* generates the mcsave function, called by mccode_main
+* generates the save function, called by mccode_main
 ***************************************************************************** */
 int cogen_save(struct instr_def *instr)
 {
@@ -2027,14 +2019,14 @@ cogen_header(struct instr_def *instr, char *output_name)
   cout("***************************************************************************** */");
   cout("");
   coutf("#ifdef MC_TRACE_ENABLED");
-  coutf("int mctraceenabled = 1;");
+  coutf("int traceenabled = 1;");
   coutf("#else");
-  coutf("int mctraceenabled = 0;");
+  coutf("int traceenabled = 0;");
   coutf("#endif");
 
   coutf("#define " MCCODE_LIBENV " \"%s%s\"", sysdir_new,pathsep);
 
-  coutf("int   mcdefaultmain         = %d;", instr->use_default_main);
+  coutf("int   defaultmain         = %d;", instr->use_default_main);
   coutf("char  instrument_name[]   = \"%s\";", instr->name);
   coutf("char  instrument_source[] = \"%s\";", instr->quoted_source);
   coutf("char *instrument_exe      = NULL; /* will be set to argv[0] in main */");
