@@ -654,7 +654,7 @@ struct mcdetector_struct {
 
 typedef struct mcdetector_struct MCDETECTOR;
 
-static   char *mcdirname             = NULL;      /* name of output directory */
+static   char *dirname             = NULL;      /* name of output directory */
 static   char *siminfo_name        = "mccode";  /* default output sim file name */
 char    *mcformat                    = NULL;      /* NULL (default) or a specific format */
 

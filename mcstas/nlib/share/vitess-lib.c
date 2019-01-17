@@ -380,10 +380,10 @@ void McInitVt()
   BufferSize  = 2;
   LogFilePtr  = stderr;
 
-  if (mcdirname==NULL)
+  if (dirname==NULL)
     setParDirectory(getenv("PWD") ? getenv("PWD") : ".");
   else
-    setParDirectory(mcdirname);
+    setParDirectory(dirname);
   idum    = -mcseed;
   keygrav = (long) mcgravitation;      /* key for gravity 1 -yes (default), 0 - no  */
 
