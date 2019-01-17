@@ -78,9 +78,6 @@
 * nsy   nEy
 * nsz   nEz
 * np
-* compcurname
-* compcurtype
-* compcurindex
 * absorb          label for ABSORB (goto)
 * Scattered       Incremented each time a SCATTER is done
 * Restore         Flag indicating that @MCCODE_PARTICLE@ should be restored
@@ -1196,12 +1193,6 @@ int cogen_decls(struct instr_def *instr)
   cout("struct instrument_struct *instrument = & instrument_static;");
   cout("#pragma acc declare create ( instrument_static )");
   cout("#pragma acc declare create ( instrument )");
-  cout("");
-
-  /* 3. Standard definitions */
-  coutf("#define compcurname  \"%s\"", instr->name);
-  coutf("#define compcurtype  %s", "INSTRUMENT");
-  coutf("#define compcurindex %i", 0);
   cout("");
 
   /* 4. Table of instrument parameters. Used in mcparseoptions and various output functions */
