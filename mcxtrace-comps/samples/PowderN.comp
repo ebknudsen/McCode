@@ -1121,7 +1121,7 @@ FINALLY
       printf("PowderN: %s: Info: you may highly improve the computation efficiency by using\n"
         "    SPLIT %i COMPONENT %s=PowderN(...)\n"
         "  in the instrument description %s.\n",
-        NAME_CURRENT_COMP, (int)split_optimal, NAME_CURRENT_COMP, mcinstrument_source);
+        NAME_CURRENT_COMP, (int)split_optimal, NAME_CURRENT_COMP, instrument_source);
   }
   );
 

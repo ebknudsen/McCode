@@ -20,7 +20,7 @@
 *
 *   struct mcinputtable_struct mcinputtable[];
 *   int mcnumipar;
-*   char mcinstrument_name[], mcinstrument_source[];
+*   char instrument_name[], instrument_source[];
 *   int mctraceenabled, mcdefaultmain;
 *   extern MCNUM  mccomp_storein[];
 *   extern MCNUM  mcAbsorbProp[];
@@ -73,7 +73,7 @@
 /*adapted from PROP_DT(dt)*//*{{{*/
 #define PROP_DL(dl) \
   do{ \
-    if( dl <0 && mcallowbackprop == 0) { mcinstrument->counter_AbsorbProp[INDEX_CURRENT_COMP]++; ABSORB; }; \
+    if( dl <0 && mcallowbackprop == 0) { instrument->counter_AbsorbProp[INDEX_CURRENT_COMP]++; ABSORB; }; \
     mcPROP_DL(dl); \
     DISALLOW_BACKPROP;\
   } while (0)
@@ -90,10 +90,10 @@
 #define mcPROP_P0(P) \
   do { \
     MCNUM mc_dl,mc_k; \
-    if(k ## P == 0) { mcinstrument->counter_AbsorbProp[INDEX_CURRENT_COMP]++; ABSORB; }; \
+    if(k ## P == 0) { instrument->counter_AbsorbProp[INDEX_CURRENT_COMP]++; ABSORB; }; \
     mc_k=sqrt(scalar_prod(kx,ky,kz,kx,ky,kz));\
     mc_dl= - P * mc_k / k ## P;\
-    if(mc_dl<0 && mcallowbackprop==0) { mcinstrument->counter_AbsorbProp[INDEX_CURRENT_COMP]++; ABSORB; };\
+    if(mc_dl<0 && mcallowbackprop==0) { instrument->counter_AbsorbProp[INDEX_CURRENT_COMP]++; ABSORB; };\
     PROP_DL(mc_dl);\
   } while(0)
 
