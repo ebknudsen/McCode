@@ -3966,8 +3966,3 @@ void neutronics_main_(float *inx, float *iny, float *inz, float *invx, float *in
 #endif /*NEUTRONICS*/
 
 #endif /* !MCCODE_H */
-/* End of file "mccode-r.c". */
-
-
-
-// END MCCODE-R
