@@ -784,7 +784,7 @@ int cogen_comp_section_class(struct comp_inst *comp,
     coutf("/* this function is common to all component type %s with %s code (SHARE) */",
       comp->def->name, section);
 
-    coutf("struct class_%s *class_%s_%s(struct class_%s *comp", comp->def->name, comp->def->name, section_lower, comp->def->name);
+    coutf("C_%s *C_%s_%s(C_%s *comp", comp->def->name, comp->def->name, section_lower, comp->def->name);
 
     if (!strcmp(section, "TRACE")) /* TRACE: need to define particle state */
     {
