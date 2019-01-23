@@ -784,7 +784,7 @@ int cogen_comp_section_class(struct comp_inst *comp,
     coutf("/* this function is common to all component type %s with %s code (SHARE) */",
       comp->def->name, section);
 
-    coutf("C_%s *C_%s_%s(C_%s *comp", comp->def->name, comp->def->name, section_lower, comp->def->name);
+    coutf("C_%s *_%s_%s(C_%s *comp", comp->def->name, comp->def->name, section_lower, comp->def->name);
 
     if (!strcmp(section, "TRACE")) /* TRACE: need to define particle state */
     {
@@ -806,7 +806,7 @@ int cogen_comp_section_class(struct comp_inst *comp,
     cogen_defundef(comp, comp->def->out_par, PAR_UNDEF);
 
     cout("  return(comp);");
-    coutf("} /* class_%s_%s */", comp->def->name, section_lower);
+    coutf("} /* _%s_%s */", comp->def->name, section_lower);
 
     cout("");
 
@@ -912,11 +912,11 @@ int cogen_comp_section(struct comp_inst *comp,
       /* else we call the common init function for each comp type */
       if (!strcmp(section, "TRACE")) {
 	cout("#pragma acc routine seq");
-        coutf("  class_%s_%s(_%s, " MCCODE_PARTICLE");",
+        coutf("  _%s_%s(_%s, " MCCODE_PARTICLE");",
           comp->def->name, section_lower, comp->name);
       }
       else
-        coutf("  class_%s_%s(_%s);",
+        coutf("  _%s_%s(_%s);",
           comp->def->name, section_lower, comp->name);
     }
   }
