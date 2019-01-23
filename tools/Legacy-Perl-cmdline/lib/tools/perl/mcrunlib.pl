@@ -292,7 +292,7 @@ sub get_out_file_next {
       # Replace any @OPENCL_CFLAGS@ by the OpenCL CFLAGS
       $mcstas_cflags =~ s/\@OPENCL_CFLAGS\@/${MCSTAS::mcstas_config{OPENCL}}/g;
     }
-    my $libs = "-lm ";
+    my $libs = "-lm -std=c99 ";
     if ($v->{'mpi'} && $MCSTAS::mcstas_config{MPICC} ne "no") {
       $libs .= " -DUSE_MPI ";
       $cc      = $MCSTAS::mcstas_config{'MPICC'};
