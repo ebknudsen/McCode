@@ -930,22 +930,22 @@ static void mcinfo_out(char *pre, FILE *f)
 } /* mcinfo_out */
 
 /*******************************************************************************
-* mcruninfo_out: output simulation tags/info (both in SIM and data files)
-* Used in: siminfo_init (ascii case), mcdetector_out_xD_ascii
+* mcruninfo_out_backend: output simulation tags/info (both in SIM and data files)
+* Used in: mcsiminfo_init (ascii case), mcdetector_out_xD_ascii, mcinfo(stdout)
 *******************************************************************************/
-static void mcruninfo_out(char *pre, FILE *f)
+static void mcruninfo_out_backend(char *pre, FILE *f, int info)
 {
   int i;
   char Parameters[CHAR_BUF_LENGTH];
 
   if (!f || mcdisable_output_files) return;
 
-  fprintf(f, "%sFormat: %s%s\n",      pre,
+  fprintf(f, "%sFormat: %s%s\n",      pre, 
     mcformat && strlen(mcformat) ? mcformat : MCCODE_NAME,
     mcformat && strcasestr(mcformat,"McCode") ? " with text headers" : "");
   fprintf(f, "%sURL: %s\n",         pre, "http://www.mccode.org");
   fprintf(f, "%sCreator: %s\n",     pre, MCCODE_STRING);
-  fprintf(f, "%sInstrument: %s\n", pre, instrument_source);
+  fprintf(f, "%sInstrument: %s\n", pre, mcinstrument_source);
   fprintf(f, "%sNcount: %llu\n",        pre, mcget_ncount());
   fprintf(f, "%sTrace: %s\n",       pre, mcdotrace ? "yes" : "no");
   fprintf(f, "%sGravitation: %s\n", pre, mcgravitation ? "yes" : "no");
@@ -958,20 +958,31 @@ static void mcruninfo_out(char *pre, FILE *f)
 #endif
 
   /* output parameter string ================================================ */
-  for(i = 0; i < numipar; i++) {
-      if (mcinputtable[i].par){
-	/* Parameters with a default value */
+  for(i = 0; i < mcnumipar; i++) {
+      if (!info){
+          (*mcinputtypes[mcinputtable[i].type].printer)(Parameters, mcinputtable[i].par);
+          fprintf(f, "%sParam: %s=%s\n", pre, mcinputtable[i].name, Parameters);
+      }else{
+        /*if an info run, some variables might not have values. Flag these by "NULL"*/
 	if(mcinputtable[i].val && strlen(mcinputtable[i].val)){
-	  (*mcinputtypes[mcinputtable[i].type].printer)(Parameters, mcinputtable[i].par);
-	  fprintf(f, "%sParam: %s=%s\n", pre, mcinputtable[i].name, Parameters);
-        /* ... and those without */
-	}else{
-	  fprintf(f, "%sParam: %s=NULL\n", pre, mcinputtable[i].name);
+            /* ... those with defautl values*/
+            (*mcinputtypes[mcinputtable[i].type].printer)(Parameters, mcinputtable[i].par);
+            fprintf(f, "%sParam: %s=%s\n", pre, mcinputtable[i].name, Parameters);
+        }else{
+            /* ... and those without */
+            fprintf(f, "%sParam: %s=NULL\n", pre, mcinputtable[i].name);
 	}
       }
   }
-  fflush(f);
-} /* mcruninfo_out */
+} /* mcruninfo_out_backend */
+
+/************************
+* wrapper function to mcruninfo_out_backend
+*  Regular runs use this whereas the single call from mcinfo is directly to the backend
+*************************/
+static void mcruninfo_out(char *pre, FILE *f){
+    mcruninfo_out_backend(pre,f,0);
+}
 
 /*******************************************************************************
 * siminfo_out:    wrapper to fprintf(siminfo_file)
@@ -2119,7 +2130,7 @@ mcinfo(void)
   mcinfo_out("  ", stdout);
   fprintf(stdout, "end instrument\n");
   fprintf(stdout, "begin simulation: %s\n", mcdirname ? mcdirname : ".");
-  mcruninfo_out("  ", stdout);
+  mcruninfo_out_backend("  ", stdout,1);
   fprintf(stdout, "end simulation\n");
   exit(0); /* includes MPI_Finalize in MPI mode */
 } /* mcinfo */
