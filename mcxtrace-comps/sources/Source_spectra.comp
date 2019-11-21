@@ -13,6 +13,7 @@
 * Date: November 11, 2009
 * Version: $Revision$
 * Origin: Risoe
+* Release: McXtrace 0.1
 *
 * Specialized X-ray source for reading in SPECTRA source definitions
 *
@@ -83,8 +84,10 @@ SHARE
 
   int source_spectra_find_offset(char * fn){
       /*find the first line that starts with [-0-9], i.e. can be considered a number*/
-      char line[512];
-      long pos,done=0;
+      char line[3][512];
+      int linecheck[3],done=0;
+      long pos[3]={0,-1,-2};
+      double buf[6];
       FILE *fs;
 
       if( (fs=fopen(fn,"rb"))==NULL){
@@ -92,35 +95,34 @@ SHARE
           exit(-1);
       }
 
-      line[0]='\0';
-      do {
-          pos=ftell(fs);
-          fgets(line,512,fs);
-          switch (line[0]){
-              case '-':
-              case '0':
-              case '1':
-              case '2':
-              case '3':
-              case '4':
-              case '5':
-              case '6':
-              case '7':
-              case '8':
-              case '9':
-                  done=1;
-                  break;
-              default:
-                  if (feof(fs)){
-                      fprintf(stderr,"Error (%s): Could not strip header from file %s\n"NAME_CURRENT_COMP, fn);
-                      exit(-1);
-                  }
-          }
-      } while (!done);
-      fclose(fs);
-      return pos;
-  }  
+      /*read lines and save position 3lines back, when three consecutive line have 3
+        columns we have an offset*/
+      line[0][0]='\0';line[1][0]='\0';line[2][0]='\0';
+      line[0][511]='\0';line[1][511]='\0';line[2][511]='\0';
 
+      do {
+          pos[2]=pos[1];pos[1]=pos[0];pos[0]=ftell(fs);
+          strncpy(line[2],line[1],511);
+          strncpy(line[1],line[0],511);
+          fgets(line[0],512,fs);
+
+          /*check for file overrun*/
+          if (feof(fs)){
+              fprintf(stderr,"Error (%s): Could not strip header from file %s\n"NAME_CURRENT_COMP, fn);
+              exit(-1);
+          }
+
+          int i;
+          for (i=0;i<3;i++){
+              linecheck[i]=sscanf(line[i],"%lf %lf %lf %lf %lf %lf", buf, buf+1, buf+2, buf+3, buf+4, buf+5);
+          }
+          if(linecheck[0]==linecheck[1] && linecheck[2]==linecheck[1] && linecheck[0]==3){
+              done=1;
+          }
+      } while(!done);
+      fclose(fs);
+      return pos[2];
+  }
 %}
 
 DECLARE
@@ -187,8 +189,54 @@ INITIALIZE
 
   }
 
+  /*if not given deduce the number of sample-points in datafiles*/
+  if (nx==0){
+      int r;
+      double p1,p2;
+      for (r=0;r<prms.xproj[0].rows;r++){
+          if ( nx==0 && (p1=Table_Index(prms.xproj[0],r,0))>(p2=Table_Index(prms.xproj[0],r+1,0)) ){
+              /*this means we have found where the first coordinate starts over*/
+              nx=r+1;
+              break;
+          }
+      }
+      if (nx==0){
+          nx=1;
+      }
+      npx/=nx;
+  }
+  if (npx==0){
+      npx=prms.xproj[0].rows/nx;
+  }
+
+  if( nx*npx != prms.xproj[0].rows){
+    fprintf(stderr,"Warning (%s): number of read rows in %s does not match nx*npx = ( %d * %d)\n",NAME_CURRENT_COMP,fn,nx,npx);
+  }
+
+  if(ny==0){
+      int r;
+      for (r=0;r<prms.yproj[0].rows;r++){
+          if ( ny==0 && Table_Index(prms.yproj[0],r,0)>Table_Index(prms.yproj[0],r+1,0) ){
+              /*this means we have found where the first coordinate starts over*/
+              ny=r+1;
+              break;
+          }
+      }
+      if (ny==0){
+          ny=1;
+      }
+  }
+  if (npy==0){
+      npy=prms.yproj[0].rows/ny;
+  }
+  if( ny*npy != prms.xproj[0].rows){
+      fprintf(stderr,"Warning (%s): number of read rows in %s does not match ny*npy = ( %d * %d)\n",NAME_CURRENT_COMP,fn,ny,npy);
+  }
+  printf("Source_spectra(%s): (nx,nxp) = ( %d %d ), (ny,npy) = ( %d %d )\n",NAME_CURRENT_COMP,nx,npx,ny,npy);
+
   /*find limits in x,x',y, and y', assuming they're the same across all source files.*/
   /*these would be relevant for a search*/
+
   //prms.xmin=prms.xpmin=prms.ymin=prms.ypmin=FLT_MAX;
   //prms.xmax=prms.xpmax=prms.ymax=prms.ypmax=FLT_MIN;
   t_Table *xptr=&(prms.xproj[0]);
@@ -206,6 +254,12 @@ INITIALIZE
   prms.ystep=Table_Index(*yptr,1,0)-Table_Index(*yptr,0,0);
   prms.ypstep=Table_Index(*yptr,ny,1)-Table_Index(*yptr,0,1);
 
+  /*Must adjust for integration steps in Ix and Iy*/
+  for (num=0;num<nE;num++){
+      //prms.Ix[num] *= prms.xstep* 1e-3 * prms.xpstep*1e-3;
+      //prms.Iy[num] *= prms.ystep* 1e-3 * prms.ypstep*1e-3;
+  }
+
   if (incoherent!=randomphase){
     fprintf(stderr,"Warning(%s): Parameter incoherent=%d overridden by randomphase=%d\n",NAME_CURRENT_COMP,(int)incoherent, (int) randomphase);
     incoherent=randomphase;
@@ -215,6 +269,13 @@ INITIALIZE
     fprintf(stderr,"Warning(%s): Sampled energy interval (%g+-%g keV) reaches outside what\'s defined by datafiles (%g+-%g keV)\n",NAME_CURRENT_COMP,E0,dE,(Emin+Emax)*0.5,(Emax-Emin)*0.5);
   }
 
+  /*downweight accoring to number of rays*/
+  prms.pmul=1.0/((double) mcget_ncount());
+
+  /*downweight for not using the full energy window. Don't do this for deterministic energy (dE=0).*/
+  if(dE && ( (E0-dE>Emin) || E0+dE<Emax) ){
+    prms.pmul*=2*dE/(Emax-Emin);
+  }
 
 %}
 
@@ -245,12 +306,6 @@ TRACE
       ABSORB;
   }
 
-  /*downweight for not using the full energy window. Don't do this for deterministic energy (dE=0).*/
-  if(dE && ( (E0-dE>Emin) || E0+dE<Emax) ){
-    p=2*dE/(Emax-Emin);
-  }else{
-    p=1;
-  }
 
   k=E2K*e;
 
@@ -282,17 +337,18 @@ TRACE
   double t0,t1;
   t0=(1-alpha)*Table_Index(*xptr,ix+ipx*nx,2) + alpha*Table_Index(*xptr,(ix+1)+ipx*nx,2);
   t1=(1-alpha)*Table_Index(*xptr,ix+(ipx+1)*nx,2) + alpha*Table_Index(*xptr,(ix+1)+(ipx+1)*nx,2);
-  Iinterpx = (1-beta)*t0+beta*t1;
+  Iinterpx = (1-beta)*t0+beta*t1 *prms.xstep*1e-3*prms.xpstep*1e-3;
   
-  alpha=( (yy - Table_Index(*yptr,iy,0)) /prms.ystep);/*regular grid so no need to do ix + ipx*nx*/
+  alpha=( (yy - Table_Index(*yptr,iy,0)) /prms.ystep);/*regular grid so no need to do iy + ipy*ny*/
   beta=( (yp - Table_Index(*yptr,ipy*ny,1)) /prms.ypstep) ;
 
   t0=(1-alpha)*Table_Index(*yptr,iy+ipy*ny,2) + alpha*Table_Index(*yptr,(iy+1)+ipy*ny,2);
   t1=(1-alpha)*Table_Index(*yptr,iy+(ipy+1)*ny,2) + alpha*Table_Index(*yptr,(iy+1)+(ipy+1)*ny,2);
-  Iinterpy = (1-beta)*t0+beta*t1;
+  Iinterpy = (1-beta)*t0+beta*t1 * prms.ystep*1e-3*prms.ypstep*1e-3;
 
-  p*=Iinterpx/prms.Ix[num] * Iinterpy/prms.Iy[num] * (prms.Ix[num]+prms.Iy[num])*0.5;
 
+  /* Set the photon ray weight to the mean of the two multiplied by initial weight
+   * due to energy interval and ray count*/
 
   p=prms.pmul * Iinterpx/prms.Ix[num] * Iinterpy/prms.Iy[num] * (prms.Ix[num]+prms.Iy[num])*0.5;
 
