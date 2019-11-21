@@ -30,6 +30,11 @@
 * various filters and convolution of detector's resolution are also available. 
 * See <a href="http://spectrax.org/spectra/">SPECTRA</a>.
 *
+* If the source is symmetric in x and/or y it is possible to speed up the spectra
+* calculations by only including one half-plane or quadrant. The other side will then
+* be mirrored by McXtrace.
+*
+*
 * %VALIDATION
 *
 * %BUGS
@@ -52,6 +57,8 @@
 * verbose (1) If non-zero output more warning messages. 
 * initial_serial (1) First serial number that the series of spectra files.
 * target_harmonic (1) Scaling factor for the fundamental wavelength.
+* symmetricx (0) Is the source symmetric in x.
+* symmetricy (0) Is the source symmetric in y.
 *
 * OUTPUT PARAMETERS:
 *
@@ -66,7 +73,7 @@ DEFINE COMPONENT Source_spectra
 DEFINITION PARAMETERS (int brilliance_column=2, int nE, string spectra_stem_x="", string spectra_stem_y="", string spectra_suffix="dsc", verbose=0)
 SETTING PARAMETERS ( 
     E0=0, dE=0, Emin,Emax, lambda0=0, dlambda=0, flux=0, gauss=0, gauss_a=0, incoherent=1, randomphase=1, phase=0,
-    nx=51,ny=51,npx=51,npy=51, int initial_serial=1)
+    int nx=0, int ny=0, int npx=0, int npy=0, int initial_serial=1, int symmetricx=0, int symmetricy=0)
 OUTPUT PARAMETERS (prms, dist)
 /* X-ray parameters: (x,y,z,kx,ky,kz,phi,t,Ex,Ey,Ez,p) */ 
 
@@ -144,7 +151,7 @@ INITIALIZE
         fprintf(stderr,"Error (%s): No generic path/s to the spectra file/s given. Aborting.\n",NAME_CURRENT_COMP);
         exit(-1);
     }
-        
+
     sprintf(fn,"%s-%d.%s",spectra_stem_x,initial_serial,spectra_suffix);
     printf("%s\n",fn);
     orig_offset=source_spectra_find_offset(fn);
@@ -167,8 +174,8 @@ INITIALIZE
     int r;
     for (r=0;r<prms.xproj[num].rows;r++){
       prms.Ix[num]+=Table_Index(prms.xproj[num],r,brilliance_column);//prms.xproj.data[r*prms.xproj.columns+ brilliance_column];
-
     }
+
     for (r=0;r<prms.yproj[num].rows;r++){
       prms.Iy[num]+=Table_Index(prms.yproj[num],r,brilliance_column);//prms.yproj.data[r*prms.yproj.columns+ brilliance_column];
     }
@@ -287,6 +294,27 @@ TRACE
   p*=Iinterpx/prms.Ix[num] * Iinterpy/prms.Iy[num] * (prms.Ix[num]+prms.Iy[num])*0.5;
 
 
+  p=prms.pmul * Iinterpx/prms.Ix[num] * Iinterpy/prms.Iy[num] * (prms.Ix[num]+prms.Iy[num])*0.5;
+
+  /*if symmetric source possibly reflect x*/
+  if (symmetricx){
+    if(rand01()<0.5){
+      x=-x;
+    }
+    if(rand01()<0.5){
+      kx=-kx;
+    }
+  }
+  if (symmetricy){
+    if(rand01()<0.5){
+      y=-y;
+    }
+    if(rand01()<0.5){
+      ky=-ky;
+    }
+  }
+
+  /*spectra output is in brilliance (unit photons/s/mm^2/mrad^2/0.1%BW), so scale to get at raw flux in photons/s */
 
   /*set polarization and phase to something known*/
   Ex=0;Ey=0;Ez=0;
@@ -303,7 +331,6 @@ TRACE
 
 MCDISPLAY
 %{
-  
   double dist=1;
   multiline(5, prms.xmin, prms.ymin, 0.0,
       prms.xmax, prms.ymin, 0.0,
