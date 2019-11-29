@@ -162,9 +162,11 @@ values for photons that pass into the monitor. This feature is additive
 to the 1D or 2D output. By default only 1000 events will be recorded in
 the file, but you can specify for instance "\textit{list} 3000 photons" or
 "\textit{list all} photons". This last option may require a lot of
-memory and generate huge files. Note that the limits to the measured parameters also apply in this mode.
-To exemplify, a monitor\_nd instance with the option string \verb+"list all k"+ will \emph{only} record those photons which have a  below $2000$ AA$^{-1}$,
-whereas an instance with the option string \verb+"list all kx ky kz 0 2000"+ will record all photons with $|k_x,k_y|<2000$ AA$^{-1}$ and $0<v_z<2000$ AA$^{-1}$. 
+memory and generate huge files.
+
+Note that the limits to the measured parameters also apply in this mode.
+To exemplify, a monitor\_nd instance with the option string \verb+"list all k"+ will \emph{only} record those photons which have a $|k|$ below $2000$ AA$^{-1}$,
+whereas an instance with the option string \verb+"list all kx ky kz limits 0 2000"+ will record all photons with $|k_x,k_y|<2000$ AA$^{-1}$ and $0<k_z<2000$ AA$^{-1}$.
 Thus, in this latter case, any neutron travelling in the negative z-direction will be disregarded.
 
 \subsection{Monitor equivalences}
