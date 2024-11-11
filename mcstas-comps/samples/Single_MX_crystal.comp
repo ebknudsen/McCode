@@ -29,7 +29,11 @@
 * radius:  [m] Radius of the crystal (cylinder or sphere).
 * reflections: [text] The file containing the reflection list.
 * sig_inc: [ ] Incoherent cross-section of the crystal.
-* sig_abs: [ ] Absorption cross-section of the crystal. 
+* sig_abs: [ ] Absorption cross-section of the crystal.
+* mosaic:  [ ] Isotropic mosaicity of the crystal.
+* mosaic_a:[ ] (Placeholder) Ansitropic mosaicity of the crystal around a-vector.
+* mosaic_b:[ ] (Placeholder) Ansitropic mosaicity of the crystal around b-vector.
+* mosaic_c:[ ] (Placeholder) Ansitropic mosaicity of the crystal around c-vector.
 * 
 * %E
 *******************************************************************************/
@@ -38,9 +42,9 @@ DEFINE COMPONENT Single_MX_crystal
 DEFINITION PARAMETERS ()
 SETTING PARAMETERS (string reflections="", xwidth=0, yheight=0.02, zdepth=0, radius=0.01, 
         sig_inc=1, sig_abs=0, p_inc=0.1,p_transmit=0.1 ,ax=0, ay=0, az=0, bx=0, by=0, bz=0, cx=0, cy=0, cz=0,
-        delta_d_d=1e-4, mosaic=1e-4, sigma_abs=0, sigma_inc=0
+        delta_d_d=1e-4, mosaic=1e-4, mosaic_a=0, mosaic_b=0, mosaic_c=0, sigma_abs=0, sigma_inc=0
 )
-OUTPUT PARAMETERS (prms)
+OUTPUT PARAMETERS ()
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
 
 SHARE
@@ -52,6 +56,7 @@ SHARE
             double asx,asy,asz, bsx,bsy,bsz, csx,csy,csz;
             double V0;
             double mosaic;
+            double moasic_a, mosaic_b, mosaic_c;
             double dets;
             double adjs[3][3];
     } sx_MX_t;
@@ -122,7 +127,7 @@ SHARE
         }
 
         /*second search to find the last of the largest d-spacing stricly smaller than the target
-         * This is done by the same aolgorith as before but using negative values.*/
+         * This is done by the same algorithm as before but using negative values.*/
         /* initialize binary search for upper limit.*/
         //li=0; ri=T.rows-1;
         //double target2=(-mid)+1e-9;
@@ -223,83 +228,81 @@ SHARE
 
 DECLARE
 %{
-    struct {
-        enum {BOX, CYLINDER, SPHERE} shape;
-        t_Table reftable;
-        int col_h, col_k, col_l, col_F2, col_d_spc;
-        double mosaic, mosaic_a, mosaic_b, mosaic_c;
-        sx_MX_t sxp;
-    } prms;
-    
-
+    int shape;
+    t_Table reftable;
+    int col_h;
+    int col_k;
+    int col_l;
+    int col_F2;
+    int col_d_spc;
+    sx_MX_t sxp;
 %}
 
 INITIALIZE
 %{
     
     double tmp_x,tmp_y, tmp_z;
-
-
+    /*shape 0:cylinder, 1:box, 2:sphere*/
     if (yheight && radius) {
-        prms.shape=CYLINDER;
+        shape=0;
     }
 
     int status;
-    if ( (status=Table_Read(&(prms.reftable),reflections,0))==-1){
-        fprintf(stderr,"Error (%s): reflection list (%s) not read cleanly. Aborting.\n",NAME_CURRENT_COMP, prms.reftable);
+    if ( (status=Table_Read(&(reftable),reflections,0))==-1){
+        fprintf(stderr,"Error (%s): reflection list (%s) not read cleanly. Aborting.\n",NAME_CURRENT_COMP, reftable);
         exit(-1);
     }
 
-    prms.col_h=0;prms.col_k=1;prms.col_l=2;prms.col_F2=3;
+    col_h=0;col_k=1;col_l=2;col_F2=3;
 
 
 
-    prms.sxp.a_x=ax; prms.sxp.a_y=ay; prms.sxp.a_z=az;
-    prms.sxp.b_x=bx; prms.sxp.b_y=by; prms.sxp.b_z=bz;
-    prms.sxp.c_x=cx; prms.sxp.c_y=cy; prms.sxp.c_z=cz;
+    sxp.a_x=ax; sxp.a_y=ay; sxp.a_z=az;
+    sxp.b_x=bx; sxp.b_y=by; sxp.b_z=bz;
+    sxp.c_x=cx; sxp.c_y=cy; sxp.c_z=cz;
     
     /*from the direct unit cell vectors compute the reciprocal ones*/
-    vec_prod(tmp_x, tmp_y, tmp_z,  prms.sxp.b_x, prms.sxp.b_y, prms.sxp.b_z, prms.sxp.c_x, prms.sxp.c_y, prms.sxp.c_z);
-    prms.sxp.V0 = fabs(scalar_prod(prms.sxp.a_x, prms.sxp.a_y, prms.sxp.a_z, tmp_x, tmp_y, tmp_z));
-    printf("V0=%g\n", prms.sxp.V0);
+    vec_prod(tmp_x, tmp_y, tmp_z,  sxp.b_x, sxp.b_y, sxp.b_z, sxp.c_x, sxp.c_y, sxp.c_z);
+    sxp.V0 = fabs(scalar_prod(sxp.a_x, sxp.a_y, sxp.a_z, tmp_x, tmp_y, tmp_z));
+    printf("V0=%g\n", sxp.V0);
 
-    prms.sxp.asx = 2*PI/prms.sxp.V0*tmp_x;
-    prms.sxp.asy = 2*PI/prms.sxp.V0*tmp_y;
-    prms.sxp.asz = 2*PI/prms.sxp.V0*tmp_z;
-    vec_prod(tmp_x, tmp_y, tmp_z, prms.sxp.c_x, prms.sxp.c_y, prms.sxp.c_z, prms.sxp.a_x, prms.sxp.a_y, prms.sxp.a_z);
-    prms.sxp.bsx = 2*PI/prms.sxp.V0*tmp_x;
-    prms.sxp.bsy = 2*PI/prms.sxp.V0*tmp_y;
-    prms.sxp.bsz = 2*PI/prms.sxp.V0*tmp_z;
-    vec_prod(tmp_x, tmp_y, tmp_z, prms.sxp.a_x, prms.sxp.a_y, prms.sxp.a_z, prms.sxp.b_x, prms.sxp.b_y, prms.sxp.b_z);
-    prms.sxp.csx = 2*PI/prms.sxp.V0*tmp_x;
-    prms.sxp.csy = 2*PI/prms.sxp.V0*tmp_y;
-    prms.sxp.csz = 2*PI/prms.sxp.V0*tmp_z;
+    sxp.asx = 2*PI/sxp.V0*tmp_x;
+    sxp.asy = 2*PI/sxp.V0*tmp_y;
+    sxp.asz = 2*PI/sxp.V0*tmp_z;
+    vec_prod(tmp_x, tmp_y, tmp_z, sxp.c_x, sxp.c_y, sxp.c_z, sxp.a_x, sxp.a_y, sxp.a_z);
+    sxp.bsx = 2*PI/sxp.V0*tmp_x;
+    sxp.bsy = 2*PI/sxp.V0*tmp_y;
+    sxp.bsz = 2*PI/sxp.V0*tmp_z;
+    vec_prod(tmp_x, tmp_y, tmp_z, sxp.a_x, sxp.a_y, sxp.a_z, sxp.b_x, sxp.b_y, sxp.b_z);
+    sxp.csx = 2*PI/sxp.V0*tmp_x;
+    sxp.csy = 2*PI/sxp.V0*tmp_y;
+    sxp.csz = 2*PI/sxp.V0*tmp_z;
 
-    printf("a*=[ %g %g %g ]\n",prms.sxp.asx, prms.sxp.asy, prms.sxp.asz);
-    printf("b*=[ %g %g %g ]\n",prms.sxp.bsx, prms.sxp.bsy, prms.sxp.bsz);
-    printf("c*=[ %g %g %g ]\n",prms.sxp.csx, prms.sxp.csy, prms.sxp.csz);
+    printf("a*=[ %g %g %g ]\n",sxp.asx, sxp.asy, sxp.asz);
+    printf("b*=[ %g %g %g ]\n",sxp.bsx, sxp.bsy, sxp.bsz);
+    printf("c*=[ %g %g %g ]\n",sxp.csx, sxp.csy, sxp.csz);
     
     /* compute the inverse of the [as bs cs] matrix. This will allow going back and forth from q to hkl*/
-    prms.sxp.dets = prms.sxp.asx*(prms.sxp.bsy*prms.sxp.csz - prms.sxp.bsz*prms.sxp.csy) 
-        - prms.sxp.bsx*(prms.sxp.asy*prms.sxp.csz-prms.sxp.asz*prms.sxp.csy) 
-        + prms.sxp.csz*(prms.sxp.asy*prms.sxp.bsz - prms.sxp.asz*prms.sxp.bsy); 
+    sxp.dets = sxp.asx*(sxp.bsy*sxp.csz - sxp.bsz*sxp.csy) 
+        - sxp.bsx*(sxp.asy*sxp.csz-sxp.asz*sxp.csy) 
+        + sxp.csz*(sxp.asy*sxp.bsz - sxp.asz*sxp.bsy); 
     
-    prms.sxp.adjs[0][0]= (prms.sxp.bsy*prms.sxp.csz - prms.sxp.csy*prms.sxp.bsz)/prms.sxp.dets;
-    prms.sxp.adjs[0][1]=-(prms.sxp.bsx*prms.sxp.csz - prms.sxp.csx*prms.sxp.bsz)/prms.sxp.dets;
-    prms.sxp.adjs[0][2]= (prms.sxp.bsx*prms.sxp.csy - prms.sxp.csx*prms.sxp.bsy)/prms.sxp.dets;
+    sxp.adjs[0][0]= (sxp.bsy*sxp.csz - sxp.csy*sxp.bsz)/sxp.dets;
+    sxp.adjs[0][1]=-(sxp.bsx*sxp.csz - sxp.csx*sxp.bsz)/sxp.dets;
+    sxp.adjs[0][2]= (sxp.bsx*sxp.csy - sxp.csx*sxp.bsy)/sxp.dets;
 
-    prms.sxp.adjs[1][0]=-(prms.sxp.asy*prms.sxp.csz - prms.sxp.csy*prms.sxp.asz)/prms.sxp.dets;
-    prms.sxp.adjs[1][1]= (prms.sxp.asx*prms.sxp.csz - prms.sxp.csx*prms.sxp.asz)/prms.sxp.dets;
-    prms.sxp.adjs[1][2]=-(prms.sxp.asx*prms.sxp.csy - prms.sxp.csx*prms.sxp.asy)/prms.sxp.dets;
+    sxp.adjs[1][0]=-(sxp.asy*sxp.csz - sxp.csy*sxp.asz)/sxp.dets;
+    sxp.adjs[1][1]= (sxp.asx*sxp.csz - sxp.csx*sxp.asz)/sxp.dets;
+    sxp.adjs[1][2]=-(sxp.asx*sxp.csy - sxp.csx*sxp.asy)/sxp.dets;
 
-    prms.sxp.adjs[2][0]= (prms.sxp.asy*prms.sxp.bsz - prms.sxp.bsy*prms.sxp.asz)/prms.sxp.dets;
-    prms.sxp.adjs[2][1]=-(prms.sxp.asx*prms.sxp.bsz - prms.sxp.bsx*prms.sxp.asz)/prms.sxp.dets;
-    prms.sxp.adjs[2][2]= (prms.sxp.asx*prms.sxp.bsy - prms.sxp.bsx*prms.sxp.asy)/prms.sxp.dets;
+    sxp.adjs[2][0]= (sxp.asy*sxp.bsz - sxp.bsy*sxp.asz)/sxp.dets;
+    sxp.adjs[2][1]=-(sxp.asx*sxp.bsz - sxp.bsx*sxp.asz)/sxp.dets;
+    sxp.adjs[2][2]= (sxp.asx*sxp.bsy - sxp.bsx*sxp.asy)/sxp.dets;
 
-    printf("det =%g\n",prms.sxp.dets);
-    printf("     [%g %g %g]\n",prms.sxp.adjs[0][0],prms.sxp.adjs[0][1],prms.sxp.adjs[0][2]);
-    printf("adjs=[%g %g %g]\n",prms.sxp.adjs[1][0],prms.sxp.adjs[1][1],prms.sxp.adjs[1][2]);
-    printf("     [%g %g %g]\n",prms.sxp.adjs[2][0],prms.sxp.adjs[2][1],prms.sxp.adjs[2][2]);
+    printf("det =%g\n",sxp.dets);
+    printf("     [%g %g %g]\n",sxp.adjs[0][0],sxp.adjs[0][1],sxp.adjs[0][2]);
+    printf("adjs=[%g %g %g]\n",sxp.adjs[1][0],sxp.adjs[1][1],sxp.adjs[1][2]);
+    printf("     [%g %g %g]\n",sxp.adjs[2][0],sxp.adjs[2][1],sxp.adjs[2][2]);
 
     /* Mosaicity calcs.*/
 
@@ -373,25 +376,21 @@ TRACE
         ht=-4;kt=-4;lt=5;
         ht=7;kt=-1;lt=2;
 
-        //qq[0]=(ht+hkle)*prms.sxp.asx + (kt+hkle)*prms.sxp.bsx+ (lt+hkle)*prms.sxp.csx;
-       // qq[1]=(ht+hkle)*prms.sxp.asy + (kt+hkle)*prms.sxp.bsy+ (lt+hkle)*prms.sxp.csy;
-       // qq[2]=(ht+hkle)*prms.sxp.asz + (kt+hkle)*prms.sxp.bsz+ (lt+hkle)*prms.sxp.csz;
+        //qq[0]=(ht+hkle)*sxp.asx + (kt+hkle)*sxp.bsx+ (lt+hkle)*sxp.csx;
+       // qq[1]=(ht+hkle)*sxp.asy + (kt+hkle)*sxp.bsy+ (lt+hkle)*sxp.csy;
+       // qq[2]=(ht+hkle)*sxp.asz + (kt+hkle)*sxp.bsz+ (lt+hkle)*sxp.csz;
 
         /* the vector g is an "hkl"-equivalent to search in the reflection list for nearest neighbour match*/
-        g[0]=prms.sxp.adjs[0][0]*qq[0] + prms.sxp.adjs[0][1]*qq[1]+ prms.sxp.adjs[0][2]*qq[2]; 
-        g[1]=prms.sxp.adjs[1][0]*qq[0] + prms.sxp.adjs[1][1]*qq[1]+ prms.sxp.adjs[1][2]*qq[2]; 
-        g[2]=prms.sxp.adjs[2][0]*qq[0] + prms.sxp.adjs[2][1]*qq[1]+ prms.sxp.adjs[2][2]*qq[2]; 
+        g[0]=sxp.adjs[0][0]*qq[0] + sxp.adjs[0][1]*qq[1]+ sxp.adjs[0][2]*qq[2];
+        g[1]=sxp.adjs[1][0]*qq[0] + sxp.adjs[1][1]*qq[1]+ sxp.adjs[1][2]*qq[2];
+        g[2]=sxp.adjs[2][0]*qq[0] + sxp.adjs[2][1]*qq[1]+ sxp.adjs[2][2]*qq[2];
         
         //g[0]=32.9;g[1]=33.1;g[2]=42.1;
 
         printf("qentry %g %g %g\n",qq[0],qq[1],qq[2]); 
         printf("gentry %g %g %g\n",g[0],g[1],g[2]);
         /*find the nearest neighbour in terms of g vector*/
-        int r=Table_Multicol_Find(prms.reftable, 3, cols, g);
-
-
-
-
+        int r=Table_Multicol_Find(reftable, 3, cols, g);
 
         /*TODO
           1. add possibility of "quasi-tunneling"
@@ -423,16 +422,16 @@ TRACE
         /* Pick a point in the 3D mosaic gaussian blob.
          * - Either by picking a point by means of three randnorm calls or by
          * uniform sampling within n sigma and adjust weight.
-         * - For testing however- we shall just choose the lattice point.*/
+         * - For now - we shall just choose the lattice point.*/
 
         int hh,kk,ll;
-        hh=Table_Index(prms.reftable,r,cols[0]);
-        kk=Table_Index(prms.reftable,r,cols[1]);
-        ll=Table_Index(prms.reftable,r,cols[2]);
+        hh=Table_Index(reftable,r,cols[0]);
+        kk=Table_Index(reftable,r,cols[1]);
+        ll=Table_Index(reftable,r,cols[2]);
         printf("DEBUGhkl hkl: %d %d %d ki: %g %g %g q~: %g %g %g ",hh,kk,ll, vx*V2K, vy*V2K, vz*V2K,  qx,qy,qz);  
-        qx=prms.sxp.asx*hh + prms.sxp.bsx*kk + prms.sxp.csx*ll;
-        qy=prms.sxp.asy*hh + prms.sxp.bsy*kk + prms.sxp.csy*ll;
-        qz=prms.sxp.asz*hh + prms.sxp.bsz*kk + prms.sxp.csz*ll;
+        qx=sxp.asx*hh + sxp.bsx*kk + sxp.csx*ll;
+        qy=sxp.asy*hh + sxp.bsy*kk + sxp.csy*ll;
+        qz=sxp.asz*hh + sxp.bsz*kk + sxp.csz*ll;
         printf(" g: %g %g %g qf: %g %g %g ",g[0],g[1],g[2], qx,qy,qz);
         kfx=vx*V2K-qx;
         kfy=vy*V2K-qy;
@@ -440,7 +439,7 @@ TRACE
         printf("      %g %g %g",kfx,kfy,kfz);
         
         /*adjust the weight according to the scattering factor and mosaic*/
-        double f2=Table_Index(prms.reftable, r, prms.col_F2);
+        double f2=Table_Index(reftable, r, col_F2);
         printf(" f2(%d)= %g\n",r,f2);
         p*=1;//f2;
 
@@ -457,11 +456,12 @@ MCDISPLAY
 %{
   /* A bit ugly; hard-coded dimensions. */
   magnify("");
-  if (prms.shape==SPHERE){
+  /*shape 0:cylinder, 1:box, 2:sphere*/
+  if (shape==2){
       circle("xy",0,0,0,radius);
       circle("xz",0,0,0,radius);
       circle("yz",0,0,0,radius);
-  }else if (prms.shape==CYLINDER){
+  }else if (shape==0){
       circle("xz",0, yheight/2.0,0,radius);
       circle("xz",0,-yheight/2.0,0,radius);
       line(radius,yheight/2,0,radius,-yheight/2,0);
@@ -469,7 +469,7 @@ MCDISPLAY
       line(0,yheight/2,radius,0,-yheight/2,radius);
       line(0,yheight/2,-radius,0,-yheight/2,-radius);
   }else{
-      box(0,0,0,xwidth,yheight,zdepth);
+      box(0,0,0,xwidth,yheight,zdepth,0,0,1,0);
   }
 %}
 END
