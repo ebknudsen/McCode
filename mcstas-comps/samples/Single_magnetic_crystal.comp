@@ -198,7 +198,7 @@ SHARE
       int status;
       if ((status = Table_Read (&atoms, atoms_file, 0)) == -1) {
         fprintf (stderr, "Single_magnetic_crystal: Error reading atom list from file: %s\n", atoms_file);
-        return (0);
+        return (-1);
       }
 
       printf ("index type x y z b\n");
@@ -447,7 +447,9 @@ SHARE
     }
 
     if (flag)
-      return (-1);
+      /* No atom file given: incoherent elastic scattering only. This is a
+         valid configuration, not an error (POSIX: 0 == success). */
+      return (0);
 
     /*re-loop over reflections and evaluate mosaicity coefficients etc.*/
     for (i = 0; i < size; i++) {
@@ -480,7 +482,7 @@ SHARE
         /*This is not implemeted fully yet (see todo below)- therefore exit with a warning*/
         fprintf (stderr, "Single_magnetic_crystal: Anisotropic mosaic not implemented yet - aborting.\n");
         free (list);
-        return (0);
+        return (-1);
       }
       list[i].sig123 = list[i].sig1 * list[i].sig2 * list[i].sig3;
       list[i].m1 = 1 / (2 * list[i].sig1 * list[i].sig1);
@@ -503,9 +505,10 @@ SHARE
     if (!info->tau_list) {
       fprintf (stderr, "Single_magnetic_crystal: Error: Out of memory!\n");
       free (list);
-      return (0);
+      return (-1);
     }
-    return (info->count = i);
+    info->count = i;
+    return (0);
   } /*}}}*/
   #endif /* !SINGLE_MAGNETIC_CRYSTAL_DECL */
 %}
@@ -545,8 +548,9 @@ INITIALIZE
     hkl_info.refx = hkl_info.refz = 0;
     hkl_info.refy = 1;
   }
-  /* Read in structure factors, and do some pre-calculations. */
-  if (!read_hkl_data (atom_sites, &hkl_info, mosaic, mosaic_h, mosaic_v, mosaic_n))
+  /* Read in structure factors, and do some pre-calculations.
+     read_hkl_data follows the POSIX convention: 0 on success, -1 on error. */
+  if (read_hkl_data (atom_sites, &hkl_info, mosaic, mosaic_h, mosaic_v, mosaic_n))
     exit (-1);
   if (hkl_info.count)
     printf ("Single_magnetic_crystal: %s: Read %d reflections from file '%s'\n", NAME_CURRENT_COMP, hkl_info.count, atom_sites);
