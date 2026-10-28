@@ -177,6 +177,48 @@ SHARE
     double y0x, y0y;      /* 2D Gauss center in tangent plane */
   };
 
+  /* Comparator for sorting the reflection list by increasing |tau|
+     (cf. SX_list_compare in Single_crystal.comp, distinct name to avoid a
+     clash when an instrument uses both components). The TRACE-section
+     Ewald-sphere search relies on the list being sorted by tau. */
+  int
+  SM_list_compare (void const* a, void const* b) {
+    struct hkl_data const* pa = a;
+    struct hkl_data const* pb = b;
+
+    /* Sort by tau */
+    if (pa->tau < pb->tau)
+      return -1;
+    if (pa->tau > pb->tau)
+      return 1;
+
+    /* Sort by tau_x */
+    if (pa->tau_x < pb->tau_x)
+      return -1;
+    if (pa->tau_x > pb->tau_x)
+      return 1;
+
+    /* Sort by tau_y */
+    if (pa->tau_y < pb->tau_y)
+      return -1;
+    if (pa->tau_y > pb->tau_y)
+      return 1;
+
+    /* Sort by tau_z */
+    if (pa->tau_z < pb->tau_z)
+      return -1;
+    if (pa->tau_z > pb->tau_z)
+      return 1;
+
+    /* In case of tie, sort by F2 also */
+    if (pa->F2 < pb->F2)
+      return -1;
+    if (pa->F2 > pb->F2)
+      return 1;
+
+    return 0;
+  } /* SM_list_compare */
+
   int
   read_hkl_data (char* atoms_file, struct hkl_info_struct* info, double SC_mosaic, double SC_mosaic_h, double SC_mosaic_v, double SC_mosaic_n) { /*{{{*/
     struct hkl_data* list = NULL;
@@ -260,6 +302,18 @@ SHARE
       info->m_a = sqrt (scalar_prod (info->m_ax, info->m_ay, info->m_az, info->m_ax, info->m_ay, info->m_az));
       info->m_b = sqrt (scalar_prod (info->m_bx, info->m_by, info->m_bz, info->m_bx, info->m_by, info->m_bz));
       info->m_c = sqrt (scalar_prod (info->m_cx, info->m_cy, info->m_cz, info->m_cx, info->m_cy, info->m_cz));
+
+      /* Sanity-check the unit cell: zero-length or degenerate (co-planar)
+         lattice vectors would give division by zero / inf / NaN when building
+         the reciprocal lattice and the hkl loops below. !(x > 0) also catches
+         NaN, !isfinite catches inf (e.g. recip_cell=1 with a zero vector). */
+      if (!(info->m_a > 0) || !(info->m_b > 0) || !(info->m_c > 0) || !isfinite (info->V0) || !(info->V0 > 0)) {
+        fprintf (stderr,
+                 "Single_magnetic_crystal: invalid unit cell definition (a=%g b=%g c=%g V0=%g).\n"
+                 "ERROR           Please check the ax..cz / recip_cell / na,nb,nc parameter values.\n",
+                 info->m_a, info->m_b, info->m_c, info->V0);
+        return (-1);
+      }
 
       /*give the atom list - calculate the chemical structure factors of a series of hkls that are within the q-range*/
       double as, bs, cs;
@@ -499,6 +553,10 @@ SHARE
       else
         list[i].cutoff = 5 * list[i].sig3;
     }
+    /* Sort the reflection list by increasing |tau|. The TRACE-section search
+       assumes sortedness, so it can break early once L[i].tau > tau_max;
+       without the sort most reflections would never be reached. */
+    qsort (list, i, sizeof (struct hkl_data), SM_list_compare);
     info->list = list;
     info->count = i;
     info->tau_list = malloc (i * sizeof (*info->tau_list));
