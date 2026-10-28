@@ -417,7 +417,7 @@ SHARE
                 size = 2 * size;
                 list = (struct hkl_data*)realloc (list, size * sizeof (struct hkl_data));
                 if (!list) {
-                  fprintf (stderr, "Single_crystal: Error re-allocating reflection list\n");
+                  fprintf (stderr, "Single_magnetic_crystal: Error re-allocating reflection list\n");
                   return (-1);
                 }
               }
@@ -488,7 +488,7 @@ SHARE
     info->count = i;
     info->tau_list = malloc (i * sizeof (*info->tau_list));
     if (!info->tau_list) {
-      fprintf (stderr, "Single_crystal: Error: Out of memory!\n");
+      fprintf (stderr, "Single_magnetic_crystal: Error: Out of memory!\n");
       return (0);
     }
     return (info->count = i);
@@ -535,9 +535,9 @@ INITIALIZE
   if (!read_hkl_data (atom_sites, &hkl_info, mosaic, mosaic_h, mosaic_v, mosaic_n))
     exit (-1);
   if (hkl_info.count)
-    printf ("Single_crystal: %s: Read %d reflections from file '%s'\n", NAME_CURRENT_COMP, hkl_info.count, atom_sites);
+    printf ("Single_magnetic_crystal: %s: Read %d reflections from file '%s'\n", NAME_CURRENT_COMP, hkl_info.count, atom_sites);
   else
-    printf ("Single_crystal: %s: Using incoherent elastic scattering only.\n", NAME_CURRENT_COMP, hkl_info.sigma_i);
+    printf ("Single_magnetic_crystal: %s: Using incoherent elastic scattering only.\n", NAME_CURRENT_COMP);
 
   hkl_info.shape = -1; /* -1:no shape, 0:cyl, 1:box, 2:sphere, 3:any-shape  */
   if (geometry && strlen (geometry) && strcmp (geometry, "NULL") && strcmp (geometry, "0")) {
@@ -646,7 +646,7 @@ TRACE
         /* neutron is leaving the sample */
         if (hkl_info.flag_warning < 100)
           fprintf (stderr,
-                   "Single_crystal: %s: Warning: neutron has unexpectedly left the crystal!\n"
+                   "Single_magnetic_crystal: %s: Warning: neutron has unexpectedly left the crystal!\n"
                    "                t1=%g t2=%g x=%g y=%g z=%g vx=%g vy=%g vz=%g\n",
                    NAME_CURRENT_COMP, t1, t2, x, y, z, vx, vy, vz);
         hkl_info.flag_warning++;
@@ -828,7 +828,7 @@ TRACE
         }
         if (j >= tau_count) {
           fprintf (stderr,
-                   "Single_crystal: Error: Illegal tau search "
+                   "Single_magnetic_crystal: Error: Illegal tau search "
                    "(r = %g, sum = %g).\n",
                    r, sum);
           j = tau_count - 1;
@@ -897,7 +897,7 @@ TRACE
 FINALLY
 %{
   if (hkl_info.flag_warning)
-    fprintf (stderr, "Single_crystal: %s: Error message was repeated %i times with absorbed neutrons.\n", NAME_CURRENT_COMP, hkl_info.flag_warning);
+    fprintf (stderr, "Single_magnetic_crystal: %s: Error message was repeated %i times with absorbed neutrons.\n", NAME_CURRENT_COMP, hkl_info.flag_warning);
 %}
 
 MCDISPLAY
