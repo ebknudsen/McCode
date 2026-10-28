@@ -281,6 +281,16 @@ SHARE
         fprintf (stderr, "Single_magnetic_crystal: Error allocating reflection list\n");
         return (-1);
       }
+      /* Scratch array holding the 4 spin-channel structure factors of the
+         reflection currently being built. Heap-allocated once and reused for
+         every hkl (its contents are copied into list[i].f below), so it stays
+         a single allocation also for very large (~1e6) reflection lists. */
+      cdouble* f_ = malloc (4 * sizeof (cdouble));
+      if (!f_) {
+        fprintf (stderr, "Single_magnetic_crystal: Error allocating cdouble f_[4]\n");
+        free (list);
+        return (-1);
+      }
       printf ("q=[%g %g]\n", info->tau_min, info->tau_max);
       printf ("as,bs,cs=(%g %g %g)\n", as, bs, cs);
       i = 0;
@@ -297,11 +307,6 @@ SHARE
               continue;
             f = cplx (0, 0);
             cdouble f_tau = cplx (0, 0);
-            cdouble* f_ = malloc (4 * sizeof (cdouble));
-            if (!f_) {
-              fprintf (stderr, "Single_magnetic_crystal: Error allocating cdouble f_[4]\n");
-              return (-1);
-            }
             f_[0] = f_[1] = f_[2] = f_[3] = cplx (0, 0);
 
             for (m = 0; m < atoms.rows; m++) {
@@ -414,12 +419,16 @@ SHARE
               }
               list[i].F2 = cabs (f_tau) * cabs (f_tau);
               if (++i == size) {
-                size = 2 * size;
-                list = (struct hkl_data*)realloc (list, size * sizeof (struct hkl_data));
-                if (!list) {
+                struct hkl_data* list_new = (struct hkl_data*)realloc (list, 2 * size * sizeof (struct hkl_data));
+                if (!list_new) {
                   fprintf (stderr, "Single_magnetic_crystal: Error re-allocating reflection list\n");
+                  free (list);
+                  free (f_);
+                  Table_Free (&atoms);
                   return (-1);
                 }
+                list = list_new;
+                size = 2 * size;
               }
               printf ("(hkl)=(%2d %2d %2d) ", h, k, l);
               printf (" |f++|^2=%g |f--|^2=%g |f+-|^2=%g |f-+|^2=%g", cabs (f_[0]) * cabs (f_[0]), cabs (f_[1]) * cabs (f_[1]), cabs (f_[2]) * cabs (f_[2]),
@@ -432,6 +441,9 @@ SHARE
       }
       /*set size to actual number of reflections*/
       size = i;
+      /* the scratch array and the parsed atom table are no longer needed */
+      free (f_);
+      Table_Free (&atoms);
     }
 
     if (flag)
@@ -467,6 +479,7 @@ SHARE
         /* Use anisotropic mosaic. */
         /*This is not implemeted fully yet (see todo below)- therefore exit with a warning*/
         fprintf (stderr, "Single_magnetic_crystal: Anisotropic mosaic not implemented yet - aborting.\n");
+        free (list);
         return (0);
       }
       list[i].sig123 = list[i].sig1 * list[i].sig2 * list[i].sig3;
@@ -489,6 +502,7 @@ SHARE
     info->tau_list = malloc (i * sizeof (*info->tau_list));
     if (!info->tau_list) {
       fprintf (stderr, "Single_magnetic_crystal: Error: Out of memory!\n");
+      free (list);
       return (0);
     }
     return (info->count = i);
