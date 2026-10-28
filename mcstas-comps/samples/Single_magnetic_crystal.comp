@@ -270,6 +270,18 @@ SHARE
         return (-1);
       }
 
+      /* Validate the column count: 6 data columns or fewer means nuclear-only,
+         while a magnetic file needs at least 14 columns (through Lz). For 7-13
+         columns Table_Index clamps out-of-range indices to the last column,
+         so the missing moment components would silently alias it. */
+      if (atoms.columns > 6 && atoms.columns < 14)
+        fprintf (stderr,
+                 "Single_magnetic_crystal: WARNING: atom file '%s' has only %d data columns (< 14).\n"
+                 "                The magnetic moment columns (Sx, Sy, Sz, gL, Lx, Ly, Lz) are incomplete;\n"
+                 "                missing columns will read as duplicates of the last column and give a wrong moment.\n"
+                 "                Please supply at least: index iontype xrel yrel zrel b[fm] gS Sx Sy Sz gL Lx Ly Lz\n",
+                 atoms_file, atoms.columns);
+
       printf ("index type x y z b\n");
       for (i = 0; i < atoms.rows; i++) {
         printf ("atom %d", (int)floor (Table_Index (atoms, i, 0)));
