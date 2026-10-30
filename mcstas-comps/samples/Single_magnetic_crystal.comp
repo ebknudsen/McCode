@@ -46,6 +46,33 @@
 *   The default size of the object depends of the OFF file data, but its 
 *   bounding box may be resized using xwidth,yheight and zdepth.
 *
+* <b>Atom sites file format:</b>
+* The atom_sites input file is a whitespace-separated table with one row per
+* atom in the CHEMICAL unit cell (the magnetic cell may be larger via the
+* na/nb/nc scaling). Columns (0-indexed):
+*
+*   index iontype xrel yrel zrel b[fm] gS Sx Sy Sz gL Lx Ly Lz [j0* j2* ...]
+*
+*   index, iontype : ignored (any number / 0)
+*   xrel,yrel,zrel : fractional position of the atom in the chemical cell
+*                    (dimensionless, along a, b, c)
+*   b              : bound coherent nuclear scattering length in fm
+*                    (divided internally by 10, so that |f|^2 comes out in barns)
+*   gS, gL         : spin and orbital Lande g-factors; g = gS + gL
+*   Sx,Sy,Sz       : spin vector of the ion in units of hbar, given as
+*                    components along the crystallographic a, b, c axes
+*                    (e.g. 0.5 for spin-1/2; 0 for non-magnetic ions)
+*   Lx,Ly,Lz       : orbital angular momentum vector, same convention
+*                    (parsed, but not yet used by the scattering formulas)
+*   j0*, j2*       : <j0>/<j2> magnetic form-factor coefficients in the Brown
+*                    parameterization j(x) = A*exp(-a*x^2) + B*exp(-b*x^2)
+*                    + C*exp(-c*x^2) + D (optional trailing columns,
+*                    currently unused - the magnetic form factor is 1)
+*
+* Files with 6 data columns or fewer are treated as nuclear-only. Note that
+* a magnetic atom file should provide at least 14 columns; shorter files
+* give undefined magnetic moments for the extra columns.
+*
 * Also, always use a non-zero value of delta_d_d.
 *
 *
